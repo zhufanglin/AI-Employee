@@ -266,6 +266,55 @@ class WeChatUIAdapter:
             "或 wxauto（微信 3.9.x）。详情：" + "；".join(errors),
         )
 
+    def _client_alive(self) -> bool | None:
+        """微信 PC 客户端进程是否还在跑。
+
+        只为了区分「缓存里那个已登录客户端」和「微信已经被关掉/升级后自己退出」：
+        返回 None 表示无法判断（没有 psutil），调用方应保持原行为。
+        """
+        try:
+            import psutil  # 随 wxauto4 / wechatauto-replica 一起装好
+        except Exception:  # noqa: BLE001
+            return None
+        try:
+            for proc in psutil.process_iter(["name"]):
+                name = (proc.info.get("name") or "").lower()
+                if name in ("weixin.exe", "wechat.exe"):
+                    return True
+        except Exception:  # noqa: BLE001
+            return None
+        return False
+
+    def _restore_window(self) -> None:
+        """把微信主窗口从最小化恢复出来。
+
+        wechatauto-replica 走 GUI 截图 + OCR，窗口最小化时截图尺寸为 0，
+        表现为「height and width must be > 0」这种看不懂的报错，所以每次 UI 操作前先恢复。
+        """
+        try:
+            import win32gui
+        except Exception:  # noqa: BLE001
+            return
+        targets: list[int] = []
+
+        def collect(hwnd: int, _acc: Any) -> None:  # noqa: ANN001
+            try:
+                if win32gui.IsIconic(hwnd):
+                    targets.append(hwnd)
+            except Exception:  # noqa: BLE001
+                pass
+
+        try:
+            win32gui.EnumWindows(collect, None)
+            for hwnd in targets:
+                title = win32gui.GetWindowText(hwnd) or ""
+                cls = win32gui.GetClassName(hwnd) or ""
+                if title in ("微信", "WeChat") or "WeChatMainWnd" in cls:
+                    win32gui.ShowWindow(hwnd, 9)  # SW_RESTORE
+                    logger.info("微信主窗口已最小化，已自动恢复：hwnd=%s", hwnd)
+        except Exception as exc:  # noqa: BLE001
+            logger.debug("恢复微信窗口失败（忽略）：%s", exc)
+
     def _connect_error(self, name: str, exc: BaseException) -> ApiError:
         text = str(exc) or exc.__class__.__name__
         if any(marker in text for marker in _NOT_LOGGED_IN_MARKERS):
@@ -282,7 +331,13 @@ class WeChatUIAdapter:
 
     def _ensure_client(self) -> Any:
         if self._wx is not None:
-            return self._wx
+            # 微信被关掉/自动升级后自己退出时，缓存的客户端仍能返回旧昵称，
+            # 会让 /bot/status 假装「已登录」，直到真正发消息才炸。这里先确认进程还在。
+            if self._client_alive() is False:
+                logger.warning("微信 PC 客户端进程已不存在，丢弃缓存的客户端")
+                self._wx = None
+            else:
+                return self._wx
         name = self._select_backend()
         if self._client_factory is not None:
             try:
@@ -318,10 +373,16 @@ class WeChatUIAdapter:
         self._wx = client
         return client
 
-    def _execute(self, label: str, operation: Callable[[], Any]) -> Any:
-        """加锁 + 超时 + 重试。任何 UI 异常最终都收敛成 503 WECHAT_UI_BUSY。"""
-        attempts = 1 + max(0, int(self.settings.ui_retry))
+    def _execute(self, label: str, operation: Callable[[], Any], retry: bool = True) -> Any:
+        """加锁 + 超时 + 重试。任何 UI 异常最终都收敛成 503 WECHAT_UI_BUSY。
+
+        retry=False 用于「发送」这类非幂等操作：点击可能已经生效，只是读回执失败，
+        重试就会把同一条消息发两遍（生产上真的出现过重复的 1500 字长文）。
+        """
+        attempts = (1 + max(0, int(self.settings.ui_retry))) if retry else 1
         last_error: BaseException | None = None
+        # GUI 后端截图对最小化窗口会报「height and width must be > 0」，先尽量恢复窗口。
+        self._restore_window()
         for attempt in range(1, attempts + 1):
             acquired = self._ui_lock.acquire(timeout=self.settings.ui_timeout_s)
             if not acquired:
@@ -702,7 +763,7 @@ class WeChatUIAdapter:
             sent_at = int(time.time())
             self._append_outgoing_cache(name, msg, "text", sent_at)
 
-        self._execute("发送消息", operation)
+        self._execute("发送消息", operation, retry=False)
         return int(time.time())
 
     def _resolve_file(self, file_path: str | None, file_url: str | None) -> str:
@@ -779,7 +840,7 @@ class WeChatUIAdapter:
                 _call_with_optional_who(fn, local_path, name)
             self._append_outgoing_cache(name, local_path, "file", int(time.time()))
 
-        self._execute("发送文件", operation)
+        self._execute("发送文件", operation, retry=False)
         return local_path, int(time.time())
 
     # ---------- 监听 ----------

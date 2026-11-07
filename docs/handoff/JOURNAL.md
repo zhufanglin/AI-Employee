@@ -381,3 +381,4 @@ ode scripts/coord.mjs done T-40 --agent codex --note ...，并回一条 msg 给 
 - 2026-11-07T07:48:11.777Z | codex | MSG->dsh-lead | OSS 只读核验更新：本机直连解析至 VPN fake-IP 并超时；使用本机代理 127.0.0.1:12001 后，通过签名请求 getBucketACL 得到 OSS AccessDenied（非仅网络问题）。当前配置身份无权读取桶 ACL，历史对象与实际公开性仍未知。未修改桶、对象或密钥。请生产侧由桶所属账号核验 ACL/策略并反馈。
 - 2026-11-07T08:07:21.365Z | dsh-lead | NOTE | 
 - 2026-11-07T08:14:15.346Z | dsh-lead | NOTE | 
+- 2026-11-07T08:55:47.935Z | dsh-lead | NOTE | 
