@@ -175,6 +175,59 @@ await runCase(
   null,
 );
 
+// ── 长结果：全文链接 ──────────────────────────────────────────────
+// 个人微信单条上限 1500 字，超长时要推「前 N 字 + 全文链接」，不能再硬截断丢掉后文。
+const veryLong = Array.from({ length: 120 }, (_, i) => "[段落" + (i + 1) + "] 这是很长的正文内容用于验证长结果回推。").join("\n");
+
+process.env.PUBLIC_BASE_URL = "https://api.fcmediaagent.com";
+try {
+  const taskRef = { value: { id: "task-long", status: "awaiting_approval", outputText: veryLong, error: null } };
+  const artifactRef = { value: { text: "" } };
+  const { dispatcher, sent } = makeDispatcher(taskRef, artifactRef);
+  await dispatcher.handleInbound({
+    channel: "personal-wechat",
+    fromUser: chat,
+    msgType: "text",
+    content: "写一份很长的方案",
+    msgId: "m-long",
+  });
+  const deadline = Date.now() + 3000;
+  while (Date.now() < deadline && sent.length === 0) await sleep(20);
+  await sleep(120);
+  const last = sent[sent.length - 1];
+  const msg = String(last?.msg ?? "");
+  check(
+    "长结果：推送里有全文链接",
+    /https:\/\/api\.fcmediaagent\.com\/api\/channels\/result\/[A-Za-z0-9_-]+\?t=[0-9a-f]{32}/.test(msg),
+    msg.slice(-160),
+  );
+  check("长结果：推送里有字数提示", /全文约 \d+ 字/.test(msg), msg.slice(-160));
+  check("长结果：单条不超过 1500 字", msg.length <= 1500, "len=" + msg.length);
+  check("长结果：保留了正文开头", msg.includes("[段落1]"), msg.slice(0, 80));
+} finally {
+  delete process.env.PUBLIC_BASE_URL;
+}
+
+// 未配置 PUBLIC_BASE_URL（本地/未上线）时必须退回截断，不能推一个空链接
+{
+  const taskRef = { value: { id: "task-long2", status: "awaiting_approval", outputText: veryLong, error: null } };
+  const artifactRef = { value: { text: "" } };
+  const { dispatcher, sent } = makeDispatcher(taskRef, artifactRef);
+  await dispatcher.handleInbound({
+    channel: "personal-wechat",
+    fromUser: chat,
+    msgType: "text",
+    content: "写一份很长的方案",
+    msgId: "m-long2",
+  });
+  const deadline = Date.now() + 3000;
+  while (Date.now() < deadline && sent.length === 0) await sleep(20);
+  await sleep(120);
+  const msg = String(sent[sent.length - 1]?.msg ?? "");
+  check("无 PUBLIC_BASE_URL：退回截断提示", msg.includes("内容过长已截断"), msg.slice(-160));
+  check("无 PUBLIC_BASE_URL：不含 result 链接", !msg.includes("/api/channels/result/"));
+}
+
 console.log("");
 if (failures > 0) {
   console.error("T11 CHANNEL PUSH SMOKE FAILED (" + failures + "/" + checks + ")");

@@ -89,6 +89,10 @@ if ($Smoke) {
     & $node "scripts\smoke-t11-channel-push.mjs"
     $script:code = $LASTEXITCODE
   }
+  Step "smoke: T-11 长结果页（全文链接）" {
+    & $node "scripts\smoke-t11-result-page.mjs"
+    $script:code = $LASTEXITCODE
+  }
   Step "smoke: W2" {
     & $node "scripts\smoke-w2.mjs"
     $script:code = $LASTEXITCODE

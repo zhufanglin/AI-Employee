@@ -6,6 +6,7 @@ import { PersonalWeChatService } from "./personal-wechat.service";
 import { PersonalWeChatOwnTexts } from "./personal-wechat.own-texts";
 import { WeComService } from "./wecom/wecom.service";
 import { WeChatMpService } from "./wechat-mp/wechat-mp.service";
+import { resultUrl } from "./result-page";
 
 export type ChannelKind = "wecom" | "wechat-mp" | "personal-wechat";
 
@@ -42,7 +43,29 @@ const TRANSIENT_FAILURE = /Bad Gateway|Gateway Timeout|Service Unavailable|UPSTR
 function truncate(text: string, maxChars: number): string {
   const raw = String(text ?? "");
   if (raw.length <= maxChars) return raw;
-  return raw.slice(0, maxChars) + "\n……（内容过长已截断，完整结果请在平台后台查看）";
+  return raw.slice(0, maxChars) + "\n……（内容过长已截断）";
+}
+
+/** 长结果回推：正文前 N 字 + 全文链接（链接页由 ChannelResultController 渲染） */
+export function longResultText(
+  content: string,
+  maxChars: number,
+  taskId: string | null | undefined,
+  url: string | null,
+): string {
+  const raw = String(content ?? "");
+  if (raw.length <= maxChars) return raw;
+  if (!url) {
+    return raw.slice(0, maxChars) + "\n……（内容过长已截断，完整结果请在平台后台查看）";
+  }
+  const summary = raw.slice(0, Math.max(200, maxChars - 260)).trimEnd();
+  return [
+    summary + "……",
+    "",
+    "（全文约 " + raw.length + " 字，微信里只展示前 " + summary.length + " 字）",
+    "点这里看完整版：",
+    url,
+  ].join("\n");
 }
 
 /**
@@ -185,7 +208,7 @@ export class ChannelDispatcherService {
     if (task.status === "succeeded") {
       this.stopWatch(taskId);
       const text = await this.readTaskText(taskId, task);
-      await this.push(msg, text ? "任务已完成：\n" + text : "任务已完成，但没有产出文本结果。");
+      await this.push(msg, text ? "任务已完成：\n" + text : "任务已完成，但没有产出文本结果。", taskId);
       return;
     }
     if (task.status === "failed") {
@@ -198,7 +221,7 @@ export class ChannelDispatcherService {
       const text = transient
         ? "这次没跑成功（服务端临时波动，通常是模型接口网络抖动）。把需求原样再发一遍就行，我会重新执行。"
         : "任务处理失败：" + (reason || "未知原因");
-      await this.push(msg, text);
+      await this.push(msg, text, taskId);
       return;
     }
     if (task.status === "needs_input" || task.status === "awaiting_approval") {
@@ -214,7 +237,7 @@ export class ChannelDispatcherService {
         task.status === "needs_input"
           ? "\n（还需要你补充信息才能继续，直接回复补充内容即可）"
           : "\n（以上为初稿，确认归档请登录平台后台）";
-      await this.push(msg, text + suffix);
+      await this.push(msg, text + suffix, taskId);
     }
   }
 
@@ -229,15 +252,21 @@ export class ChannelDispatcherService {
     return typeof artifact?.text === "string" ? artifact.text.trim() : "";
   }
 
-  /** 任务结果主动推送（企微应用消息 / 公众号客服消息） */
-  private async push(msg: InboundMessage, content: string) {
+  /**
+   * 任务结果主动推送（企微应用消息 / 公众号客服消息 / 个人微信）
+   *
+   * 超过渠道单条上限时不再硬截断：正文前 N 字 + 全文网页链接（PUBLIC_BASE_URL 未配置时退回截断）。
+   */
+  private async push(msg: InboundMessage, content: string, taskId?: string) {
     const maxChars =
       msg.channel === "wecom"
         ? WECOM_PUSH_MAX_CHARS
         : msg.channel === "personal-wechat"
           ? PERSONAL_PUSH_MAX_CHARS
           : WECHAT_MP_PUSH_MAX_CHARS;
-    const text = truncate(content, maxChars);
+    const raw = String(content ?? "");
+    const link = taskId && raw.length > maxChars ? resultUrl(taskId) : null;
+    const text = link ? longResultText(raw, maxChars, taskId, link) : truncate(raw, maxChars);
     try {
       if (msg.channel === "wecom") await this.wecom.sendText(msg.fromUser, text);
       else if (msg.channel === "personal-wechat") {

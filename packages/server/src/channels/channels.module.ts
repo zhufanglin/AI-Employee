@@ -3,6 +3,7 @@ import { EmployeeModule } from "../employee/employee.module";
 import { ChannelsConfig } from "./channels.config";
 import { ChannelsController, WeChatMpChannelsController, WeComChannelsController } from "./channels.controller";
 import { ChannelDispatcherService } from "./dispatcher.service";
+import { ChannelResultController } from "./result-page.controller";
 import { PersonalWeChatPoller } from "./personal-wechat.poller";
 import { PersonalWeChatOwnTexts } from "./personal-wechat.own-texts";
 import { PersonalWeChatService } from "./personal-wechat.service";
@@ -17,7 +18,7 @@ import { WeComService } from "./wecom/wecom.service";
  */
 @Module({
   imports: [EmployeeModule],
-  controllers: [ChannelsController, WeComChannelsController, WeChatMpChannelsController],
+  controllers: [ChannelsController, WeComChannelsController, WeChatMpChannelsController, ChannelResultController],
   providers: [
     PersonalWeChatService,
     ChannelsConfig,
