@@ -4,9 +4,12 @@ import { spawn } from "node:child_process";
 import { existsSync } from "node:fs";
 import path from "node:path";
 import os from "node:os";
+import { readFileSync } from "node:fs";
 
 const exe = path.join(os.homedir(), "AppData", "Local", "Programs", "fcmediaagent-desktop", "中科元晟 AI员工.exe");
 if (!existsSync(exe)) { console.error("未找到已安装客户端：" + exe); process.exit(1); }
+const pkg = JSON.parse(readFileSync(path.join(import.meta.dirname, "..", "packages", "desktop", "package.json"), "utf8"));
+const expectedVersion = pkg.version;
 const port = 9223;
 const child = spawn(exe, ["--remote-debugging-port=" + port], { detached: false, stdio: "ignore" });
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -49,7 +52,8 @@ try {
   await new Promise((resolve, reject) => { ws.addEventListener("open", resolve); ws.addEventListener("error", reject); });
   const info = await evaluate(ws, "window.fcm.info().then(v => JSON.stringify(v))", 1);
   const infoValue = JSON.parse(info.result.value);
-  if (String(infoValue.version).startsWith("0.1.3")) ok("客户端版本 0.1.3", infoValue.version); else bad("客户端版本 0.1.3", infoValue.version);
+  if (String(infoValue.version) === expectedVersion) ok("客户端版本 " + expectedVersion, infoValue.version);
+  else bad("客户端版本 " + expectedVersion, String(infoValue.version));
 
   const ipc = await evaluate(ws, "JSON.stringify({ pick: typeof window.fcm.workspace.pick, list: typeof window.fcm.workspace.list, remove: typeof window.fcm.workspace.remove })", 2);
   const kinds = JSON.parse(ipc.result.value);
@@ -72,6 +76,6 @@ try {
 } finally {
   try { child.kill(); } catch { /* ignore */ }
   await sleep(800);
-  if (process.exitCode) console.log("DESKTOP 0.1.3 SMOKE FAILED (" + pass + " checks passed)");
-  else console.log("DESKTOP 0.1.3 SMOKE OK (" + pass + " checks)");
+  if (process.exitCode) console.log("DESKTOP SMOKE FAILED (" + pass + " checks passed)");
+  else console.log("DESKTOP SMOKE OK (" + pass + " checks)");
 }
