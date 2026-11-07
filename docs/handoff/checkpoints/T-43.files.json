@@ -1,0 +1,37 @@
+[
+  {
+    "p": "packages/server/src/workspace/workspace.controller.ts",
+    "size": 617,
+    "mtime": 1794030726023
+  },
+  {
+    "p": "packages/server/src/workspace/workspace.module.ts",
+    "size": 271,
+    "mtime": 1794030726117
+  },
+  {
+    "p": "packages/server/src/workspace/workspace.service.ts",
+    "size": 2491,
+    "mtime": 1794030725984
+  },
+  {
+    "p": "packages/desktop/src/main/index.ts",
+    "size": 21706,
+    "mtime": 1794030992383
+  },
+  {
+    "p": "packages/desktop/src/preload/index.ts",
+    "size": 6264,
+    "mtime": 1794030992455
+  },
+  {
+    "p": "packages/desktop/src/renderer/src/pages/EmployeeOffice.tsx",
+    "size": 15327,
+    "mtime": 1794031016791
+  },
+  {
+    "p": "packages/desktop/src/renderer/src/types.ts",
+    "size": 2393,
+    "mtime": 1794031040635
+  }
+]

@@ -1,0 +1,27 @@
+[
+  {
+    "p": "packages/server/src/capabilities/capabilities/files.ts",
+    "size": 14117,
+    "mtime": 1794030792992
+  },
+  {
+    "p": "packages/worker/tool-loop.mjs",
+    "size": 9230,
+    "mtime": 1794030735609
+  },
+  {
+    "p": "packages/worker/cloud-executor.mjs",
+    "size": 8192,
+    "mtime": 1793911512901
+  },
+  {
+    "p": "packages/desktop/src/main/executor.ts",
+    "size": 8588,
+    "mtime": 1793910128458
+  },
+  {
+    "p": "packages/desktop/src/renderer/src/pages/EmployeeOffice.tsx",
+    "size": 15413,
+    "mtime": 1794036369489
+  }
+]

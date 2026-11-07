@@ -237,7 +237,7 @@ export default function EmployeeOffice() {
       {!library.length && <div className="empty-state">还没有资料。点「添加资料」上传客户名单、产品价格表、竞品文档或 PDF。</div>}
       {!!library.length && <div className="attach-list">
         {library.slice(0, 20).map((f: any) => <span className="attach-chip" key={f.key}>
-          {f.url ? <a href={f.url} target="_blank" rel="noreferrer">{f.name}</a> : f.name}
+          <button className="link" disabled={busy} onClick={() => void act(async () => { await window.fcm.workspace.download({ key: f.key, name: f.name }) })}>{f.name}</button>
           <span className="muted small">{Math.max(1, Math.round((f.bytes || 0) / 1024))}KB</span>
           <button className="link" disabled={busy} onClick={() => void removeLibraryFile(f)}>删除</button>
         </span>)}
@@ -258,7 +258,7 @@ export default function EmployeeOffice() {
           {!!task.artifacts?.length && <div className="artifact-list">{task.artifacts.map((a: any) => {
             const url = ['image', 'video'].includes(a.kind) ? mediaUrl(a.url || a.path) : ''
             return <div key={a.id || `${a.kind}-${a.url}-${a.path}`}>
-              <b>{a.kind}</b> {url ? <><a href={url} target="_blank" rel="noreferrer">打开产物</a><div>{a.kind === 'image' ? <img src={url} alt="员工生成的图片" style={{ maxWidth: '100%', maxHeight: 360 }} /> : <video controls src={url} style={{ maxWidth: '100%', maxHeight: 360 }} />}</div></> : a.text || a.url || a.path || '产物已生成'}
+              <b>{a.kind}</b> {a.kind === 'workspace-file' && typeof a.path === 'string' ? <button className="link" disabled={busy} onClick={() => void act(async () => { await window.fcm.workspace.download({ key: a.path, name: a.text || '文件' }) })}>下载 {a.text || '文件'}</button> : url ? <><a href={url} target="_blank" rel="noreferrer">打开产物</a><div>{a.kind === 'image' ? <img src={url} alt="员工生成的图片" style={{ maxWidth: '100%', maxHeight: 360 }} /> : <video controls src={url} style={{ maxWidth: '100%', maxHeight: 360 }} />}</div></> : a.text || a.url || a.path || '产物已生成'}
             </div>
           })}</div>}
           {task.status === 'awaiting_approval' && <div className="task-actions">

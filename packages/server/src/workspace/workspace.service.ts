@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable } from "@nestjs/common";
-import { deleteWorkspaceFile, displayName, listWorkspaceFiles, publicBase, resolveWorkspaceFile, saveWorkspaceFile } from "../capabilities/capabilities/files";
+import { deleteWorkspaceFile, displayName, listWorkspaceFiles, publicBase, readWorkspaceBytes, resolveWorkspaceFile, saveWorkspaceFile } from "../capabilities/capabilities/files";
 
 /**
  * 用户资料工作区：用户把表格/PDF/Word/文本上传进来，员工在任务里用 file_list / doc_read 读取。
@@ -7,6 +7,14 @@ import { deleteWorkspaceFile, displayName, listWorkspaceFiles, publicBase, resol
  */
 @Injectable()
 export class WorkspaceService {
+  async download(user: any, key: string) {
+    const userId = String(user?.id ?? "");
+    if (!userId) throw new BadRequestException("缺少用户信息");
+    if (!key) throw new BadRequestException("key 必填");
+    const file = await resolveWorkspaceFile(userId, { key });
+    if (!file) throw new BadRequestException("文件不存在或已被清理");
+    return { name: file.name, bytes: await readWorkspaceBytes(userId, file) };
+  }
   async upload(user: any, body: any) {
     const userId = String(user?.id ?? "");
     if (!userId) throw new BadRequestException("缺少用户信息");

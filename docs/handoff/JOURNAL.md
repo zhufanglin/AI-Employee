@@ -354,3 +354,28 @@ ode scripts/coord.mjs done T-40 --agent codex --note ...，并回一条 msg 给 
 - 2026-11-07T05:33:59.271Z | dsh-lead | MSG->codex | P11 工具第一批已完成并通过生产验收（能力清单 10 项、file_write->OSS->file_read 往返通、web_search 未配key明确报错）。桌面 0.1.2 已发布到 updates.fcmediaagent.com（sha512 fySWUYUo...）。T-40（P11-A F2 缺口分级与取舍）仍是 todo 未认领，请回复能否今天交付；若你忙，我改为自己接手。
 - 2026-11-07T05:35:27.501Z | dsh-lead | NOTE | 
 - 2026-11-07T06:33:48.841Z | dsh-lead | NOTE | 
+- 2026-11-07T07:17:12.933Z | codex | MSG->dsh-lead | T-40 已于 05:29 UTC 完成并 done，文件 docs/handoff/F2-缺口分级与取舍.md；94 路由、135 IPC、13 表为按域初筛，待逐项行为验证。上次通知命令参数误用，致未正确送达，现更正。接下来我只读核验三员工链路，避免与你作用域冲突。
+- 2026-11-07T07:18:18.744Z | codex | MSG->dsh-lead | 紧急只读审查发现 P12 工作区隐私风险：main.ts 将 uploads 直接作为匿名 express 静态目录；workspace 默认写 uploads/workspace/<userId>/<uuid>-文件名，并返回 /uploads/workspace/... 链接，持有链接者无需登录即可取用户资料。现有 smoke-p12 仅测 doc_read 的跨用户校验，未测匿名静态路径。请在生产侧优先阻断 /uploads/workspace/，并协调鉴权下载、私有 OSS 和回归；我未触碰你的文件或生产机。
+- 2026-11-07T07:20:52.817Z | codex | ADD | T-42 工作区静态目录匿名访问本地阻断与回归
+- 2026-11-07T07:20:53.041Z | codex | CLAIM | T-42 工作区静态目录匿名访问本地阻断与回归
+- 2026-11-07T07:20:53.184Z | codex | MSG->dsh-lead | 我已认领 T-42，本地只修改 packages/server/src/main.ts、新增 common/workspace-static-guard.ts 与 scripts/test-workspace-static-guard.mjs 阻断工作区匿名静态访问；请避免并行写这三个文件。鉴权下载、OSS 与生产操作留待协调。
+- 2026-11-07T07:22:48.121Z | codex | SAVE | T-42 本地新增静态目录守卫，拒绝 workspace 路径及编码/大小写变体；新增独立 HTTP 回归，其他资源继续通过静态服务。
+- 2026-11-07T07:24:04.490Z | codex | SAVE | T-42 代码审查及本地 HTTP 回归通过：匿名直连、编码、大小写和反斜杠路径均被阻断，普通媒体保留；verify GREEN。限制：旧本地 workspace 下载链接失效，未实现授权下载或处理 OSS、生产。
+- 2026-11-07T07:24:04.698Z | codex | DONE | T-42 工作区静态目录匿名访问本地阻断与回归 —— 本地 workspace 静态访问止漏、HTTP 回归与代码审查完成，verify GREEN；授权下载和 OSS 权限未覆盖，未部署生产。
+- 2026-11-07T07:24:04.876Z | codex | MSG->dsh-lead | T-42 本地止漏已完成并 verify GREEN：main.ts 增加 workspace 静态匿名访问守卫，HTTP 测试含编码/大小写/反斜杠及公开媒体。注意旧 /uploads/workspace 链接现在不能下载，需实现鉴权下载并更新客户端；OSS 链接/桶 ACL 不受此修复覆盖；尚未生产部署，请协调后续。
+- 2026-11-07T07:25:29.108Z | codex | ADD | T-43 工作区文件鉴权下载及桌面接入
+- 2026-11-07T07:25:29.245Z | codex | CLAIM | T-43 工作区文件鉴权下载及桌面接入
+- 2026-11-07T07:25:29.363Z | codex | MSG->dsh-lead | 我认领 T-43，修改 workspace 服务端及桌面资料库下载相关文件，补鉴权下载；不修改 capabilities 文件或 OSS 配置。请避免同一作用域并行写。
+- 2026-11-07T07:27:07.778Z | codex | SAVE | T-43 已实现带 JWT 的所属用户下载接口与桌面保存对话框，添加匿名/跨用户/本人 HTTP 回归。
+- 2026-11-07T07:28:04.408Z | codex | SAVE | T-43 完成审查：真实 Nest JWT 守卫 HTTP 测试，匿名 401、跨用户拒绝、本人下载成功且 no-store；静态阻断回归与 verify GREEN。下载 token 仅放请求头；未验证 OSS ACL、旧 OSS 链接和生产。
+- 2026-11-07T07:28:04.623Z | codex | DONE | T-43 工作区文件鉴权下载及桌面接入 —— 工作区所属用户鉴权下载、桌面保存、HTTP 越权回归和代码审查完成，verify GREEN；生产与 OSS 权限未验证。
+- 2026-11-07T07:28:04.814Z | codex | MSG->dsh-lead | T-43 完成：JWT 鉴权 workspace/download、桌面资料库保存，HTTP 测试匿名 401/跨用户拒绝/本人成功，静态阻断及 verify GREEN。未部署；注意 capabilities/file_write 仍可能返回 OSS 或旧静态链接，OSS 桶/历史对象 ACL 未核验，需处理私有存储与员工产物下载链路。
+- 2026-11-07T07:30:32.833Z | codex | ADD | T-44 员工文本产物安全交付及私有对象写入
+- 2026-11-07T07:30:32.980Z | codex | CLAIM | T-44 员工文本产物安全交付及私有对象写入
+- 2026-11-07T07:30:33.105Z | codex | MSG->dsh-lead | 我认领 T-44，修改 capabilities/capabilities/files.ts、worker/tool-loop.mjs、worker/cloud-executor.mjs、desktop/main/executor.ts、EmployeeOffice.tsx 及专项测试：私有工作区对象、员工文件产物走鉴权下载；请避免同时写这些文件。OSS ACL 只读查询返回 ResponseError，未改远端配置。
+- 2026-11-07T07:32:03.607Z | codex | MSG->dsh-lead | T-44 因 file_write 改为不返回公开 URL，需要同步更新 scripts/smoke-p11-tools.mjs 与 scripts/smoke-p12-files.mjs 的旧 URL 断言；请避免并行修改这两项测试。
+- 2026-11-07T07:32:03.763Z | codex | SAVE | T-44 file_write 和上传去除公开链接，新 OSS 对象请求私有 ACL；工具循环收集工作区 key，桌面/云执行器写入产物，桌面鉴权下载。
+- 2026-11-07T07:33:13.054Z | codex | SAVE | T-44 代码审查与回归：员工 file_write 收集 key 并由桌面/云执行器登记 workspace-file 产物，桌面鉴权下载；新 OSS put 请求 private ACL，公开 URL 返回 null；P11 15 项、P12 37 项、工具循环及下载 HTTP 测试和 verify GREEN。
+- 2026-11-07T07:33:13.296Z | codex | DONE | T-44 员工文本产物安全交付及私有对象写入 —— 员工文本产物安全下载链路和新对象私有 ACL 请求实现，本地审查与回归通过；OSS 实际权限和历史对象未验证，未部署生产。
+- 2026-11-07T07:33:13.394Z | codex | MSG->dsh-lead | T-44 完成：file_write 不再返回公开地址，新上传 OSS 对象请求 private ACL，员工写出文件登记为 workspace-file 并通过桌面鉴权下载；专项回归、P11/P12 和 verify GREEN。getBucketACL 只读调用返回 ResponseError，未能核验桶/历史对象；OSS 上传失败会退到本地，请生产核实 ACL 和存储持久化。未部署。
+- 2026-11-07T07:48:11.777Z | codex | MSG->dsh-lead | OSS 只读核验更新：本机直连解析至 VPN fake-IP 并超时；使用本机代理 127.0.0.1:12001 后，通过签名请求 getBucketACL 得到 OSS AccessDenied（非仅网络问题）。当前配置身份无权读取桶 ACL，历史对象与实际公开性仍未知。未修改桶、对象或密钥。请生产侧由桶所属账号核验 ACL/策略并反馈。

@@ -6,6 +6,7 @@ import { join } from "node:path";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
 import { AppModule } from "./app.module";
 import { ensureEnv, env, envInt } from "./common/env";
+import { denyWorkspaceStatic } from "./common/workspace-static-guard";
 
 async function bootstrap() {
   ensureEnv();
@@ -16,7 +17,7 @@ async function bootstrap() {
   // 管理端上传（T-14）：base64 JSON 可达 200MB
   app.use(json({ limit: "220mb" }));
   // 本地上传文件静态服务（复刻口径：OSS 未配置时本地落盘）
-  app.use("/uploads", serveStatic(join(process.cwd(), "uploads"), { maxAge: "7d", fallthrough: true }));
+  app.use("/uploads", denyWorkspaceStatic, serveStatic(join(process.cwd(), "uploads"), { maxAge: "7d", fallthrough: true }));
   // 运营后台（T-29）：零构建静态 SPA，前端直连同源 /api/admin/*
   app.use("/admin", serveStatic(join(__dirname, "..", "public", "admin"), { maxAge: "0", fallthrough: true }));
 

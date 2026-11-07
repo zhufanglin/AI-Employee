@@ -108,7 +108,7 @@ function stubFetch(payload) {
     assert.ok(written.key.startsWith('workspace/u1/'), 'key 前缀');
     assert.equal(written.name, '选品清单.md');
     assert.ok(written.bytes > 0);
-    assert.equal(written.url, 'https://api.example.com/uploads/' + written.key);
+    assert.equal(written.url, null);
     assert.ok(fs.existsSync(path.join(workspace, 'u1', written.key.split('/').pop())), '本地文件应存在');
   });
 

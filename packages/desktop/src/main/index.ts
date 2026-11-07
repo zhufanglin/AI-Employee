@@ -323,6 +323,15 @@ function registerIpc() {
     return { items }
   })
   ipcMain.handle('workspace:list', (_e, limit?: number) => api('/workspace/files?limit=' + encodeURIComponent(String(limit || 50))))
+  ipcMain.handle('workspace:download', async (_e, file: { key: string; name: string }) => {
+    if (!settings.token) throw new Error('请先登录')
+    const result = await dialog.showSaveDialog({ defaultPath: basename(file.name) })
+    if (result.canceled || !result.filePath) return { canceled: true }
+    const response = await fetch(settings.apiBase + '/workspace/download?key=' + encodeURIComponent(file.key), { headers: { authorization: 'Bearer ' + settings.token } })
+    if (!response.ok) throw new Error('下载失败（HTTP ' + response.status + '）')
+    writeFileSync(result.filePath, Buffer.from(await response.arrayBuffer()))
+    return { canceled: false }
+  })
   ipcMain.handle('workspace:remove', (_e, p: { key?: string; name?: string }) => api('/workspace/delete', { method: 'POST', body: JSON.stringify(p) }))
 
   // 媒体生产（数字人 / 音色克隆 / 音频素材）：编排在服务端，这里只做转发。

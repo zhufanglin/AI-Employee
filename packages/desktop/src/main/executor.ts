@@ -164,6 +164,7 @@ export class TaskExecutor {
             artifacts: [
               { kind: 'text', text: out.content.slice(0, 20000), mime: 'text/plain' },
               { kind: 'file', path: out.file, mime: 'text/markdown' },
+              ...(out.files || []).map((f: any) => ({ kind: 'workspace-file', path: f.key, text: f.name, mime: 'application/octet-stream' })),
               ...out.media.filter((m: any) => m.url).map((m: any) => ({ kind: m.kind, path: m.url, mime: m.kind === 'image' ? 'image/*' : 'video/*' }))
             ]
           })

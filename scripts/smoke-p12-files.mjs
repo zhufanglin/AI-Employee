@@ -49,7 +49,7 @@ await checkAsync("file_write 写出交付物并可下载", async () => {
   written = await files.handlers.file_write({ userId: USER, params: { name: "选品清单.md", content: "# 选品\n- 洗衣液\n- 纸巾" } });
   if (!written.key || !written.key.startsWith("workspace/" + USER + "/")) throw new Error("key 前缀不对：" + written.key);
   expectEq("file_write bytes", written.bytes, Buffer.byteLength("# 选品\n- 洗衣液\n- 纸巾", "utf8"));
-  expectEq("file_write url", written.url && written.url.startsWith("https://api.example.com/uploads/workspace/"), true);
+  expectEq("file_write 无公开链接", written.url, null);
 });
 
 await checkAsync("file_list 列出自有文件并带展示名", async () => {

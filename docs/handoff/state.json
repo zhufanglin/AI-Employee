@@ -1,7 +1,7 @@
 {
   "project": "中科元晟 AI员工 0.4.29 完全复刻",
   "version": 1,
-  "updatedAt": "2026-11-07T05:29:45.534Z",
+  "updatedAt": "2026-11-07T07:33:13.157Z",
   "phase": "P10（先能用三件事）派工完成，看板 29/33",
   "phaseGoal": "用户要求先能用、定价后置：T-31 桌面端出图出片 / T-32 员工多步干活 / T-33 成本护栏 已派 Codex；dsh-lead 推主线（生产可用性收口 + 复核），T-11 渠道仍 blocked(env)。",
   "owners": {
@@ -2622,6 +2622,168 @@
       },
       "finishedAt": "2026-11-07T05:05:39.256Z",
       "result": "P11-B 完成，产出 docs/handoff/P11-技能需求映射.md"
+    },
+    {
+      "id": "T-42",
+      "title": "工作区静态目录匿名访问本地阻断与回归",
+      "status": "done",
+      "owner": "codex",
+      "scope": [
+        "packages/server/src/main.ts",
+        "packages/server/src/common/workspace-static-guard.ts",
+        "scripts/test-workspace-static-guard.mjs"
+      ],
+      "accept": "匿名静态路径包括编码变体不能读取工作区；其他静态资源不受影响；本地测试和 verify 通过，OSS 风险单列",
+      "blockedBy": [],
+      "createdAt": "2026-11-07T07:20:52.798Z",
+      "history": [
+        {
+          "at": "2026-11-07T07:20:52.937Z",
+          "by": "codex",
+          "what": "claim"
+        },
+        {
+          "at": "2026-11-07T07:22:48.113Z",
+          "by": "codex",
+          "what": "save: 本地新增静态目录守卫，拒绝 workspace 路径及编码/大小写变体；新增独立 HTTP 回归，其他资源继续通过静态服务。"
+        },
+        {
+          "at": "2026-11-07T07:24:04.483Z",
+          "by": "codex",
+          "what": "save: 代码审查及本地 HTTP 回归通过：匿名直连、编码、大小写和反斜杠路径均被阻断，普通媒体保留；verify GREEN。限制：旧本地 workspace 下载链接失效，未实现授权下载或处理 OSS、生产。"
+        },
+        {
+          "at": "2026-11-07T07:24:04.693Z",
+          "by": "codex",
+          "what": "done: 本地 workspace 静态访问止漏、HTTP 回归与代码审查完成，verify GREEN；授权下载和 OSS 权限未覆盖，未部署生产。"
+        }
+      ],
+      "lease": {
+        "at": "2026-11-07T07:20:52.936Z",
+        "heartbeat": "2026-11-07T07:24:04.483Z",
+        "reason": null
+      },
+      "checkpoint": {
+        "progress": [],
+        "notes": [
+          "07:22 本地新增静态目录守卫，拒绝 workspace 路径及编码/大小写变体；新增独立 HTTP 回归，其他资源继续通过静态服务。",
+          "07:24 代码审查及本地 HTTP 回归通过：匿名直连、编码、大小写和反斜杠路径均被阻断，普通媒体保留；verify GREEN。限制：旧本地 workspace 下载链接失效，未实现授权下载或处理 OSS、生产。"
+        ],
+        "files": [],
+        "next": "标记本地止漏完成并通知负责人后续鉴权下载与生产验证。"
+      },
+      "finishedAt": "2026-11-07T07:24:04.691Z",
+      "result": "本地 workspace 静态访问止漏、HTTP 回归与代码审查完成，verify GREEN；授权下载和 OSS 权限未覆盖，未部署生产。"
+    },
+    {
+      "id": "T-43",
+      "title": "工作区文件鉴权下载及桌面接入",
+      "status": "done",
+      "owner": "codex",
+      "scope": [
+        "packages/server/src/workspace",
+        "packages/desktop/src/main/index.ts",
+        "packages/desktop/src/preload/index.ts",
+        "packages/desktop/src/renderer/src/pages/EmployeeOffice.tsx",
+        "packages/desktop/src/renderer/src/types.ts",
+        "scripts/test-workspace-download.mjs"
+      ],
+      "accept": "仅文件所属用户可下载，匿名与跨用户拒绝；桌面资料库保存文件可用；回归及 verify 通过",
+      "blockedBy": [],
+      "createdAt": "2026-11-07T07:25:29.092Z",
+      "history": [
+        {
+          "at": "2026-11-07T07:25:29.243Z",
+          "by": "codex",
+          "what": "claim"
+        },
+        {
+          "at": "2026-11-07T07:27:07.767Z",
+          "by": "codex",
+          "what": "save: 已实现带 JWT 的所属用户下载接口与桌面保存对话框，添加匿名/跨用户/本人 HTTP 回归。"
+        },
+        {
+          "at": "2026-11-07T07:28:04.397Z",
+          "by": "codex",
+          "what": "save: 完成审查：真实 Nest JWT 守卫 HTTP 测试，匿名 401、跨用户拒绝、本人下载成功且 no-store；静态阻断回归与 verify GREEN。下载 token 仅放请求头；未验证 OSS ACL、旧 OSS 链接和生产。"
+        },
+        {
+          "at": "2026-11-07T07:28:04.616Z",
+          "by": "codex",
+          "what": "done: 工作区所属用户鉴权下载、桌面保存、HTTP 越权回归和代码审查完成，verify GREEN；生产与 OSS 权限未验证。"
+        }
+      ],
+      "lease": {
+        "at": "2026-11-07T07:25:29.242Z",
+        "heartbeat": "2026-11-07T07:28:04.397Z",
+        "reason": null
+      },
+      "checkpoint": {
+        "progress": [],
+        "notes": [
+          "07:27 已实现带 JWT 的所属用户下载接口与桌面保存对话框，添加匿名/跨用户/本人 HTTP 回归。",
+          "07:28 完成审查：真实 Nest JWT 守卫 HTTP 测试，匿名 401、跨用户拒绝、本人下载成功且 no-store；静态阻断回归与 verify GREEN。下载 token 仅放请求头；未验证 OSS ACL、旧 OSS 链接和生产。"
+        ],
+        "files": [],
+        "next": "完成本地鉴权下载并交接 OSS 权限及产物旧链接待办。"
+      },
+      "finishedAt": "2026-11-07T07:28:04.614Z",
+      "result": "工作区所属用户鉴权下载、桌面保存、HTTP 越权回归和代码审查完成，verify GREEN；生产与 OSS 权限未验证。"
+    },
+    {
+      "id": "T-44",
+      "title": "员工文本产物安全交付及私有对象写入",
+      "status": "done",
+      "owner": "codex",
+      "scope": [
+        "packages/server/src/capabilities/capabilities/files.ts",
+        "packages/worker/tool-loop.mjs",
+        "packages/worker/cloud-executor.mjs",
+        "packages/desktop/src/main/executor.ts",
+        "packages/desktop/src/renderer/src/pages/EmployeeOffice.tsx",
+        "scripts/test-workspace-artifacts.mjs"
+      ],
+      "accept": "员工生成文件以用户工作区 key 交付并用鉴权下载，新 OSS 对象强制私有；回归与 verify 绿",
+      "blockedBy": [],
+      "createdAt": "2026-11-07T07:30:32.814Z",
+      "history": [
+        {
+          "at": "2026-11-07T07:30:32.977Z",
+          "by": "codex",
+          "what": "claim"
+        },
+        {
+          "at": "2026-11-07T07:32:03.757Z",
+          "by": "codex",
+          "what": "save: file_write 和上传去除公开链接，新 OSS 对象请求私有 ACL；工具循环收集工作区 key，桌面/云执行器写入产物，桌面鉴权下载。"
+        },
+        {
+          "at": "2026-11-07T07:33:13.051Z",
+          "by": "codex",
+          "what": "save: 代码审查与回归：员工 file_write 收集 key 并由桌面/云执行器登记 workspace-file 产物，桌面鉴权下载；新 OSS put 请求 private ACL，公开 URL 返回 null；P11 15 项、P12 37 项、工具循环及下载 HTTP 测试和 verify GREEN。"
+        },
+        {
+          "at": "2026-11-07T07:33:13.157Z",
+          "by": "codex",
+          "what": "done: 员工文本产物安全下载链路和新对象私有 ACL 请求实现，本地审查与回归通过；OSS 实际权限和历史对象未验证，未部署生产。"
+        }
+      ],
+      "lease": {
+        "at": "2026-11-07T07:30:32.976Z",
+        "heartbeat": "2026-11-07T07:33:13.051Z",
+        "reason": null
+      },
+      "checkpoint": {
+        "progress": [],
+        "notes": [
+          "07:32 file_write 和上传去除公开链接，新 OSS 对象请求私有 ACL；工具循环收集工作区 key，桌面/云执行器写入产物，桌面鉴权下载。",
+          "07:33 代码审查与回归：员工 file_write 收集 key 并由桌面/云执行器登记 workspace-file 产物，桌面鉴权下载；新 OSS put 请求 private ACL，公开 URL 返回 null；P11 15 项、P12 37 项、工具循环及下载 HTTP 测试和 verify GREEN。"
+        ],
+        "files": [],
+        "next": "标明云端桶和历史对象 ACL 因只读请求错误尚未核验，交接生产修复。"
+      },
+      "finishedAt": "2026-11-07T07:33:13.156Z",
+      "result": "员工文本产物安全下载链路和新对象私有 ACL 请求实现，本地审查与回归通过；OSS 实际权限和历史对象未验证，未部署生产。"
     }
   ],
   "primary": "dsh-lead",

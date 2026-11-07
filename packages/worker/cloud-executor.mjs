@@ -134,7 +134,7 @@ async function tick() {
           outputKind: "text",
           outputText: out.content.slice(0, MAX_OUTPUT),
           outputMeta: { ...(task.outputMeta || {}), executor: "cloud", node: DEVICE_ID, model: out.model, usage: out.usages, steps: out.steps, media: out.media, finishedAt: new Date().toISOString() },
-          artifacts: [{ kind: "text", text: out.content.slice(0, 20000), mime: "text/plain" }, ...out.media.filter(m => m.url).map(m => ({ kind: m.kind, path: m.url, mime: m.kind === 'image' ? 'image/*' : 'video/*' }))],
+          artifacts: [{ kind: "text", text: out.content.slice(0, 20000), mime: "text/plain" }, ...(out.files || []).map(f => ({ kind: 'workspace-file', path: f.key, text: f.name, mime: 'application/octet-stream' })), ...out.media.filter(m => m.url).map(m => ({ kind: m.kind, path: m.url, mime: m.kind === 'image' ? 'image/*' : 'video/*' }))],
         }),
       });
       log("done", task.id);

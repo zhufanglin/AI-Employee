@@ -1,139 +1,19 @@
-﻿{
-    "at":  "2026-11-07T14:23:45.3951686+08:00",
-    "ok":  true,
-    "failed":  0,
-    "steps":  [
-                  {
-                      "name":  "server tsc",
-                      "ok":  true,
-                      "exit":  0,
-                      "seconds":  7
-                  },
-                  {
-                      "name":  "desktop electron-vite build",
-                      "ok":  true,
-                      "exit":  0,
-                      "seconds":  4
-                  },
-                  {
-                      "name":  "server restart (fresh dist, kill stale :3000)",
-                      "ok":  true,
-                      "exit":  0,
-                      "seconds":  9
-                  },
-                  {
-                      "name":  "unit: 员工工具循环 JSON 容错",
-                      "ok":  true,
-                      "exit":  0,
-                      "seconds":  0
-                  },
-                  {
-                      "name":  "unit: web_extract SSRF 守卫",
-                      "ok":  true,
-                      "exit":  0,
-                      "seconds":  1
-                  },
-                  {
-                      "name":  "smoke: T-11 渠道加解密骨架",
-                      "ok":  true,
-                      "exit":  0,
-                      "seconds":  0
-                  },
-                  {
-                      "name":  "smoke: T-11 个人微信入站链路",
-                      "ok":  true,
-                      "exit":  0,
-                      "seconds":  6
-                  },
-                  {
-                      "name":  "smoke: T-11 渠道结果回推",
-                      "ok":  true,
-                      "exit":  0,
-                      "seconds":  1
-                  },
-                  {
-                      "name":  "smoke: W2",
-                      "ok":  true,
-                      "exit":  0,
-                      "seconds":  38
-                  },
-                  {
-                      "name":  "smoke: W2 计费隔离",
-                      "ok":  true,
-                      "exit":  0,
-                      "seconds":  3
-                  },
-                  {
-                      "name":  "smoke: M6.5",
-                      "ok":  true,
-                      "exit":  0,
-                      "seconds":  1
-                  },
-                  {
-                      "name":  "smoke: T-36 员工技能原文",
-                      "ok":  true,
-                      "exit":  0,
-                      "seconds":  1
-                  },
-                  {
-                      "name":  "smoke: T-12 支付与后台",
-                      "ok":  true,
-                      "exit":  0,
-                      "seconds":  1
-                  },
-                  {
-                      "name":  "smoke: T-08 套餐与订单",
-                      "ok":  true,
-                      "exit":  0,
-                      "seconds":  1
-                  },
-                  {
-                      "name":  "smoke: T-14 管理端扩展",
-                      "ok":  true,
-                      "exit":  0,
-                      "seconds":  2
-                  },
-                  {
-                      "name":  "smoke: T-29 运营后台",
-                      "ok":  true,
-                      "exit":  0,
-                      "seconds":  0
-                  },
-                  {
-                      "name":  "smoke: T-19 员工执行器",
-                      "ok":  true,
-                      "exit":  0,
-                      "seconds":  1
-                  },
-                  {
-                      "name":  "smoke: T-30 媒体编排",
-                      "ok":  true,
-                      "exit":  0,
-                      "seconds":  1
-                  },
-                  {
-                      "name":  "smoke: T-33 媒体成本护栏（模拟上游）",
-                      "ok":  true,
-                      "exit":  0,
-                      "seconds":  2
-                  },
-                  {
-                      "name":  "smoke: 媒体任务取消与退款",
-                      "ok":  true,
-                      "exit":  0,
-                      "seconds":  1
-                  },
-                  {
-                      "name":  "smoke: T-32 员工多步执行（模拟模型和媒体）",
-                      "ok":  true,
-                      "exit":  0,
-                      "seconds":  2
-                  },
-                  {
-                      "name":  "smoke: T-28 本地能力层",
-                      "ok":  true,
-                      "exit":  0,
-                      "seconds":  8
-                  }
-              ]
+{
+  "at": "2026-11-07T15:32:41.3596386+08:00",
+  "ok": true,
+  "failed": 0,
+  "steps": [
+    {
+      "name": "server tsc",
+      "ok": true,
+      "exit": 0,
+      "seconds": 3
+    },
+    {
+      "name": "desktop electron-vite build",
+      "ok": true,
+      "exit": 0,
+      "seconds": 3
+    }
+  ]
 }

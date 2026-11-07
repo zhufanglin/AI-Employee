@@ -205,13 +205,11 @@ export async function saveWorkspaceFile(userId: string, rawName: string, buffer:
   const client = ossClient();
   if (client) {
     try {
-      const result = await client.put(key, buffer, { headers: { "Content-Type": mime, "Content-Disposition": "inline" } });
-      url = result.url || null;
+      await client.put(key, buffer, { headers: { "Content-Type": mime, "Content-Disposition": "attachment", "x-oss-object-acl": "private" } });
     } catch (error) {
       console.error("[file] OSS upload failed, fallback to local:", error instanceof Error ? error.message : error);
     }
   }
-  if (!url && publicBase()) url = publicBase() + "/uploads/" + key;
   const info = await stat(path);
   return { file: { name, stored, key, ext, bytes: info.size, updatedAt: info.mtime.toISOString() }, url };
 }
@@ -244,26 +242,23 @@ export const handlers = {
     const client = ossClient();
     if (client) {
       try {
-        const result = await client.put(key, Buffer.from(content, "utf8"), { headers: { "Content-Type": mime, "Content-Disposition": "inline" } });
-        url = result.url || null;
+        await client.put(key, Buffer.from(content, "utf8"), { headers: { "Content-Type": mime, "Content-Disposition": "attachment", "x-oss-object-acl": "private" } });
       } catch (error) {
         console.error("[file] OSS upload failed, fallback to local:", error instanceof Error ? error.message : error);
       }
     }
-    if (!url && publicBase()) url = publicBase() + "/uploads/" + key;
     return { name, bytes, url, key };
   },
   file_list: async ({ userId, params }: any) => {
     const limit = Math.min(Math.max(Math.trunc(Number(params?.limit) || 20), 1), 50);
     const rows = await listWorkspaceFiles(userId);
-    const base = publicBase();
     const items = rows.slice(0, limit).map(row => ({
       name: row.name,
       key: row.key,
       ext: row.ext,
       bytes: row.bytes,
       updatedAt: row.updatedAt,
-      url: base ? base + "/uploads/" + row.key : null,
+      url: null,
     }));
     return { total: rows.length, items };
   },

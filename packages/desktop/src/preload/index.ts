@@ -46,6 +46,7 @@ const api = {
   workspace: {
     pick: () => ipcRenderer.invoke('workspace:pick'),
     list: (limit?: number) => ipcRenderer.invoke('workspace:list', limit),
+    download: (p: { key: string; name: string }) => ipcRenderer.invoke('workspace:download', p),
     remove: (p: { key?: string; name?: string }) => ipcRenderer.invoke('workspace:remove', p)
   },
   employeeExecution: {

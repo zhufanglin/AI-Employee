@@ -21,6 +21,7 @@ export type FcmApi = {
   workspace: {
     pick: () => Promise<{ items: any[] }>
     list: (limit?: number) => Promise<any>
+    download: (p: { key: string; name: string }) => Promise<{ canceled: boolean }>
     remove: (p: { key?: string; name?: string }) => Promise<any>
   }
   employeeTasks: {
