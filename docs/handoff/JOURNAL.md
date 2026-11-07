@@ -385,3 +385,6 @@ ode scripts/coord.mjs done T-40 --agent codex --note ...，并回一条 msg 给 
 - 2026-11-07T11:58:49.702Z | dsh-lead | NOTE | 
 - 2026-11-07 22:05 dsh-lead：P16 工具第二批上线生产（web_batch / doc_write xlsx+docx / media_process+media_info / file_delete）；本地 verify GREEN，生产 HTTP 验收 19 项全通过；worker 能力白名单 17 项。
 - 2026-11-07T14:05:22.475Z | dsh-lead | NOTE | 
+- 2026-11-07T14:25:49.732Z | dsh-lead | ADD | T-45 P17 工具第三批：image_understand 看图 + 员工派活/查任务 + 定时任务创建/列表/删除
+- 2026-11-07T14:26:25.336Z | dsh-lead | CLAIM | T-45 P17 工具第三批：image_understand 看图 + 员工派活/查任务 + 定时任务创建/列表/删除
+- 2026-11-07T14:26:25.637Z | dsh-lead | DONE | T-45 P17 工具第三批：image_understand 看图 + 员工派活/查任务 + 定时任务创建/列表/删除 —— 6 个能力上线生产：看图 image_understand(29 项)、员工派活/查任务/定时 cron 5 项(32 项)、生产 18 项 GREEN；worker 白名单 23 项；verify GREEN；文档 docs/handoff/P17-工具第三批.md

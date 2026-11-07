@@ -164,6 +164,10 @@ Step "smoke: T-19 员工执行器" {
     & $node "scripts\smoke-p16-doc-write.mjs"
     if ($LASTEXITCODE -ne 0) { $script:code = $LASTEXITCODE; return }
     & $node "scripts\smoke-p16-media.mjs"
+    if ($LASTEXITCODE -ne 0) { $script:code = $LASTEXITCODE; return }
+    & $node "scripts\smoke-p17-vision.mjs"
+    if ($LASTEXITCODE -ne 0) { $script:code = $LASTEXITCODE; return }
+    & $node "scripts\smoke-p17-employee-tools.mjs"
     $script:code = $LASTEXITCODE
   }
 }

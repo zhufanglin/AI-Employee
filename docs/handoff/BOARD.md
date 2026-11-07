@@ -1,6 +1,6 @@
 # 任务看板（自动生成，勿手改）
 
-> 生成时间 2026-11-07T13:47:48.830Z · 单一事实源 `docs/handoff/state.json`
+> 生成时间 2026-11-07T14:26:25.626Z · 单一事实源 `docs/handoff/state.json`
 
 **当前阶段**：P10（先能用三件事）派工完成，看板 29/33 —— 用户要求先能用、定价后置：T-31 桌面端出图出片 / T-32 员工多步干活 / T-33 成本护栏 已派 Codex；dsh-lead 推主线（生产可用性收口 + 复核），T-11 渠道仍 blocked(env)。
 
@@ -49,8 +49,8 @@
 | T-41 | P11-B 17 员工 SKILL.md 工具需求映射 | done | skill-tool-mapper | 11-07 05:05 | docs/handoff/P11-技能需求映射.md |
 | T-42 | 工作区静态目录匿名访问本地阻断与回归 | done | codex | 11-07 07:24 | packages/server/src/main.ts, packages/server/src/common/workspace-static-guard.ts, scripts/test-workspace-static-guard.mjs |
 | T-43 | 工作区文件鉴权下载及桌面接入 | done | codex | 11-07 07:28 | packages/server/src/workspace, packages/desktop/src/main/index.ts, packages/desktop/src/preload/index.ts, packages/desktop/src/renderer/src/pages/EmployeeOffice.tsx, packages/desktop/src/renderer/src/types.ts, scripts/test-workspace-download.mjs |
-| T-45 | P16 工具第二批：web_batch 批量抓取 / doc_write 生成 xlsx+docx / media_process+media_info（ffmpeg）/ file_delete | done | dsh-lead | 11-07 22:05 | packages/server/src/capabilities, scripts, packages/worker |
 | T-44 | 员工文本产物安全交付及私有对象写入 | done | codex | 11-07 07:33 | packages/server/src/capabilities/capabilities/files.ts, packages/worker/tool-loop.mjs, packages/worker/cloud-executor.mjs, packages/desktop/src/main/executor.ts, packages/desktop/src/renderer/src/pages/EmployeeOffice.tsx, scripts/test-workspace-artifacts.mjs |
+| T-45 | P17 工具第三批：image_understand 看图 + 员工派活/查任务 + 定时任务创建/列表/删除 | done | dsh-lead | 11-07 14:26 | packages/server/src/capabilities, packages/worker, scripts |
 
 **未完成任务详情**
 

@@ -1,0 +1,607 @@
+[
+  {
+    "p": "packages/server/src/capabilities/capabilities/content.ts",
+    "size": 2614,
+    "mtime": 1793889330879
+  },
+  {
+    "p": "packages/server/src/capabilities/capabilities/customer.ts",
+    "size": 1670,
+    "mtime": 1793889288201
+  },
+  {
+    "p": "packages/server/src/capabilities/capabilities/docs-write.ts",
+    "size": 16414,
+    "mtime": 1794058465241
+  },
+  {
+    "p": "packages/server/src/capabilities/capabilities/docs.ts",
+    "size": 3890,
+    "mtime": 1794030690948
+  },
+  {
+    "p": "packages/server/src/capabilities/capabilities/employee-tools.ts",
+    "size": 12084,
+    "mtime": 1794060638409
+  },
+  {
+    "p": "packages/server/src/capabilities/capabilities/files.ts",
+    "size": 15261,
+    "mtime": 1794058717108
+  },
+  {
+    "p": "packages/server/src/capabilities/capabilities/llm.ts",
+    "size": 1303,
+    "mtime": 1793889344373
+  },
+  {
+    "p": "packages/server/src/capabilities/capabilities/media-tools.ts",
+    "size": 26435,
+    "mtime": 1794058726574
+  },
+  {
+    "p": "packages/server/src/capabilities/capabilities/search.ts",
+    "size": 5117,
+    "mtime": 1794027239367
+  },
+  {
+    "p": "packages/server/src/capabilities/capabilities/vision.ts",
+    "size": 5291,
+    "mtime": 1794060840972
+  },
+  {
+    "p": "packages/server/src/capabilities/capabilities/web-batch.ts",
+    "size": 3228,
+    "mtime": 1794058356577
+  },
+  {
+    "p": "packages/server/src/capabilities/capabilities/web-extract-guard.test.cjs",
+    "size": 2098,
+    "mtime": 1793911800835
+  },
+  {
+    "p": "packages/server/src/capabilities/capabilities/web-extract.ts",
+    "size": 6675,
+    "mtime": 1793911800833
+  },
+  {
+    "p": "packages/server/src/capabilities/capability.controller.ts",
+    "size": 1157,
+    "mtime": 1793889346635
+  },
+  {
+    "p": "packages/server/src/capabilities/capability.module.ts",
+    "size": 402,
+    "mtime": 1793889349367
+  },
+  {
+    "p": "packages/server/src/capabilities/capability.service.ts",
+    "size": 4238,
+    "mtime": 1794060768430
+  },
+  {
+    "p": "packages/server/src/capabilities/capability.types.ts",
+    "size": 578,
+    "mtime": 1793889268637
+  },
+  {
+    "p": "packages/worker/cloud-executor.mjs",
+    "size": 8314,
+    "mtime": 1794036710148
+  },
+  {
+    "p": "packages/worker/tool-loop-parse.test.mjs",
+    "size": 2074,
+    "mtime": 1793911596054
+  },
+  {
+    "p": "packages/worker/tool-loop.mjs",
+    "size": 10511,
+    "mtime": 1794060791077
+  },
+  {
+    "p": "scripts/apply-skills-md.mjs",
+    "size": 1123,
+    "mtime": 1793911015836
+  },
+  {
+    "p": "scripts/audit/01-collect.mjs",
+    "size": 6106,
+    "mtime": 1793801148948
+  },
+  {
+    "p": "scripts/audit/02-verify-ipc.mjs",
+    "size": 2099,
+    "mtime": 1793800703152
+  },
+  {
+    "p": "scripts/audit/03-diff.mjs",
+    "size": 4841,
+    "mtime": 1793801222962
+  },
+  {
+    "p": "scripts/audit/04-copy-diff.mjs",
+    "size": 2149,
+    "mtime": 1793785418518
+  },
+  {
+    "p": "scripts/audit/05-report.mjs",
+    "size": 9091,
+    "mtime": 1793867655024
+  },
+  {
+    "p": "scripts/audit/lib.mjs",
+    "size": 6397,
+    "mtime": 1793825400794
+  },
+  {
+    "p": "scripts/audit/_probe.mjs",
+    "size": 318,
+    "mtime": 1793785461079
+  },
+  {
+    "p": "scripts/check-desktop-p13.mjs",
+    "size": 4058,
+    "mtime": 1794033998384
+  },
+  {
+    "p": "scripts/check-skills-content.mjs",
+    "size": 3572,
+    "mtime": 1793910159058
+  },
+  {
+    "p": "scripts/coord.mjs",
+    "size": 21473,
+    "mtime": 1793800348581
+  },
+  {
+    "p": "scripts/dev-down.ps1",
+    "size": 743,
+    "mtime": 1793786371116
+  },
+  {
+    "p": "scripts/dev-up.ps1",
+    "size": 2772,
+    "mtime": 1793786371116
+  },
+  {
+    "p": "scripts/diagnose-oss-cleanup.mjs",
+    "size": 1032,
+    "mtime": 1793906548284
+  },
+  {
+    "p": "scripts/diagnose-oss-curl.mjs",
+    "size": 2071,
+    "mtime": 1793906830465
+  },
+  {
+    "p": "scripts/diagnose-oss-list.mjs",
+    "size": 900,
+    "mtime": 1793906351909
+  },
+  {
+    "p": "scripts/diagnose-oss-readonly.mjs",
+    "size": 2494,
+    "mtime": 1793908784307
+  },
+  {
+    "p": "scripts/diagnose-oss-write.mjs",
+    "size": 2898,
+    "mtime": 1793906718379
+  },
+  {
+    "p": "scripts/e2e-acceptance-prod.mjs",
+    "size": 6787,
+    "mtime": 1793899441218
+  },
+  {
+    "p": "scripts/e2e-compose-prod.mjs",
+    "size": 3401,
+    "mtime": 1793888961591
+  },
+  {
+    "p": "scripts/e2e-compose.mjs",
+    "size": 3837,
+    "mtime": 1793887998482
+  },
+  {
+    "p": "scripts/e2e-extapps.mjs",
+    "size": 3949,
+    "mtime": 1793891539990
+  },
+  {
+    "p": "scripts/e2e-gateway.ps1",
+    "size": 3590,
+    "mtime": 1793332028039
+  },
+  {
+    "p": "scripts/e2e-imagevideo.mjs",
+    "size": 3228,
+    "mtime": 1793897358964
+  },
+  {
+    "p": "scripts/e2e-media-cancel.mjs",
+    "size": 3900,
+    "mtime": 1794023631980
+  },
+  {
+    "p": "scripts/e2e-mixcut.mjs",
+    "size": 2634,
+    "mtime": 1793891639164
+  },
+  {
+    "p": "scripts/e2e-video.mjs",
+    "size": 2479,
+    "mtime": 1793897761818
+  },
+  {
+    "p": "scripts/gen-skills-content.mjs",
+    "size": 3196,
+    "mtime": 1793910159033
+  },
+  {
+    "p": "scripts/import-secrets.mjs",
+    "size": 4602,
+    "mtime": 1793872059851
+  },
+  {
+    "p": "scripts/live-t32-status.mjs",
+    "size": 1426,
+    "mtime": 1793905510790
+  },
+  {
+    "p": "scripts/live-t32.mjs",
+    "size": 4064,
+    "mtime": 1793905368108
+  },
+  {
+    "p": "scripts/probe-vision.mjs",
+    "size": 2470,
+    "mtime": 1794060523645
+  },
+  {
+    "p": "scripts/prod-e2e-p16.mjs",
+    "size": 3353,
+    "mtime": 1794060170072
+  },
+  {
+    "p": "scripts/prod-verify-p11.mjs",
+    "size": 4032,
+    "mtime": 1794027931308
+  },
+  {
+    "p": "scripts/prod-verify-p12.mjs",
+    "size": 5071,
+    "mtime": 1794031271745
+  },
+  {
+    "p": "scripts/prod-verify-p13-public-url.mjs",
+    "size": 3438,
+    "mtime": 1794038520892
+  },
+  {
+    "p": "scripts/prod-verify-p16.mjs",
+    "size": 6903,
+    "mtime": 1794059898317
+  },
+  {
+    "p": "scripts/prod-verify-p17.mjs",
+    "size": 6807,
+    "mtime": 1794061349574
+  },
+  {
+    "p": "scripts/prod-verify-real-demand.mjs",
+    "size": 2890,
+    "mtime": 1794041314461
+  },
+  {
+    "p": "scripts/prod-verify-search-task.mjs",
+    "size": 2838,
+    "mtime": 1794038990284
+  },
+  {
+    "p": "scripts/prod-verify-t36.mjs",
+    "size": 2474,
+    "mtime": 1793911096424
+  },
+  {
+    "p": "scripts/prod-verify-tavily.mjs",
+    "size": 2950,
+    "mtime": 1794038922627
+  },
+  {
+    "p": "scripts/publish-update.mjs",
+    "size": 3183,
+    "mtime": 1793947682972
+  },
+  {
+    "p": "scripts/reconcile-local-t32.mjs",
+    "size": 2689,
+    "mtime": 1793907443756
+  },
+  {
+    "p": "scripts/rehearse-upgrade.mjs",
+    "size": 6703,
+    "mtime": 1794026095051
+  },
+  {
+    "p": "scripts/release-desktop.ps1",
+    "size": 2414,
+    "mtime": 1793889759480
+  },
+  {
+    "p": "scripts/shot-admin.mjs",
+    "size": 3935,
+    "mtime": 1793869909150
+  },
+  {
+    "p": "scripts/smoke-admin-ui.mjs",
+    "size": 3120,
+    "mtime": 1793869837780
+  },
+  {
+    "p": "scripts/smoke-capabilities.mjs",
+    "size": 5431,
+    "mtime": 1793911800837
+  },
+  {
+    "p": "scripts/smoke-channels.mjs",
+    "size": 8216,
+    "mtime": 1793947984812
+  },
+  {
+    "p": "scripts/smoke-m65.mjs",
+    "size": 3629,
+    "mtime": 1793785873102
+  },
+  {
+    "p": "scripts/smoke-media-cancel.mjs",
+    "size": 6772,
+    "mtime": 1794023616400
+  },
+  {
+    "p": "scripts/smoke-p11-tools.mjs",
+    "size": 8322,
+    "mtime": 1794036743698
+  },
+  {
+    "p": "scripts/smoke-p12-files.mjs",
+    "size": 7738,
+    "mtime": 1794036743700
+  },
+  {
+    "p": "scripts/smoke-p16-doc-write.mjs",
+    "size": 14855,
+    "mtime": 1794058425803
+  },
+  {
+    "p": "scripts/smoke-p16-media.mjs",
+    "size": 11163,
+    "mtime": 1794058545698
+  },
+  {
+    "p": "scripts/smoke-p16-web-tools.mjs",
+    "size": 4562,
+    "mtime": 1794058492260
+  },
+  {
+    "p": "scripts/smoke-p17-employee-tools.mjs",
+    "size": 19528,
+    "mtime": 1794060695210
+  },
+  {
+    "p": "scripts/smoke-p17-vision.mjs",
+    "size": 6424,
+    "mtime": 1794060864901
+  },
+  {
+    "p": "scripts/smoke-t08.mjs",
+    "size": 10378,
+    "mtime": 1793860007987
+  },
+  {
+    "p": "scripts/smoke-t11-channel-push.mjs",
+    "size": 8748,
+    "mtime": 1794052336019
+  },
+  {
+    "p": "scripts/smoke-t11-personal-inbound.mjs",
+    "size": 7234,
+    "mtime": 1793986398906
+  },
+  {
+    "p": "scripts/smoke-t11-personal-wechat.mjs",
+    "size": 4624,
+    "mtime": 1793986141491
+  },
+  {
+    "p": "scripts/smoke-t11-result-page.mjs",
+    "size": 6812,
+    "mtime": 1794052391872
+  },
+  {
+    "p": "scripts/smoke-t12.mjs",
+    "size": 9489,
+    "mtime": 1793860470951
+  },
+  {
+    "p": "scripts/smoke-t14.mjs",
+    "size": 13822,
+    "mtime": 1793867578153
+  },
+  {
+    "p": "scripts/smoke-t19.mjs",
+    "size": 6576,
+    "mtime": 1793903782053
+  },
+  {
+    "p": "scripts/smoke-t30.mjs",
+    "size": 10892,
+    "mtime": 1793902876505
+  },
+  {
+    "p": "scripts/smoke-t32-loop.mjs",
+    "size": 2079,
+    "mtime": 1793904241659
+  },
+  {
+    "p": "scripts/smoke-t32-worker.mjs",
+    "size": 4397,
+    "mtime": 1793911545200
+  },
+  {
+    "p": "scripts/smoke-t32.mjs",
+    "size": 3526,
+    "mtime": 1793903954386
+  },
+  {
+    "p": "scripts/smoke-t33.mjs",
+    "size": 10708,
+    "mtime": 1793905500516
+  },
+  {
+    "p": "scripts/smoke-t36.mjs",
+    "size": 5307,
+    "mtime": 1793911545197
+  },
+  {
+    "p": "scripts/smoke-w2-billing.mjs",
+    "size": 3336,
+    "mtime": 1793860007990
+  },
+  {
+    "p": "scripts/smoke-w2.mjs",
+    "size": 4957,
+    "mtime": 1793860007988
+  },
+  {
+    "p": "scripts/smoke-web-safety.mjs",
+    "size": 551,
+    "mtime": 1793904790459
+  },
+  {
+    "p": "scripts/test-workspace-artifacts.mjs",
+    "size": 1028,
+    "mtime": 1794036743702
+  },
+  {
+    "p": "scripts/test-workspace-download.mjs",
+    "size": 2256,
+    "mtime": 1794036406787
+  },
+  {
+    "p": "scripts/test-workspace-static-guard.mjs",
+    "size": 1851,
+    "mtime": 1794036152777
+  },
+  {
+    "p": "scripts/verify.ps1",
+    "size": 6957,
+    "mtime": 1794060892473
+  },
+  {
+    "p": "scripts/_accept_t32_local.mjs",
+    "size": 3554,
+    "mtime": 1793907552675
+  },
+  {
+    "p": "scripts/_accept_t32_prod.mjs",
+    "size": 3387,
+    "mtime": 1793907266284
+  },
+  {
+    "p": "scripts/_assign_t36.mjs",
+    "size": 628,
+    "mtime": 1793910076123
+  },
+  {
+    "p": "scripts/_backfill_cv.mjs",
+    "size": 563,
+    "mtime": 1793892480448
+  },
+  {
+    "p": "scripts/_cu.ps1",
+    "size": 2034,
+    "mtime": 1793870852385
+  },
+  {
+    "p": "scripts/_dns_probe.cjs",
+    "size": 294,
+    "mtime": 1793907818863
+  },
+  {
+    "p": "scripts/_env.mjs",
+    "size": 618,
+    "mtime": 1793860007982
+  },
+  {
+    "p": "scripts/_gen-skills-json.mjs",
+    "size": 507,
+    "mtime": 1793911015867
+  },
+  {
+    "p": "scripts/_guard_probe.cjs",
+    "size": 987,
+    "mtime": 1793907930907
+  },
+  {
+    "p": "scripts/_lipsync_e2e.mjs",
+    "size": 2228,
+    "mtime": 1793880970860
+  },
+  {
+    "p": "scripts/_poll-mixcut.mjs",
+    "size": 1507,
+    "mtime": 1793892366607
+  },
+  {
+    "p": "scripts/_probe_cv.mjs",
+    "size": 618,
+    "mtime": 1793892355880
+  },
+  {
+    "p": "scripts/_probe_extract.mjs",
+    "size": 829,
+    "mtime": 1793907747188
+  },
+  {
+    "p": "scripts/_rh-query.mjs",
+    "size": 612,
+    "mtime": 1793892073967
+  },
+  {
+    "p": "scripts/_rh.mjs",
+    "size": 639,
+    "mtime": 1793873992512
+  },
+  {
+    "p": "scripts/_rhq.mjs",
+    "size": 428,
+    "mtime": 1793897633880
+  },
+  {
+    "p": "scripts/_rh_e2e.mjs",
+    "size": 2563,
+    "mtime": 1793876506938
+  },
+  {
+    "p": "scripts/_rule_probe.cjs",
+    "size": 973,
+    "mtime": 1793907955175
+  },
+  {
+    "p": "scripts/_v6rule.cjs",
+    "size": 458,
+    "mtime": 1793907976167
+  },
+  {
+    "p": "scripts/_verify_employee_crawl.mjs",
+    "size": 1990,
+    "mtime": 1793908475841
+  },
+  {
+    "p": "scripts/_xlsx.mjs",
+    "size": 1072,
+    "mtime": 1793873947614
+  }
+]
