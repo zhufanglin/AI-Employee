@@ -33,6 +33,9 @@ const ALIAS_MAP: Record<string, { provider: ResolvedUpstream["provider"]; upstre
   "kimi-k2.6": { provider: "ark", upstreamModel: "doubao-seed-2-1-pro-260628" },
 };
 
+/** 上游网关类 5xx：重试通常能过；4xx 是参数/额度问题，重试没意义。 */
+const GATEWAY_STATUS = new Set([500, 502, 503, 504, 529]);
+
 const PROVIDER_DEFAULTS: Record<ResolvedUpstream["provider"], { baseUrlEnv: string; baseUrl: string; keyEnv: string }> = {
   ark: { baseUrlEnv: "ARK_BASE_URL", baseUrl: "https://ark.cn-beijing.volces.com/api/v3", keyEnv: "ARK_API_KEY" },
   deepseek: { baseUrlEnv: "DEEPSEEK_BASE_URL", baseUrl: "https://api.deepseek.com/v1", keyEnv: "DEEPSEEK_API_KEY" },
@@ -95,16 +98,25 @@ export class ProvidersService {
     };
   }
 
-  // 网络层瞬时失败（DNS/连接重置）在跨境出口很常见：非流式请求重试一次，避免把 500 直接甩给用户
-  private async fetchWithRetry(url: string, init: RequestInit, attempts = 2): Promise<Response> {
+  // 网络层瞬时失败（DNS/连接重置/网关 5xx）在跨境出口很常见：
+  // 之前只重试 1 次（合计约 1 秒窗口）不够——实测一次 1 秒级的抖动就能把整个员工任务打成 failed，
+  // 用户看到的还是一条「Bad Gateway Exception」。现在网络错误重试 3 次（0.4s/1.2s/2.4s 退避），
+  // 网关类 5xx 也重试，把这类抖动吃掉。
+  private async fetchWithRetry(url: string, init: RequestInit, attempts = 3): Promise<Response> {
     let lastErr: any;
     for (let i = 0; i < attempts; i++) {
       try {
-        return await fetch(url, init);
+        const res = await fetch(url, init);
+        if (GATEWAY_STATUS.has(res.status) && i < attempts - 1) {
+          this.logger.warn(`upstream ${res.status} (attempt ${i + 1}/${attempts}), retrying`);
+          await new Promise((r) => setTimeout(r, 400 * 3 ** i));
+          continue;
+        }
+        return res;
       } catch (e: any) {
         lastErr = e;
         this.logger.warn(`upstream fetch failed (attempt ${i + 1}/${attempts}): ${e?.message ?? e}`);
-        if (i < attempts - 1) await new Promise((r) => setTimeout(r, 400 * (i + 1)));
+        if (i < attempts - 1) await new Promise((r) => setTimeout(r, 400 * 3 ** i));
       }
     }
     throw new BadGatewayException({

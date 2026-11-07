@@ -36,6 +36,9 @@ const WECHAT_MP_PUSH_MAX_CHARS = 1800;
 /** 个人微信（桌面客户端）单条文本保守上限 */
 const PERSONAL_PUSH_MAX_CHARS = 1500;
 
+/** 这些失败属于上游网络/网关抖动，重发通常就好，文案改成引导重试。 */
+const TRANSIENT_FAILURE = /Bad Gateway|Gateway Timeout|Service Unavailable|UPSTREAM_UNREACHABLE|上游网络不可达|fetch failed|ECONNRESET|ETIMEDOUT|socket hang up|timeout|超时|502|503|504/i;
+
 function truncate(text: string, maxChars: number): string {
   const raw = String(text ?? "");
   if (raw.length <= maxChars) return raw;
@@ -187,8 +190,15 @@ export class ChannelDispatcherService {
     }
     if (task.status === "failed") {
       this.stopWatch(taskId);
-      const reason = typeof task.error === "string" && task.error.trim() ? task.error.trim() : "未知原因";
-      await this.push(msg, "任务处理失败：" + reason);
+      const reason = typeof task.error === "string" && task.error.trim() ? task.error.trim() : "";
+      // 渠道用户看不到后台，原始异常（如「Bad Gateway Exception」）对他们没有意义；
+      // 网络抖动这类可重试的失败改成「再发一遍」的引导，其余仍然把原因告诉他们。
+      const transient = TRANSIENT_FAILURE.test(reason);
+      if (transient) this.logger.warn(`渠道任务失败（可重试） task=${taskId} reason=${reason.slice(0, 300)}`);
+      const text = transient
+        ? "这次没跑成功（服务端临时波动，通常是模型接口网络抖动）。把需求原样再发一遍就行，我会重新执行。"
+        : "任务处理失败：" + (reason || "未知原因");
+      await this.push(msg, text);
       return;
     }
     if (task.status === "needs_input" || task.status === "awaiting_approval") {

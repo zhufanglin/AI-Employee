@@ -147,10 +147,24 @@ await runCase(
   null,
 );
 await runCase(
-  "failed",
+  "failed 网络抖动（引导重试）",
+  { id: "task-1", status: "failed", outputText: "", error: "Bad Gateway Exception" },
+  { text: "" },
+  "这次没跑成功（服务端临时波动，通常是模型接口网络抖动）。把需求原样再发一遍就行，我会重新执行。",
+  null,
+);
+await runCase(
+  "failed 超时也按可重试处理",
   { id: "task-1", status: "failed", outputText: "", error: "模型超时" },
   { text: "" },
-  "任务处理失败：模型超时",
+  "这次没跑成功（服务端临时波动，通常是模型接口网络抖动）。把需求原样再发一遍就行，我会重新执行。",
+  null,
+);
+await runCase(
+  "failed 非网络原因仍报原因",
+  { id: "task-1", status: "failed", outputText: "", error: "余额不足，请充值" },
+  { text: "" },
+  "任务处理失败：余额不足，请充值",
   null,
 );
 await runCase(
