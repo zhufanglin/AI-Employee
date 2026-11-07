@@ -25,6 +25,8 @@ const ALIAS_MAP: Record<string, { provider: ResolvedUpstream["provider"]; upstre
   "doubao-seed-2.0-code": { provider: "ark", upstreamModel: "doubao-seed-2-0-code-preview-260215" },
   "doubao-seed-2.0-pro": { provider: "ark", upstreamModel: "doubao-seed-2-1-pro-260628" },
   "doubao-seed-2.0-lite": { provider: "ark", upstreamModel: "doubao-seed-2-0-lite-260428" },
+  // 非推理的小模型：记忆语义检索（扩展词 / 重排）用它，1–2s 内出结果
+  "doubao-seed-2.0-mini": { provider: "ark", upstreamModel: "doubao-seed-2-0-mini-260428" },
   "glm-5.1": { provider: "ark", upstreamModel: "glm-4-5-air-20250728" },
   "deepseek-v3.2": { provider: "ark", upstreamModel: "doubao-seed-2-1-pro-260628" },
   "deepseek-v4-flash": { provider: "ark", upstreamModel: "doubao-seed-2-1-turbo-260628" },

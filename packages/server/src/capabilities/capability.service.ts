@@ -42,7 +42,7 @@ export class CapabilityService {
       ...mediaHandlers,
       ...buildVisionHandlers(providers),
       ...buildEmployeeHandlers(prisma),
-      ...buildMemoryHandlers(prisma),
+      ...buildMemoryHandlers(prisma, providers),
     } as Record<string, CapabilityHandler>;
   }
 

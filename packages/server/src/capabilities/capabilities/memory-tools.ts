@@ -1,20 +1,26 @@
 import { BadRequestException } from "@nestjs/common";
 import type { CapabilityContext, CapabilityDescriptor, CapabilityHandler } from "../capability.types";
+import { SEMANTIC_LIMITS, combineScores, expandQuery, rerank, semanticEnabled } from "./memory-semantic";
 
 /**
  * 长期记忆能力（P18）。
  *
  * 设计取舍：
  * - 表 AgentMemory 按 userId 隔离，员工之间共享同一份记忆（同一个老板的助理们要互相知道事情）。
- * - 检索是纯关键词（Prisma contains → MySQL LIKE），在候选集上做 JS 打分（命中次数 + 标题权重 + 新鲜度），
- *   不引入向量库/embedding：一是没有 embedding 凭证，二是单用户记忆量（几百条）关键词足够。
- * - 打分先取最近 200 条候选，避免历史长大后全表扫描。
+ * - 召回：Prisma contains（MySQL LIKE）取候选，先取最近 200 条，避免历史长大后全表扫描。
+ * - 排序：关键词分（命中次数 + 标题权重 + 标签权重 + 新鲜度）与语义分（小模型重排 0–100）加权合并，
+ *   语义部分见 memory-semantic.ts（P19：没有 embedding 凭证，用「查询扩展 + 模型重排」实现语义检索）。
+ * - 语义三步（扩展 → 召回补齐 → 重排）任何一步失败都自动退回纯关键词排序，检索永远可用；
+ *   传 mode=keyword 可强制关掉语义。候选补齐见 memory_search 里的注释：光靠扩展词做 LIKE，
+ *   遇到「查结汇、记忆里写回款走 Payoneer」这种纯语义查询会一条都召不回来。
  */
 
 const MAX_CONTENT = 4000;
 const MAX_TITLE = 191;
 const MAX_TAGS = 512;
 const CANDIDATE_ROWS = 200;
+/** 关键词召回不够时，用最近的记忆把重排候选位补满 */
+const SUPPLEMENT_ROWS = 60;
 const KINDS = new Set(["note", "fact", "preference", "lesson"]);
 
 function str(value: any, name: string, max?: number): string {
@@ -103,12 +109,13 @@ export const descriptors: CapabilityDescriptor[] = [
   },
   {
     name: "memory_search",
-    title: "回忆（搜索长期记忆）",
+    title: "回忆（语义检索长期记忆）",
     category: "memory",
-    description: "按关键词检索记忆库，返回最相关的若干条记忆",
+    description: "检索记忆库，按语义相关性返回最相关的若干条记忆（字面不同、意思相近也能召回）",
     params: {
-      query: "必填，要回忆的关键词或短句",
+      query: "必填，要回忆的问题或关键词，例如「这个客户的价格怎么收」",
       limit: "可选，返回条数，默认 5，最多 20",
+      mode: "可选，auto（默认，语义+关键词）| keyword（只用关键词，更快更省）",
     },
   },
   {
@@ -127,7 +134,7 @@ export const descriptors: CapabilityDescriptor[] = [
   },
 ];
 
-export function buildMemoryHandlers(prisma: any): Record<string, CapabilityHandler> {
+export function buildMemoryHandlers(prisma: any, providers?: any): Record<string, CapabilityHandler> {
   return {
     memory_save: async (ctx: CapabilityContext) => {
       const content = str(ctx.params.content, "content", MAX_CONTENT);
@@ -146,26 +153,77 @@ export function buildMemoryHandlers(prisma: any): Record<string, CapabilityHandl
     memory_search: async (ctx: CapabilityContext) => {
       const query = str(ctx.params.query, "query", 200);
       const limit = Math.min(Math.max(Math.trunc(Number(ctx.params.limit) || 5), 1), 20);
-      const terms = splitTerms(query);
-      if (!terms.length) throw new BadRequestException("query 至少要有一个关键词");
+      const mode = optionalStr(ctx.params.mode, "mode", 16) || "auto";
+      const baseTerms = splitTerms(query);
+      const useSemantic = !!providers && semanticEnabled() && mode !== "keyword";
+      if (!baseTerms.length) throw new BadRequestException("query 至少要有一个关键词");
+
+      // 语义第一步：查询扩展。「这个客户价格怎么收」扩成 价格/报价/收费… 才能召回「报价只接受季度付」
+      const expanded = useSemantic ? await expandQuery(providers, query) : [];
+      const terms = Array.from(new Set([...baseTerms, ...expanded])).slice(0, 16);
       const rows = await prisma.agentMemory.findMany({
         where: { userId: ctx.userId, OR: terms.flatMap((term) => [{ content: { contains: term } }, { title: { contains: term } }, { tags: { contains: term } }]) },
         orderBy: { createdAt: "desc" },
         take: CANDIDATE_ROWS,
       });
       const now = Date.now();
-      const ranked = rows
-        .map((row: any) => ({ row, score: scoreRow(row, terms, now) }))
+      const candidates: any[] = rows
+        .map((row: any) => ({ row, keyword: scoreRow(row, terms, now) }))
+        .filter((entry: any) => entry.keyword > 0)
+        .sort((a: any, b: any) => b.keyword - a.keyword)
+        .slice(0, SEMANTIC_LIMITS.MAX_RERANK_ITEMS);
+
+      // 语义第二步：补齐候选。扩展词仍然只是「词」，靠 LIKE 召回不到纯语义的表述
+      // （实测：查「他那边结汇走什么渠道」，记忆里写的是「回款走 Payoneer」，关键词召回 0 条，
+      //  重排根本没机会判断）。所以候选不够时用最近的记忆补满，交给模型挑。
+      if (useSemantic && candidates.length < SEMANTIC_LIMITS.MAX_RERANK_ITEMS) {
+        const picked = new Set(candidates.map((entry: any) => entry.row.id));
+        const recent = await prisma.agentMemory.findMany({
+          where: { userId: ctx.userId },
+          orderBy: { createdAt: "desc" },
+          take: SUPPLEMENT_ROWS,
+        });
+        for (const row of recent) {
+          if (picked.has(row.id)) continue;
+          candidates.push({ row, keyword: 0 });
+          picked.add(row.id);
+          if (candidates.length >= SEMANTIC_LIMITS.MAX_RERANK_ITEMS) break;
+        }
+      }
+
+      // 语义第三步：模型重排（0–100 相关度），候选补齐进来的条目关键词分为 0，只能靠语义分进榜
+      const semanticScores: Map<string, number> | null = useSemantic && candidates.length
+        ? await rerank(providers, query, candidates.map((entry: any) => ({ id: entry.row.id, title: entry.row.title, text: entry.row.content })))
+        : null;
+      const maxKeyword = candidates.reduce((max: number, entry: any) => Math.max(max, entry.keyword), 0);
+      const ranked = candidates
+        .map((entry: any) => {
+          const semanticScore = semanticScores ? semanticScores.get(entry.row.id) : undefined;
+          return { row: entry.row, keywordScore: entry.keyword, semanticScore, score: combineScores(entry.keyword, maxKeyword, semanticScore) };
+        })
         .filter((entry: any) => entry.score > 0)
         .sort((a: any, b: any) => b.score - a.score)
         .slice(0, limit);
+
       if (ranked.length) {
         await prisma.agentMemory.updateMany({
           where: { id: { in: ranked.map((entry: any) => entry.row.id) }, userId: ctx.userId },
           data: { hitCount: { increment: 1 } },
         });
       }
-      return { query, terms, total: ranked.length, items: ranked.map((entry: any) => ({ ...shape(entry.row), score: Math.round(entry.score * 100) / 100 })) };
+      return {
+        query,
+        terms,
+        expandedTerms: expanded,
+        semantic: !!semanticScores,
+        total: ranked.length,
+        items: ranked.map((entry: any) => ({
+          ...shape(entry.row),
+          score: Math.round(entry.score * 100) / 100,
+          keywordScore: Math.round(entry.keywordScore * 100) / 100,
+          semanticScore: entry.semanticScore === undefined ? null : entry.semanticScore,
+        })),
+      };
     },
 
     memory_list: async (ctx: CapabilityContext) => {
