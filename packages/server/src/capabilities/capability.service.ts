@@ -8,8 +8,11 @@ import { contentDescriptors, buildContentHandlers } from "./capabilities/content
 import { customerDescriptors, buildCustomerHandlers } from "./capabilities/customer";
 import { llmDescriptors, buildLlmHandlers } from "./capabilities/llm";
 import { descriptor as searchDescriptor, handler as searchHandler } from "./capabilities/search";
+import { descriptor as webBatchDescriptor, handler as webBatchHandler } from "./capabilities/web-batch";
 import { descriptors as fileDescriptors, handlers as fileHandlers } from "./capabilities/files";
 import { descriptors as docDescriptors, handlers as docHandlers } from "./capabilities/docs";
+import { descriptors as docWriteDescriptors, handlers as docWriteHandlers } from "./capabilities/docs-write";
+import { descriptors as mediaDescriptors, handlers as mediaHandlers } from "./capabilities/media-tools";
 
 /**
  * 能力层：原版 agent-tool-box 的 36 个 .pyc 原子能力的明文本地重写。
@@ -18,7 +21,7 @@ import { descriptors as docDescriptors, handlers as docHandlers } from "./capabi
 @Injectable()
 export class CapabilityService {
   private readonly logger = new Logger(CapabilityService.name);
-  private readonly descriptors: CapabilityDescriptor[] = [webExtractDescriptor, ...contentDescriptors, ...customerDescriptors, ...llmDescriptors, searchDescriptor, ...fileDescriptors, ...docDescriptors];
+  private readonly descriptors: CapabilityDescriptor[] = [webExtractDescriptor, webBatchDescriptor, ...contentDescriptors, ...customerDescriptors, ...llmDescriptors, searchDescriptor, ...fileDescriptors, ...docDescriptors, ...docWriteDescriptors, ...mediaDescriptors];
   private readonly handlers: Record<string, CapabilityHandler>;
 
   constructor(private readonly prisma: PrismaService, private readonly toolapi: ToolapiService) {
@@ -28,8 +31,11 @@ export class CapabilityService {
       ...buildCustomerHandlers(toolapi),
       ...buildLlmHandlers(toolapi),
       web_search: searchHandler,
+      web_batch: webBatchHandler,
       ...fileHandlers,
       ...docHandlers,
+      ...docWriteHandlers,
+      ...mediaHandlers,
     } as Record<string, CapabilityHandler>;
   }
 

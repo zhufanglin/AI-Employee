@@ -1,5 +1,5 @@
 ﻿{
-    "at":  "2026-11-07T19:57:35.9232899+08:00",
+    "at":  "2026-11-07T21:51:48.2474338+08:00",
     "ok":  true,
     "failed":  0,
     "steps":  [
@@ -7,25 +7,25 @@
                       "name":  "server tsc",
                       "ok":  true,
                       "exit":  0,
-                      "seconds":  7
+                      "seconds":  9
                   },
                   {
                       "name":  "desktop electron-vite build",
                       "ok":  true,
                       "exit":  0,
-                      "seconds":  15
+                      "seconds":  9
                   },
                   {
                       "name":  "server restart (fresh dist, kill stale :3000)",
                       "ok":  true,
                       "exit":  0,
-                      "seconds":  17
+                      "seconds":  15
                   },
                   {
                       "name":  "unit: 员工工具循环 JSON 容错",
                       "ok":  true,
                       "exit":  0,
-                      "seconds":  1
+                      "seconds":  0
                   },
                   {
                       "name":  "unit: web_extract SSRF 守卫",
@@ -61,7 +61,7 @@
                       "name":  "smoke: W2",
                       "ok":  true,
                       "exit":  0,
-                      "seconds":  31
+                      "seconds":  23
                   },
                   {
                       "name":  "smoke: W2 计费隔离",
@@ -115,7 +115,7 @@
                       "name":  "smoke: T-30 媒体编排",
                       "ok":  true,
                       "exit":  0,
-                      "seconds":  2
+                      "seconds":  1
                   },
                   {
                       "name":  "smoke: T-33 媒体成本护栏（模拟上游）",
@@ -127,19 +127,19 @@
                       "name":  "smoke: 媒体任务取消与退款",
                       "ok":  true,
                       "exit":  0,
-                      "seconds":  1
+                      "seconds":  2
                   },
                   {
                       "name":  "smoke: T-32 员工多步执行（模拟模型和媒体）",
                       "ok":  true,
                       "exit":  0,
-                      "seconds":  2
+                      "seconds":  3
                   },
                   {
                       "name":  "smoke: T-28 本地能力层",
                       "ok":  true,
                       "exit":  0,
-                      "seconds":  7
+                      "seconds":  18
                   }
               ]
 }

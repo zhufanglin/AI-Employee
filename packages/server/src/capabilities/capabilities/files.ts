@@ -29,6 +29,13 @@ export const descriptors: CapabilityDescriptor[] = [
     description: "按 key 或文件名读取工作区里的文本文件（md/txt/csv/json/html/xml/log）；表格、PDF、Word 请用 doc_read",
     params: { key: "可选，file_write 或 file_list 返回的 key", name: "可选，file_list 返回的文件名；key 与 name 至少填一个", maxChars: "可选，最大字符数，默认 8000，上限 40000" },
   },
+  {
+    name: "file_delete",
+    title: "删除工作区文件",
+    category: "file",
+    description: "删除当前用户工作区里的一个文件（含用户上传的资料或员工写出的交付物）；删除后不可恢复，删除前建议先 file_list 确认",
+    params: { key: "可选，file_write 或 file_list 返回的 key", name: "可选，file_list 返回的文件名；key 与 name 至少填一个" },
+  },
 ];
 
 /** file_write 与 file_read 支持的纯文本扩展名。 */
@@ -36,7 +43,7 @@ const TEXT_EXTS = [".md", ".txt", ".csv", ".json", ".html", ".xml", ".log"];
 /** doc_read 支持的文档扩展名。 */
 const DOC_EXTS = [".xlsx", ".xls", ".docx", ".pdf"];
 /** 用户上传通道额外允许的扩展名（图片、音视频作为素材引用，不解析）。 */
-const UPLOAD_ONLY_EXTS = [".png", ".jpg", ".jpeg", ".webp", ".mp3", ".wav", ".m4a", ".mp4", ".mov"];
+const UPLOAD_ONLY_EXTS = [".png", ".jpg", ".jpeg", ".webp", ".gif", ".mp3", ".wav", ".m4a", ".mp4", ".mov", ".webm"];
 export const UPLOAD_EXTS = [...TEXT_EXTS, ...DOC_EXTS, ...UPLOAD_ONLY_EXTS];
 
 const MIME_BY_EXT: Record<string, string> = {
@@ -280,5 +287,12 @@ export const handlers = {
     const buffer = await readWorkspaceBytes(userId, file);
     const text = buffer.toString("utf8");
     return { name: file.name, bytes: file.bytes, truncated: text.length > maxChars, text: text.slice(0, maxChars) };
+  },
+  file_delete: async ({ userId, params }: any) => {
+    const file = await resolveWorkspaceFile(userId, params);
+    if (!file) throw new BadRequestException("文件不存在或已被清理，先用 file_list 查看可用文件");
+    // deleteWorkspaceFile 同时删本地与 OSS 副本，避免删除后公链还能访问
+    const result = await deleteWorkspaceFile(userId, { key: file.key });
+    return { name: file.name, key: file.key, deleted: result.deleted };
   },
 } as Record<string, CapabilityHandler>;

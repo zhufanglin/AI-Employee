@@ -1,4 +1,4 @@
-param(
+﻿param(
   [switch]$Smoke,
   [switch]$SkipDesktop
 )
@@ -158,6 +158,12 @@ Step "smoke: T-19 员工执行器" {
     & $node "scripts\smoke-p11-tools.mjs"
     if ($LASTEXITCODE -ne 0) { $script:code = $LASTEXITCODE; return }
     & $node "scripts\smoke-p12-files.mjs"
+    if ($LASTEXITCODE -ne 0) { $script:code = $LASTEXITCODE; return }
+    & $node "scripts\smoke-p16-web-tools.mjs"
+    if ($LASTEXITCODE -ne 0) { $script:code = $LASTEXITCODE; return }
+    & $node "scripts\smoke-p16-doc-write.mjs"
+    if ($LASTEXITCODE -ne 0) { $script:code = $LASTEXITCODE; return }
+    & $node "scripts\smoke-p16-media.mjs"
     $script:code = $LASTEXITCODE
   }
 }
