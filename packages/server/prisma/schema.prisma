@@ -813,3 +813,26 @@ model UserPackageGrant {
   @@index([userId, packageId])
   @@index([expiresAt])
 }
+
+/// P18：AI 员工的长期记忆（按用户隔离，纯关键词检索，无向量）
+model AgentMemory {
+  id           String   @id @default(cuid())
+  userId       String
+  /// note|fact|preference|lesson
+  kind         String   @default("note")
+  /// 短标题，便于列表展示（可空）
+  title        String?  @db.VarChar(191)
+  content      String   @db.Text
+  /// 逗号分隔的标签
+  tags         String?  @db.VarChar(512)
+  employeeSlug String?
+  sourceTaskId String?
+  /// 被检索命中次数，用于排序参考
+  hitCount     Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([userId, createdAt])
+  @@index([userId, kind])
+}
+

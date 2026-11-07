@@ -388,3 +388,6 @@ ode scripts/coord.mjs done T-40 --agent codex --note ...，并回一条 msg 给 
 - 2026-11-07T14:25:49.732Z | dsh-lead | ADD | T-45 P17 工具第三批：image_understand 看图 + 员工派活/查任务 + 定时任务创建/列表/删除
 - 2026-11-07T14:26:25.336Z | dsh-lead | CLAIM | T-45 P17 工具第三批：image_understand 看图 + 员工派活/查任务 + 定时任务创建/列表/删除
 - 2026-11-07T14:26:25.637Z | dsh-lead | DONE | T-45 P17 工具第三批：image_understand 看图 + 员工派活/查任务 + 定时任务创建/列表/删除 —— 6 个能力上线生产：看图 image_understand(29 项)、员工派活/查任务/定时 cron 5 项(32 项)、生产 18 项 GREEN；worker 白名单 23 项；verify GREEN；文档 docs/handoff/P17-工具第三批.md
+- 2026-11-07T14:48:22.596Z | dsh-lead | ADD | T-46 P18 长期记忆检索（记忆保存/搜索/列表/删除）
+- 2026-11-07T14:48:29.348Z | dsh-lead | CLAIM | T-46 P18 长期记忆检索（记忆保存/搜索/列表/删除）
+- 2026-11-07T14:48:29.440Z | dsh-lead | DONE | T-46 P18 长期记忆检索（记忆保存/搜索/列表/删除） —— 完成

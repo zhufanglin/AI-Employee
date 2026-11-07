@@ -168,6 +168,8 @@ Step "smoke: T-19 员工执行器" {
     & $node "scripts\smoke-p17-vision.mjs"
     if ($LASTEXITCODE -ne 0) { $script:code = $LASTEXITCODE; return }
     & $node "scripts\smoke-p17-employee-tools.mjs"
+    if ($LASTEXITCODE -ne 0) { $script:code = $LASTEXITCODE; return }
+    & $node "scripts\smoke-p18-memory.mjs"
     $script:code = $LASTEXITCODE
   }
 }
