@@ -1,0 +1,4 @@
+interface:
+  display_name: "AI外贸开发客户员工"
+  short_description: "研究海外市场并筛选潜在企业客户，生成邮件、领英和WhatsApp开发内容"
+  default_prompt: "使用 $boss-export-sales-agent 为我的产品制定海外客户开发清单和触达内容。"

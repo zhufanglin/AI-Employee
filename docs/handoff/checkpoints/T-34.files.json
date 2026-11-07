@@ -1,0 +1,47 @@
+[
+  {
+    "p": "packages/server/src/capabilities/capabilities/content.ts",
+    "size": 2614,
+    "mtime": 1793889330879
+  },
+  {
+    "p": "packages/server/src/capabilities/capabilities/customer.ts",
+    "size": 1670,
+    "mtime": 1793889288201
+  },
+  {
+    "p": "packages/server/src/capabilities/capabilities/llm.ts",
+    "size": 1303,
+    "mtime": 1793889344373
+  },
+  {
+    "p": "packages/server/src/capabilities/capabilities/web-extract-guard.test.cjs",
+    "size": 1875,
+    "mtime": 1793908027643
+  },
+  {
+    "p": "packages/server/src/capabilities/capabilities/web-extract.ts",
+    "size": 6389,
+    "mtime": 1793908027582
+  },
+  {
+    "p": "packages/server/src/capabilities/capability.controller.ts",
+    "size": 1157,
+    "mtime": 1793889346635
+  },
+  {
+    "p": "packages/server/src/capabilities/capability.module.ts",
+    "size": 402,
+    "mtime": 1793889349367
+  },
+  {
+    "p": "packages/server/src/capabilities/capability.service.ts",
+    "size": 2902,
+    "mtime": 1793889345315
+  },
+  {
+    "p": "packages/server/src/capabilities/capability.types.ts",
+    "size": 578,
+    "mtime": 1793889268637
+  }
+]

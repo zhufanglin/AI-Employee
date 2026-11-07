@@ -1,0 +1,4367 @@
+[
+  {
+    "p": "packages/desktop/resources/openclaw/app-heartbeat",
+    "size": 0,
+    "mtime": 1793266504604
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/.i18n/ar-navigation.json",
+    "size": 333,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/.i18n/de-navigation.json",
+    "size": 313,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/.i18n/es-navigation.json",
+    "size": 310,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/.i18n/fr-navigation.json",
+    "size": 316,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/.i18n/glossary.ar.json",
+    "size": 1089,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/.i18n/glossary.de.json",
+    "size": 1089,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/.i18n/glossary.es.json",
+    "size": 1089,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/.i18n/glossary.fa.json",
+    "size": 1089,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/.i18n/glossary.fr.json",
+    "size": 1089,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/.i18n/glossary.id.json",
+    "size": 1089,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/.i18n/glossary.it.json",
+    "size": 1089,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/.i18n/glossary.ja-JP.json",
+    "size": 1494,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/.i18n/glossary.ko.json",
+    "size": 1089,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/.i18n/glossary.nl.json",
+    "size": 1089,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/.i18n/glossary.pl.json",
+    "size": 1089,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/.i18n/glossary.pt-BR.json",
+    "size": 1089,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/.i18n/glossary.th.json",
+    "size": 1089,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/.i18n/glossary.tr.json",
+    "size": 1089,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/.i18n/glossary.uk.json",
+    "size": 1089,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/.i18n/glossary.vi.json",
+    "size": 1089,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/.i18n/glossary.zh-CN.json",
+    "size": 20891,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/.i18n/glossary.zh-TW.json",
+    "size": 1120,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/.i18n/id-navigation.json",
+    "size": 310,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/.i18n/it-navigation.json",
+    "size": 308,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/.i18n/ja-navigation.json",
+    "size": 332,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/.i18n/ko-navigation.json",
+    "size": 309,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/.i18n/pl-navigation.json",
+    "size": 308,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/.i18n/pt-BR-navigation.json",
+    "size": 329,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/.i18n/tr-navigation.json",
+    "size": 312,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/.i18n/translation-workflow.md",
+    "size": 5341,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/.i18n/zh-Hans-navigation.json",
+    "size": 16031,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/agent-runtime-architecture.md",
+    "size": 2417,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/AGENTS.md",
+    "size": 2545,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/announcements/bluebubbles-imessage.md",
+    "size": 3690,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/auth-credential-semantics.md",
+    "size": 5064,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/automation/auth-monitoring.md",
+    "size": 254,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/automation/clawflow.md",
+    "size": 246,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/automation/cron-jobs.md",
+    "size": 31829,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/automation/cron-vs-heartbeat.md",
+    "size": 247,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/automation/gmail-pubsub.md",
+    "size": 370,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/automation/hooks.md",
+    "size": 16870,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/automation/index.md",
+    "size": 7938,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/automation/poll.md",
+    "size": 295,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/automation/standing-orders.md",
+    "size": 9596,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/automation/taskflow.md",
+    "size": 7268,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/automation/tasks.md",
+    "size": 20306,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/automation/troubleshooting.md",
+    "size": 399,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/automation/webhook.md",
+    "size": 335,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/brave-search.md",
+    "size": 203,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/channels/access-groups.md",
+    "size": 7008,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/channels/ambient-room-events.md",
+    "size": 7289,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/channels/bot-loop-protection.md",
+    "size": 3987,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/channels/broadcast-groups.md",
+    "size": 12290,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/channels/channel-routing.md",
+    "size": 6485,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/channels/clickclack.md",
+    "size": 3877,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/channels/discord.md",
+    "size": 78826,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/channels/feishu.md",
+    "size": 25039,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/channels/googlechat.md",
+    "size": 12244,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/channels/group-messages.md",
+    "size": 6107,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/channels/groups.md",
+    "size": 25826,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/channels/imessage-from-bluebubbles.md",
+    "size": 26894,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/channels/imessage.md",
+    "size": 43894,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/channels/index.md",
+    "size": 4314,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/channels/irc.md",
+    "size": 6925,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/channels/line.md",
+    "size": 7214,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/channels/location.md",
+    "size": 2407,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/channels/matrix-migration.md",
+    "size": 21680,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/channels/matrix-presentation.md",
+    "size": 3310,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/channels/matrix-push-rules.md",
+    "size": 5803,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/channels/matrix.md",
+    "size": 45961,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/channels/mattermost.md",
+    "size": 22049,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/channels/msteams.md",
+    "size": 49419,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/channels/nextcloud-talk.md",
+    "size": 6302,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/channels/nostr.md",
+    "size": 6974,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/channels/pairing.md",
+    "size": 8554,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/channels/qqbot.md",
+    "size": 11602,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/channels/signal.md",
+    "size": 18334,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/channels/slack.md",
+    "size": 66115,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/channels/sms.md",
+    "size": 12027,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/channels/synology-chat.md",
+    "size": 7543,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/channels/telegram.md",
+    "size": 49343,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/channels/tlon.md",
+    "size": 8220,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/channels/troubleshooting.md",
+    "size": 13600,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/channels/twitch.md",
+    "size": 11885,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/channels/wechat.md",
+    "size": 5479,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/channels/whatsapp.md",
+    "size": 32370,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/channels/yuanbao.md",
+    "size": 11817,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/channels/zalo.md",
+    "size": 11801,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/channels/zalouser.md",
+    "size": 8275,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/ci.md",
+    "size": 71104,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/clawhub/cli.md",
+    "size": 2411,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/clawhub/publishing.md",
+    "size": 2982,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/cli/acp.md",
+    "size": 17931,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/cli/agent.md",
+    "size": 7820,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/cli/agents.md",
+    "size": 7658,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/cli/approvals.md",
+    "size": 5858,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/cli/backup.md",
+    "size": 5204,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/cli/browser.md",
+    "size": 11555,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/cli/channels.md",
+    "size": 9008,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/cli/clawbot.md",
+    "size": 533,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/cli/commitments.md",
+    "size": 1895,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/cli/completion.md",
+    "size": 1282,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/cli/config.md",
+    "size": 18224,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/cli/configure.md",
+    "size": 4112,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/cli/crestodian.md",
+    "size": 10975,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/cli/cron.md",
+    "size": 16158,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/cli/daemon.md",
+    "size": 4137,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/cli/dashboard.md",
+    "size": 1309,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/cli/devices.md",
+    "size": 9069,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/cli/directory.md",
+    "size": 2400,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/cli/dns.md",
+    "size": 1553,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/cli/docs.md",
+    "size": 2170,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/cli/doctor.md",
+    "size": 17673,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/cli/flows.md",
+    "size": 1998,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/cli/gateway.md",
+    "size": 29263,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/cli/health.md",
+    "size": 1509,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/cli/hooks.md",
+    "size": 8019,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/cli/index.md",
+    "size": 11595,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/cli/infer.md",
+    "size": 18015,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/cli/logs.md",
+    "size": 3024,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/cli/mcp.md",
+    "size": 36345,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/cli/memory.md",
+    "size": 8657,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/cli/message.md",
+    "size": 11645,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/cli/migrate.md",
+    "size": 16636,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/cli/models.md",
+    "size": 10929,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/cli/node.md",
+    "size": 6168,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/cli/nodes.md",
+    "size": 2680,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/cli/onboard.md",
+    "size": 10837,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/cli/pairing.md",
+    "size": 2722,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/cli/path.md",
+    "size": 19654,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/cli/plugins.md",
+    "size": 31172,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/cli/policy.md",
+    "size": 48086,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/cli/proxy.md",
+    "size": 4309,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/cli/qr.md",
+    "size": 3188,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/cli/reset.md",
+    "size": 1110,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/cli/sandbox.md",
+    "size": 6397,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/cli/secrets.md",
+    "size": 7593,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/cli/security.md",
+    "size": 7985,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/cli/sessions.md",
+    "size": 7792,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/cli/setup.md",
+    "size": 3642,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/cli/skills.md",
+    "size": 7110,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/cli/status.md",
+    "size": 4311,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/cli/system.md",
+    "size": 2965,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/cli/tasks.md",
+    "size": 3100,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/cli/transcripts.md",
+    "size": 4655,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/cli/tui.md",
+    "size": 4509,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/cli/uninstall.md",
+    "size": 1312,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/cli/update.md",
+    "size": 13482,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/cli/voicecall.md",
+    "size": 9222,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/cli/webhooks.md",
+    "size": 6052,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/cli/wiki.md",
+    "size": 7256,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/cli/workboard.md",
+    "size": 8175,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/concepts/active-memory.md",
+    "size": 35079,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/concepts/agent-loop.md",
+    "size": 11770,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/concepts/agent-runtimes.md",
+    "size": 15907,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/concepts/agent-workspace.md",
+    "size": 9519,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/concepts/agent.md",
+    "size": 6499,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/concepts/architecture.md",
+    "size": 5817,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/concepts/channel-docking.md",
+    "size": 4502,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/concepts/commitments.md",
+    "size": 5633,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/concepts/compaction.md",
+    "size": 8559,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/concepts/context-engine.md",
+    "size": 15932,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/concepts/context.md",
+    "size": 8913,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/concepts/delegate-architecture.md",
+    "size": 13031,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/concepts/dreaming.md",
+    "size": 11669,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/concepts/experimental-features.md",
+    "size": 6979,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/concepts/features.md",
+    "size": 3564,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/concepts/mantis-slack-desktop-runbook.md",
+    "size": 8445,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/concepts/mantis.md",
+    "size": 32579,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/concepts/markdown-formatting.md",
+    "size": 5146,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/concepts/memory-builtin.md",
+    "size": 5350,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/concepts/memory-honcho.md",
+    "size": 5486,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/concepts/memory-qmd.md",
+    "size": 9883,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/concepts/memory-search.md",
+    "size": 6346,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/concepts/memory.md",
+    "size": 11775,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/concepts/message-lifecycle-refactor.md",
+    "size": 49637,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/concepts/messages.md",
+    "size": 9362,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/concepts/model-failover.md",
+    "size": 24402,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/concepts/model-providers.md",
+    "size": 37785,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/concepts/models.md",
+    "size": 20270,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/concepts/multi-agent.md",
+    "size": 21675,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/concepts/oauth.md",
+    "size": 8809,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/concepts/openclaw-sdk.md",
+    "size": 12506,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/concepts/parallel-specialist-lanes.md",
+    "size": 3810,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/concepts/personal-agent-benchmark-pack.md",
+    "size": 3146,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/concepts/presence.md",
+    "size": 4181,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/concepts/progress-drafts.md",
+    "size": 12915,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/concepts/qa-e2e-automation.md",
+    "size": 54030,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/concepts/qa-matrix.md",
+    "size": 14727,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/concepts/queue-steering.md",
+    "size": 4530,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/concepts/queue.md",
+    "size": 7414,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/concepts/retry.md",
+    "size": 2334,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/concepts/session-pruning.md",
+    "size": 3895,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/concepts/session-tool.md",
+    "size": 9686,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/concepts/session.md",
+    "size": 6400,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/concepts/soul.md",
+    "size": 4113,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/concepts/streaming.md",
+    "size": 14432,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/concepts/system-prompt.md",
+    "size": 17194,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/concepts/timezone.md",
+    "size": 3038,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/concepts/typebox.md",
+    "size": 9481,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/concepts/typing-indicators.md",
+    "size": 2921,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/concepts/usage-tracking.md",
+    "size": 3865,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/date-time.md",
+    "size": 3555,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/debug/node-issue.md",
+    "size": 2964,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/diagnostics/flags.md",
+    "size": 4665,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/docs.json",
+    "size": 52914,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/gateway/authentication.md",
+    "size": 11280,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/gateway/background-process.md",
+    "size": 6046,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/gateway/bonjour.md",
+    "size": 12593,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/gateway/bridge-protocol.md",
+    "size": 3878,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/gateway/cli-backends.md",
+    "size": 18603,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/gateway/config-agents.md",
+    "size": 70068,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/gateway/config-channels.md",
+    "size": 46588,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/gateway/config-tools.md",
+    "size": 35729,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/gateway/configuration-examples.md",
+    "size": 17845,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/gateway/configuration-reference.md",
+    "size": 70448,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/gateway/configuration.md",
+    "size": 30076,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/gateway/diagnostics.md",
+    "size": 8247,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/gateway/discovery.md",
+    "size": 7565,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/gateway/doctor.md",
+    "size": 45388,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/gateway/gateway-lock.md",
+    "size": 2364,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/gateway/health.md",
+    "size": 6526,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/gateway/heartbeat.md",
+    "size": 24420,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/gateway/index.md",
+    "size": 13512,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/gateway/local-model-services.md",
+    "size": 6396,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/gateway/local-models.md",
+    "size": 17031,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/gateway/logging.md",
+    "size": 5949,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/gateway/multiple-gateways.md",
+    "size": 5834,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/gateway/network-model.md",
+    "size": 397,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/gateway/openai-http-api.md",
+    "size": 16247,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/gateway/openresponses-http-api.md",
+    "size": 12603,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/gateway/openshell.md",
+    "size": 10012,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/gateway/opentelemetry.md",
+    "size": 25934,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/gateway/operator-scopes.md",
+    "size": 6351,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/gateway/pairing.md",
+    "size": 8616,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/gateway/prometheus.md",
+    "size": 16114,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/gateway/protocol.md",
+    "size": 51368,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/gateway/remote-gateway-readme.md",
+    "size": 4264,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/gateway/remote.md",
+    "size": 11424,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/gateway/sandbox-vs-tool-policy-vs-elevated.md",
+    "size": 8370,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/gateway/sandboxing.md",
+    "size": 27870,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/gateway/secrets-plan-contract.md",
+    "size": 5440,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/gateway/secrets.md",
+    "size": 29274,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/gateway/security/audit-checks.md",
+    "size": 30496,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/gateway/security/exposure-runbook.md",
+    "size": 8422,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/gateway/security/index.md",
+    "size": 72220,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/gateway/security/secure-file-operations.md",
+    "size": 4156,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/gateway/security/shrinkwrap.md",
+    "size": 4417,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/gateway/tailscale.md",
+    "size": 7218,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/gateway/tools-invoke-http-api.md",
+    "size": 7861,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/gateway/troubleshooting.md",
+    "size": 45126,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/gateway/trusted-proxy-auth.md",
+    "size": 19372,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/help/debugging.md",
+    "size": 12161,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/help/environment.md",
+    "size": 12062,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/help/faq-first-run.md",
+    "size": 39351,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/help/faq-models.md",
+    "size": 23480,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/help/faq.md",
+    "size": 90317,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/help/index.md",
+    "size": 1645,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/help/scripts.md",
+    "size": 1743,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/help/testing-live.md",
+    "size": 33028,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/help/testing-updates-plugins.md",
+    "size": 13289,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/help/testing.md",
+    "size": 70885,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/help/troubleshooting.md",
+    "size": 19817,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/index.md",
+    "size": 6769,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/install/ansible.md",
+    "size": 7172,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/install/azure.md",
+    "size": 10133,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/install/bun.md",
+    "size": 1720,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/install/clawdock.md",
+    "size": 4423,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/install/development-channels.md",
+    "size": 5560,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/install/digitalocean.md",
+    "size": 5546,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/install/docker-vm-runtime.md",
+    "size": 5973,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/install/docker.md",
+    "size": 24028,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/install/exe-dev.md",
+    "size": 6420,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/install/fly.md",
+    "size": 14527,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/install/gcp.md",
+    "size": 12560,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/install/hetzner.md",
+    "size": 9007,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/install/hostinger.md",
+    "size": 3780,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/install/index.md",
+    "size": 6843,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/install/installer.md",
+    "size": 20351,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/install/kubernetes.md",
+    "size": 6518,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/install/macos-vm.md",
+    "size": 6756,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/install/migrating-claude.md",
+    "size": 6574,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/install/migrating-hermes.md",
+    "size": 8217,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/install/migrating.md",
+    "size": 5971,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/install/nix.md",
+    "size": 4703,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/install/node.md",
+    "size": 4051,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/install/northflank.mdx",
+    "size": 1826,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/install/oracle.md",
+    "size": 8142,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/install/podman.md",
+    "size": 9352,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/install/railway.mdx",
+    "size": 2743,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/install/raspberry-pi.md",
+    "size": 7759,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/install/render.mdx",
+    "size": 5881,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/install/uninstall.md",
+    "size": 3846,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/install/updating.md",
+    "size": 10559,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/install/upstash.md",
+    "size": 2368,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/logging.md",
+    "size": 12618,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/nav-tabs-underline.js",
+    "size": 2938,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/network.md",
+    "size": 2618,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/nodes/audio.md",
+    "size": 8358,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/nodes/camera.md",
+    "size": 5761,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/nodes/images.md",
+    "size": 4002,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/nodes/index.md",
+    "size": 18138,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/nodes/location-command.md",
+    "size": 2806,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/nodes/media-understanding.md",
+    "size": 18691,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/nodes/talk.md",
+    "size": 9141,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/nodes/troubleshooting.md",
+    "size": 5044,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/nodes/voicewake.md",
+    "size": 2820,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/openclaw-agent-runtime.md",
+    "size": 2711,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/perplexity.md",
+    "size": 228,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plan/codex-context-engine-harness.md",
+    "size": 22817,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plan/ui-channels.md",
+    "size": 11378,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/platforms/android.md",
+    "size": 12659,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/platforms/digitalocean.md",
+    "size": 247,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/platforms/easyrunner.md",
+    "size": 3565,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/platforms/index.md",
+    "size": 2378,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/platforms/ios.md",
+    "size": 11907,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/platforms/linux.md",
+    "size": 3979,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/platforms/mac/bundled-gateway.md",
+    "size": 2279,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/platforms/mac/canvas.md",
+    "size": 3724,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/platforms/mac/child-process.md",
+    "size": 2427,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/platforms/mac/dev-setup.md",
+    "size": 3177,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/platforms/mac/health.md",
+    "size": 1567,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/platforms/mac/icon.md",
+    "size": 2087,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/platforms/mac/logging.md",
+    "size": 2635,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/platforms/mac/menu-bar.md",
+    "size": 3813,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/platforms/mac/peekaboo.md",
+    "size": 3879,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/platforms/mac/permissions.md",
+    "size": 3291,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/platforms/mac/remote.md",
+    "size": 7144,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/platforms/mac/signing.md",
+    "size": 3669,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/platforms/mac/skills.md",
+    "size": 1705,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/platforms/mac/voice-overlay.md",
+    "size": 3889,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/platforms/mac/voicewake.md",
+    "size": 4197,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/platforms/mac/webchat.md",
+    "size": 1966,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/platforms/mac/xpc.md",
+    "size": 2925,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/platforms/macos.md",
+    "size": 8774,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/platforms/oracle.md",
+    "size": 229,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/platforms/raspberry-pi.md",
+    "size": 274,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/platforms/windows.md",
+    "size": 9421,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/adding-capabilities.md",
+    "size": 5699,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/admin-http-rpc.md",
+    "size": 7752,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/agent-tools.md",
+    "size": 370,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/architecture-internals.md",
+    "size": 61627,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/architecture.md",
+    "size": 28422,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/building-extensions.md",
+    "size": 333,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/building-plugins.md",
+    "size": 11543,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/bundles.md",
+    "size": 11859,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/cli-backend-plugins.md",
+    "size": 13188,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/codex-computer-use.md",
+    "size": 14822,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/codex-harness-reference.md",
+    "size": 27917,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/codex-harness-runtime.md",
+    "size": 23175,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/codex-harness.md",
+    "size": 44085,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/codex-native-plugins.md",
+    "size": 12229,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/community.md",
+    "size": 2854,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/compatibility.md",
+    "size": 7692,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/copilot.md",
+    "size": 17261,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/dependency-resolution.md",
+    "size": 8354,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/google-meet.md",
+    "size": 65352,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/hooks.md",
+    "size": 24662,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/install-overrides.md",
+    "size": 2922,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/manage-plugins.md",
+    "size": 8340,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/manifest.md",
+    "size": 95016,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/memory-lancedb.md",
+    "size": 11090,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/memory-wiki.md",
+    "size": 15803,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/message-presentation.md",
+    "size": 16764,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/oc-path.md",
+    "size": 7363,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/plugin-inventory.md",
+    "size": 22993,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/plugin-permission-requests.md",
+    "size": 9190,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/acpx.md",
+    "size": 442,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/admin-http-rpc.md",
+    "size": 432,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/alibaba.md",
+    "size": 416,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/amazon-bedrock-mantle.md",
+    "size": 570,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/amazon-bedrock.md",
+    "size": 584,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/anthropic-vertex.md",
+    "size": 468,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/anthropic.md",
+    "size": 475,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/arcee.md",
+    "size": 399,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/azure-speech.md",
+    "size": 512,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/bonjour.md",
+    "size": 360,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/brave.md",
+    "size": 419,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/browser.md",
+    "size": 373,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/byteplus.md",
+    "size": 456,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/canvas.md",
+    "size": 409,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/cerebras.md",
+    "size": 426,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/chutes.md",
+    "size": 408,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/clickclack.md",
+    "size": 491,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/cloudflare-ai-gateway.md",
+    "size": 543,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/codex-supervisor.md",
+    "size": 795,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/codex.md",
+    "size": 542,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/comfy.md",
+    "size": 496,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/copilot-proxy.md",
+    "size": 400,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/copilot.md",
+    "size": 405,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/deepgram.md",
+    "size": 555,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/deepinfra.md",
+    "size": 570,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/deepseek.md",
+    "size": 426,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/diagnostics-otel.md",
+    "size": 468,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/diagnostics-prometheus.md",
+    "size": 468,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/diffs-language-pack.md",
+    "size": 1231,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/diffs.md",
+    "size": 386,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/discord.md",
+    "size": 492,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/document-extract.md",
+    "size": 507,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/duckduckgo.md",
+    "size": 417,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/elevenlabs.md",
+    "size": 658,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/exa.md",
+    "size": 375,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/fal.md",
+    "size": 470,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/feishu.md",
+    "size": 521,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/file-transfer.md",
+    "size": 612,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/firecrawl.md",
+    "size": 550,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/fireworks.md",
+    "size": 435,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/github-copilot.md",
+    "size": 517,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/gmi.md",
+    "size": 444,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/google-meet.md",
+    "size": 512,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/google.md",
+    "size": 713,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/googlechat.md",
+    "size": 459,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/gradium.md",
+    "size": 401,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/groq.md",
+    "size": 430,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/huggingface.md",
+    "size": 457,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/imessage.md",
+    "size": 473,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/inworld.md",
+    "size": 455,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/irc.md",
+    "size": 428,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/kilocode.md",
+    "size": 426,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/kimi.md",
+    "size": 433,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/line.md",
+    "size": 385,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/litellm.md",
+    "size": 454,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/llm-task.md",
+    "size": 408,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/lmstudio.md",
+    "size": 467,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/lobster.md",
+    "size": 398,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/matrix.md",
+    "size": 445,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/mattermost.md",
+    "size": 491,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/memory-core.md",
+    "size": 434,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/memory-lancedb.md",
+    "size": 538,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/memory-wiki.md",
+    "size": 492,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/microsoft-foundry.md",
+    "size": 428,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/microsoft.md",
+    "size": 359,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/migrate-claude.md",
+    "size": 523,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/migrate-hermes.md",
+    "size": 477,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/minimax.md",
+    "size": 620,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/mistral.md",
+    "size": 515,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/moonshot.md",
+    "size": 486,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/msteams.md",
+    "size": 442,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/nextcloud-talk.md",
+    "size": 465,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/nostr.md",
+    "size": 422,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/novita.md",
+    "size": 471,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/nvidia.md",
+    "size": 408,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/oc-path.md",
+    "size": 424,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/ollama.md",
+    "size": 549,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/open-prose.md",
+    "size": 366,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/openai.md",
+    "size": 599,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/opencode-go.md",
+    "size": 493,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/opencode.md",
+    "size": 466,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/openrouter.md",
+    "size": 579,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/openshell.md",
+    "size": 480,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/perplexity.md",
+    "size": 417,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/pixverse.md",
+    "size": 477,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/policy.md",
+    "size": 3512,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/qa-channel.md",
+    "size": 475,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/qa-lab.md",
+    "size": 382,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/qa-matrix.md",
+    "size": 340,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/qianfan.md",
+    "size": 417,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/qqbot.md",
+    "size": 456,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/qwen.md",
+    "size": 708,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/runway.md",
+    "size": 410,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/searxng.md",
+    "size": 346,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/senseaudio.md",
+    "size": 443,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/sglang.md",
+    "size": 408,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/signal.md",
+    "size": 455,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/slack.md",
+    "size": 436,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/sms.md",
+    "size": 388,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/stepfun.md",
+    "size": 459,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/synology-chat.md",
+    "size": 486,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/synthetic.md",
+    "size": 435,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/tavily.md",
+    "size": 455,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/telegram.md",
+    "size": 473,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/tencent.md",
+    "size": 444,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/tlon.md",
+    "size": 397,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/together.md",
+    "size": 463,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/tokenjuice.md",
+    "size": 490,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/tts-local-cli.md",
+    "size": 368,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/twitch.md",
+    "size": 425,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/venice.md",
+    "size": 408,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/vercel-ai-gateway.md",
+    "size": 507,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/vllm.md",
+    "size": 390,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/voice-call.md",
+    "size": 456,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/volcengine.md",
+    "size": 523,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/voyage.md",
+    "size": 362,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/vydra.md",
+    "size": 479,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/web-readability.md",
+    "size": 452,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/webhooks.md",
+    "size": 470,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/whatsapp.md",
+    "size": 451,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/workboard.md",
+    "size": 432,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/xai.md",
+    "size": 547,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/xiaomi.md",
+    "size": 493,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/zai.md",
+    "size": 425,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/zalo.md",
+    "size": 391,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference/zalouser.md",
+    "size": 505,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/reference.md",
+    "size": 520,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/sdk-agent-harness.md",
+    "size": 12715,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/sdk-channel-inbound.md",
+    "size": 2592,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/sdk-channel-ingress.md",
+    "size": 5146,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/sdk-channel-message.md",
+    "size": 786,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/sdk-channel-outbound.md",
+    "size": 3783,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/sdk-channel-plugins.md",
+    "size": 37286,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/sdk-channel-turn.md",
+    "size": 302,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/sdk-entrypoints.md",
+    "size": 15874,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/sdk-migration.md",
+    "size": 62145,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/sdk-overview.md",
+    "size": 30346,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/sdk-provider-plugins.md",
+    "size": 43104,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/sdk-runtime.md",
+    "size": 27859,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/sdk-setup.md",
+    "size": 26020,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/sdk-subpaths.md",
+    "size": 42480,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/sdk-testing.md",
+    "size": 23853,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/tool-plugins.md",
+    "size": 12303,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/voice-call.md",
+    "size": 33855,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/webhooks.md",
+    "size": 4308,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/workboard.md",
+    "size": 17904,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/plugins/zalouser.md",
+    "size": 2159,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/prose.md",
+    "size": 5345,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/providers/alibaba.md",
+    "size": 6908,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/providers/anthropic.md",
+    "size": 13012,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/providers/arcee.md",
+    "size": 5291,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/providers/azure-speech.md",
+    "size": 6365,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/providers/bedrock-mantle.md",
+    "size": 7393,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/providers/bedrock.md",
+    "size": 16301,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/providers/cerebras.md",
+    "size": 4909,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/providers/chutes.md",
+    "size": 5251,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/providers/claude-max-api-proxy.md",
+    "size": 6408,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/providers/cloudflare-ai-gateway.md",
+    "size": 4102,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/providers/comfy.md",
+    "size": 12409,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/providers/deepgram.md",
+    "size": 6663,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/providers/deepinfra.md",
+    "size": 4337,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/providers/deepseek.md",
+    "size": 5081,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/providers/ds4.md",
+    "size": 8759,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/providers/elevenlabs.md",
+    "size": 4877,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/providers/fal.md",
+    "size": 7841,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/providers/fireworks.md",
+    "size": 6529,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/providers/github-copilot.md",
+    "size": 9084,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/providers/gmi.md",
+    "size": 3258,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/providers/google.md",
+    "size": 17160,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/providers/gradium.md",
+    "size": 4254,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/providers/groq.md",
+    "size": 7103,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/providers/huggingface.md",
+    "size": 9916,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/providers/index.md",
+    "size": 4094,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/providers/inferrs.md",
+    "size": 8714,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/providers/inworld.md",
+    "size": 5269,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/providers/kilocode.md",
+    "size": 5007,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/providers/litellm.md",
+    "size": 6300,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/providers/lmstudio.md",
+    "size": 7307,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/providers/minimax.md",
+    "size": 21027,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/providers/mistral.md",
+    "size": 9583,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/providers/models.md",
+    "size": 2519,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/providers/moonshot.md",
+    "size": 13678,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/providers/novita.md",
+    "size": 3208,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/providers/nvidia.md",
+    "size": 7882,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/providers/ollama-cloud.md",
+    "size": 3927,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/providers/ollama.md",
+    "size": 45900,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/providers/openai.md",
+    "size": 48201,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/providers/opencode-go.md",
+    "size": 4059,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/providers/opencode.md",
+    "size": 4598,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/providers/openrouter.md",
+    "size": 11755,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/providers/perplexity-provider.md",
+    "size": 4853,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/providers/pixverse.md",
+    "size": 6471,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/providers/qianfan.md",
+    "size": 4705,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/providers/qwen-oauth.md",
+    "size": 4173,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/providers/qwen.md",
+    "size": 13929,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/providers/runway.md",
+    "size": 4312,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/providers/senseaudio.md",
+    "size": 2737,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/providers/sglang.md",
+    "size": 5294,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/providers/stepfun.md",
+    "size": 7628,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/providers/synthetic.md",
+    "size": 6247,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/providers/tencent.md",
+    "size": 5307,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/providers/together.md",
+    "size": 4841,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/providers/venice.md",
+    "size": 15512,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/providers/vercel-ai-gateway.md",
+    "size": 4245,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/providers/vllm.md",
+    "size": 12538,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/providers/volcengine.md",
+    "size": 7581,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/providers/vydra.md",
+    "size": 5530,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/providers/xai.md",
+    "size": 22343,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/providers/xiaomi.md",
+    "size": 11556,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/providers/zai.md",
+    "size": 6780,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/refactor/access.md",
+    "size": 329,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/refactor/acp.md",
+    "size": 10077,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/refactor/canvas.md",
+    "size": 7790,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/refactor/database-first.md",
+    "size": 142192,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/refactor/ingress-core.md",
+    "size": 13742,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/reference/AGENTS.default.md",
+    "size": 5974,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/reference/api-usage-costs.md",
+    "size": 9545,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/reference/application-modernization-plan.md",
+    "size": 8381,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/reference/code-mode.md",
+    "size": 38291,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/reference/credits.md",
+    "size": 1197,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/reference/device-models.md",
+    "size": 2020,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/reference/full-release-validation.md",
+    "size": 23204,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/reference/memory-config.md",
+    "size": 33048,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/reference/openclaw-sdk-api-design.md",
+    "size": 13045,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/reference/prompt-caching.md",
+    "size": 16461,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/reference/release-performance-sweep.md",
+    "size": 17782,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/reference/RELEASING.md",
+    "size": 46657,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/reference/rich-output-protocol.md",
+    "size": 3220,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/reference/rpc.md",
+    "size": 1328,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/reference/secret-placeholder-conventions.md",
+    "size": 1073,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/reference/secretref-credential-surface.md",
+    "size": 7212,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/reference/secretref-user-supplied-credentials-matrix.json",
+    "size": 21114,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/reference/session-management-compaction.md",
+    "size": 23345,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/reference/templates/AGENTS.dev.md",
+    "size": 2918,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/reference/templates/AGENTS.md",
+    "size": 8240,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/reference/templates/BOOT.md",
+    "size": 415,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/reference/templates/BOOTSTRAP.md",
+    "size": 1644,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/reference/templates/HEARTBEAT.md",
+    "size": 766,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/reference/templates/IDENTITY.dev.md",
+    "size": 1688,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/reference/templates/IDENTITY.md",
+    "size": 815,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/reference/templates/SOUL.dev.md",
+    "size": 3860,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/reference/templates/SOUL.md",
+    "size": 1933,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/reference/templates/TOOLS.dev.md",
+    "size": 728,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/reference/templates/TOOLS.md",
+    "size": 1049,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/reference/templates/USER.dev.md",
+    "size": 696,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/reference/templates/USER.md",
+    "size": 650,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/reference/test.md",
+    "size": 26555,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/reference/token-use.md",
+    "size": 12039,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/reference/transcript-hygiene.md",
+    "size": 11111,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/reference/wizard.md",
+    "size": 13422,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/security/CONTRIBUTING-THREAT-MODEL.md",
+    "size": 4918,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/security/formal-verification.md",
+    "size": 6177,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/security/incident-response.md",
+    "size": 2623,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/security/network-proxy.md",
+    "size": 20808,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/security/THREAT-MODEL-ATLAS.md",
+    "size": 39332,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/snippets/plugin-publish/minimal-openclaw.plugin.json",
+    "size": 224,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/snippets/plugin-publish/minimal-package.json",
+    "size": 360,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/specs/claw-supervisor.md",
+    "size": 9720,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/start/bootstrapping.md",
+    "size": 1833,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/start/docs-directory.md",
+    "size": 2051,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/start/getting-started.md",
+    "size": 4089,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/start/hubs.md",
+    "size": 6158,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/start/lore.md",
+    "size": 7364,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/start/onboarding-overview.md",
+    "size": 2566,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/start/onboarding.md",
+    "size": 3618,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/start/openclaw.md",
+    "size": 9627,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/start/quickstart.md",
+    "size": 630,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/start/setup.md",
+    "size": 6410,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/start/showcase.md",
+    "size": 14762,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/start/wizard-cli-automation.md",
+    "size": 7038,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/start/wizard-cli-reference.md",
+    "size": 15131,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/start/wizard.md",
+    "size": 6832,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/style.css",
+    "size": 2949,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/superpowers/specs/2026-04-22-tweakcn-custom-theme-import-design.md",
+    "size": 11302,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/tools/acp-agents-setup.md",
+    "size": 11724,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/tools/acp-agents.md",
+    "size": 53571,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/tools/agent-send.md",
+    "size": 5628,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/tools/apply-patch.md",
+    "size": 1957,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/tools/brave-search.md",
+    "size": 5091,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/tools/browser-control.md",
+    "size": 17620,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/tools/browser-linux-troubleshooting.md",
+    "size": 7189,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/tools/browser-login.md",
+    "size": 2478,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/tools/browser-wsl2-windows-remote-cdp-troubleshooting.md",
+    "size": 7281,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/tools/browser.md",
+    "size": 38539,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/tools/btw.md",
+    "size": 4971,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/tools/capability-cookbook.md",
+    "size": 330,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/tools/clawhub.md",
+    "size": 87,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/tools/code-execution.md",
+    "size": 5955,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/tools/creating-skills.md",
+    "size": 8665,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/tools/diffs.md",
+    "size": 17333,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/tools/duckduckgo-search.md",
+    "size": 2891,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/tools/elevated.md",
+    "size": 4905,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/tools/exa-search.md",
+    "size": 4754,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/tools/exec-approvals-advanced.md",
+    "size": 22723,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/tools/exec-approvals.md",
+    "size": 20313,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/tools/exec.md",
+    "size": 17286,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/tools/firecrawl.md",
+    "size": 4913,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/tools/gemini-search.md",
+    "size": 3835,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/tools/goal.md",
+    "size": 7488,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/tools/grok-search.md",
+    "size": 4195,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/tools/image-generation.md",
+    "size": 22785,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/tools/index.md",
+    "size": 12363,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/tools/kimi-search.md",
+    "size": 3382,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/tools/llm-task.md",
+    "size": 3372,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/tools/lobster.md",
+    "size": 11865,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/tools/loop-detection.md",
+    "size": 8374,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/tools/media-overview.md",
+    "size": 8919,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/tools/minimax-search.md",
+    "size": 3339,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/tools/multi-agent-sandbox-tools.md",
+    "size": 12714,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/tools/music-generation.md",
+    "size": 14491,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/tools/ollama-search.md",
+    "size": 3732,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/tools/parallel-search.md",
+    "size": 5674,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/tools/pdf.md",
+    "size": 6518,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/tools/permission-modes.md",
+    "size": 6008,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/tools/perplexity-search.md",
+    "size": 6464,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/tools/plugin.md",
+    "size": 19212,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/tools/reactions.md",
+    "size": 3897,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/tools/searxng-search.md",
+    "size": 4409,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/tools/skill-workshop.md",
+    "size": 8373,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/tools/skills-config.md",
+    "size": 14820,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/tools/skills.md",
+    "size": 22527,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/tools/slash-commands.md",
+    "size": 22884,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/tools/steer.md",
+    "size": 2625,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/tools/subagents.md",
+    "size": 34123,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/tools/tavily.md",
+    "size": 7282,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/tools/thinking.md",
+    "size": 14712,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/tools/tokenjuice.md",
+    "size": 2064,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/tools/tool-search.md",
+    "size": 8435,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/tools/trajectory.md",
+    "size": 7981,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/tools/tts.md",
+    "size": 47048,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/tools/video-generation.md",
+    "size": 28334,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/tools/web-fetch.md",
+    "size": 6852,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/tools/web.md",
+    "size": 23421,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/tts.md",
+    "size": 185,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/vps.md",
+    "size": 5704,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/web/control-ui.md",
+    "size": 37788,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/web/dashboard.md",
+    "size": 5893,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/web/index.md",
+    "size": 4207,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/web/tui.md",
+    "size": 9172,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/docs/web/webchat.md",
+    "size": 8121,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/gateway-env.json",
+    "size": 10512,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/gateway-launcher.cjs",
+    "size": 7569,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/gateway-watchdog.cjs",
+    "size": 17726,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/LICENSE",
+    "size": 1170,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/npm-shrinkwrap.json",
+    "size": 126319,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/openclaw.mjs",
+    "size": 19764,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/package.json",
+    "size": 107412,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/patches/@agentclientprotocol__claude-agent-acp@0.39.0.patch",
+    "size": 1722,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/pnpm-workspace.yaml",
+    "size": 2907,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/scripts/crabbox-wrapper.mjs",
+    "size": 73768,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/scripts/lib/official-external-channel-catalog.json",
+    "size": 17908,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/scripts/lib/official-external-plugin-catalog.json",
+    "size": 7411,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/scripts/lib/official-external-provider-catalog.json",
+    "size": 4707,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/scripts/lib/package-dist-imports.mjs",
+    "size": 5227,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/scripts/npm-runner.mjs",
+    "size": 3125,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/scripts/postinstall-bundled-plugins.mjs",
+    "size": 33866,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/scripts/preinstall-package-manager-warning.mjs",
+    "size": 2145,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/scripts/prepare-git-hooks.mjs",
+    "size": 2357,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/scripts/windows-cmd-helpers.mjs",
+    "size": 1017,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/skills/1password/references/cli-examples.md",
+    "size": 720,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/skills/1password/references/get-started.md",
+    "size": 994,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/skills/1password/SKILL.md",
+    "size": 2513,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/skills/apple-notes/SKILL.md",
+    "size": 1979,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/skills/apple-reminders/SKILL.md",
+    "size": 3039,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/skills/bear-notes/SKILL.md",
+    "size": 2651,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/skills/blogwatcher/SKILL.md",
+    "size": 1417,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/skills/blucli/SKILL.md",
+    "size": 1022,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/skills/camsnap/SKILL.md",
+    "size": 1091,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/skills/canvas/SKILL.md",
+    "size": 2433,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/skills/clawhub/SKILL.md",
+    "size": 1436,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/skills/coding-agent/SKILL.md",
+    "size": 4327,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/skills/diagram-maker/references/excalidraw-patterns.md",
+    "size": 1394,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/skills/diagram-maker/references/svg-template.md",
+    "size": 1930,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/skills/diagram-maker/SKILL.md",
+    "size": 2357,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/skills/discord/SKILL.md",
+    "size": 2459,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/skills/eightctl/SKILL.md",
+    "size": 1096,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/skills/gemini/SKILL.md",
+    "size": 1158,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/skills/gh-issues/SKILL.md",
+    "size": 6258,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/skills/gifgrep/SKILL.md",
+    "size": 2610,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/skills/github/SKILL.md",
+    "size": 2435,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/skills/gog/SKILL.md",
+    "size": 4574,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/skills/goplaces/SKILL.md",
+    "size": 1473,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/skills/healthcheck/SKILL.md",
+    "size": 2537,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/skills/himalaya/references/configuration.md",
+    "size": 4084,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/skills/himalaya/references/message-composition.md",
+    "size": 3799,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/skills/himalaya/SKILL.md",
+    "size": 1755,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/skills/imsg/SKILL.md",
+    "size": 2923,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/skills/mcporter/SKILL.md",
+    "size": 1612,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/skills/meme-maker/references/templates.json",
+    "size": 13128,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/skills/meme-maker/scripts/meme.mjs",
+    "size": 12505,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/skills/meme-maker/SKILL.md",
+    "size": 2215,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/skills/model-usage/references/codexbar-cli.md",
+    "size": 1120,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/skills/model-usage/scripts/model_usage.py",
+    "size": 10754,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/skills/model-usage/scripts/test_model_usage.py",
+    "size": 1310,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/skills/model-usage/SKILL.md",
+    "size": 2418,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/skills/nano-pdf/SKILL.md",
+    "size": 954,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/skills/node-connect/SKILL.md",
+    "size": 4477,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/skills/node-inspect-debugger/SKILL.md",
+    "size": 3576,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/skills/notion/SKILL.md",
+    "size": 3867,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/skills/obsidian/SKILL.md",
+    "size": 2942,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/skills/openai-whisper/SKILL.md",
+    "size": 914,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/skills/openai-whisper-api/scripts/transcribe.sh",
+    "size": 3214,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/skills/openai-whisper-api/SKILL.md",
+    "size": 2073,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/skills/openhue/SKILL.md",
+    "size": 2423,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/skills/oracle/SKILL.md",
+    "size": 4894,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/skills/ordercli/SKILL.md",
+    "size": 2391,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/skills/peekaboo/SKILL.md",
+    "size": 6505,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/skills/pyproject.toml",
+    "size": 193,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/skills/python-debugpy/SKILL.md",
+    "size": 2552,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/skills/sag/SKILL.md",
+    "size": 2302,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/skills/session-logs/SKILL.md",
+    "size": 4387,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/skills/sherpa-onnx-tts/bin/sherpa-onnx-tts",
+    "size": 4811,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/skills/sherpa-onnx-tts/SKILL.md",
+    "size": 3757,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/skills/skill-creator/license.txt",
+    "size": 11358,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/skills/skill-creator/scripts/init_skill.py",
+    "size": 13753,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/skills/skill-creator/scripts/package_skill.py",
+    "size": 4703,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/skills/skill-creator/scripts/quick_validate.py",
+    "size": 5299,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/skills/skill-creator/scripts/test_package_skill.py",
+    "size": 7771,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/skills/skill-creator/scripts/test_quick_validate.py",
+    "size": 3961,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/skills/skill-creator/SKILL.md",
+    "size": 2384,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/skills/slack/SKILL.md",
+    "size": 1677,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/skills/songsee/SKILL.md",
+    "size": 1316,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/skills/sonoscli/SKILL.md",
+    "size": 2457,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/skills/spike/SKILL.md",
+    "size": 1891,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/skills/spotify-player/SKILL.md",
+    "size": 1688,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/skills/summarize/SKILL.md",
+    "size": 2125,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/skills/taskflow/SKILL.md",
+    "size": 4751,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/skills/taskflow-inbox-triage/SKILL.md",
+    "size": 2569,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/skills/things-mac/SKILL.md",
+    "size": 3390,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/skills/tmux/scripts/find-sessions.sh",
+    "size": 2945,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/skills/tmux/scripts/wait-for-text.sh",
+    "size": 2139,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/skills/tmux/SKILL.md",
+    "size": 1953,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/skills/trello/SKILL.md",
+    "size": 2948,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/skills/video-frames/scripts/frame.sh",
+    "size": 1347,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/skills/video-frames/SKILL.md",
+    "size": 959,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/skills/voice-call/SKILL.md",
+    "size": 1161,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/skills/wacli/SKILL.md",
+    "size": 2370,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/skills/weather/SKILL.md",
+    "size": 2905,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/skills/xurl/SKILL.md",
+    "size": 2747,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/src/agents/templates/HEARTBEAT.md",
+    "size": 244,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/openclaw/THIRD_PARTY_NOTICES.md",
+    "size": 1575,
+    "mtime": 1793169458000
+  },
+  {
+    "p": "packages/desktop/resources/skills/boss-ai-team-orchestrator/agents/openai.yaml",
+    "size": 293,
+    "mtime": 1785569004000
+  },
+  {
+    "p": "packages/desktop/resources/skills/boss-ai-team-orchestrator/SKILL.md",
+    "size": 2451,
+    "mtime": 1785569004000
+  },
+  {
+    "p": "packages/desktop/resources/skills/boss-ai-team-orchestrator/新手使用说明.md",
+    "size": 1381,
+    "mtime": 1785569004000
+  },
+  {
+    "p": "packages/desktop/resources/skills/boss-blogger-deconstructor/agents/openai.yaml",
+    "size": 290,
+    "mtime": 1785569004000
+  },
+  {
+    "p": "packages/desktop/resources/skills/boss-blogger-deconstructor/SKILL.md",
+    "size": 2434,
+    "mtime": 1785569004000
+  },
+  {
+    "p": "packages/desktop/resources/skills/boss-blogger-deconstructor/新手使用说明.md",
+    "size": 1517,
+    "mtime": 1785569004000
+  },
+  {
+    "p": "packages/desktop/resources/skills/boss-chat-deal-analyzer/agents/openai.yaml",
+    "size": 275,
+    "mtime": 1785569004000
+  },
+  {
+    "p": "packages/desktop/resources/skills/boss-chat-deal-analyzer/SKILL.md",
+    "size": 2141,
+    "mtime": 1785569004000
+  },
+  {
+    "p": "packages/desktop/resources/skills/boss-chat-deal-analyzer/新手使用说明.md",
+    "size": 1356,
+    "mtime": 1785569004000
+  },
+  {
+    "p": "packages/desktop/resources/skills/boss-comment-opportunity/agents/openai.yaml",
+    "size": 270,
+    "mtime": 1785569004000
+  },
+  {
+    "p": "packages/desktop/resources/skills/boss-comment-opportunity/SKILL.md",
+    "size": 2681,
+    "mtime": 1785569004000
+  },
+  {
+    "p": "packages/desktop/resources/skills/boss-comment-opportunity/新手使用说明.md",
+    "size": 1444,
+    "mtime": 1785569004000
+  },
+  {
+    "p": "packages/desktop/resources/skills/boss-competitor-viral-radar/agents/openai.yaml",
+    "size": 270,
+    "mtime": 1785569004000
+  },
+  {
+    "p": "packages/desktop/resources/skills/boss-competitor-viral-radar/SKILL.md",
+    "size": 2144,
+    "mtime": 1785569004000
+  },
+  {
+    "p": "packages/desktop/resources/skills/boss-competitor-viral-radar/新手使用说明.md",
+    "size": 1376,
+    "mtime": 1785569004000
+  },
+  {
+    "p": "packages/desktop/resources/skills/boss-daily-lead-topics/agents/openai.yaml",
+    "size": 277,
+    "mtime": 1785569004000
+  },
+  {
+    "p": "packages/desktop/resources/skills/boss-daily-lead-topics/SKILL.md",
+    "size": 2266,
+    "mtime": 1785569004000
+  },
+  {
+    "p": "packages/desktop/resources/skills/boss-daily-lead-topics/新手使用说明.md",
+    "size": 1328,
+    "mtime": 1785569004000
+  },
+  {
+    "p": "packages/desktop/resources/skills/boss-export-sales-agent/agents/openai.yaml",
+    "size": 288,
+    "mtime": 1785569004000
+  },
+  {
+    "p": "packages/desktop/resources/skills/boss-export-sales-agent/SKILL.md",
+    "size": 2447,
+    "mtime": 1785569004000
+  },
+  {
+    "p": "packages/desktop/resources/skills/boss-export-sales-agent/新手使用说明.md",
+    "size": 1423,
+    "mtime": 1785569004000
+  },
+  {
+    "p": "packages/desktop/resources/skills/boss-geo-auditor/agents/openai.yaml",
+    "size": 266,
+    "mtime": 1785569004000
+  },
+  {
+    "p": "packages/desktop/resources/skills/boss-geo-auditor/SKILL.md",
+    "size": 2472,
+    "mtime": 1785569004000
+  },
+  {
+    "p": "packages/desktop/resources/skills/boss-geo-auditor/新手使用说明.md",
+    "size": 1407,
+    "mtime": 1785569004000
+  },
+  {
+    "p": "packages/desktop/resources/skills/boss-industry-researcher/agents/openai.yaml",
+    "size": 288,
+    "mtime": 1785569004000
+  },
+  {
+    "p": "packages/desktop/resources/skills/boss-industry-researcher/SKILL.md",
+    "size": 2500,
+    "mtime": 1785569004000
+  },
+  {
+    "p": "packages/desktop/resources/skills/boss-industry-researcher/新手使用说明.md",
+    "size": 1512,
+    "mtime": 1785569004000
+  },
+  {
+    "p": "packages/desktop/resources/skills/boss-investment-researcher/agents/openai.yaml",
+    "size": 284,
+    "mtime": 1785569004000
+  },
+  {
+    "p": "packages/desktop/resources/skills/boss-investment-researcher/SKILL.md",
+    "size": 2730,
+    "mtime": 1785569004000
+  },
+  {
+    "p": "packages/desktop/resources/skills/boss-investment-researcher/新手使用说明.md",
+    "size": 1598,
+    "mtime": 1785569004000
+  },
+  {
+    "p": "packages/desktop/resources/skills/boss-lead-radar/agents/openai.yaml",
+    "size": 275,
+    "mtime": 1785569004000
+  },
+  {
+    "p": "packages/desktop/resources/skills/boss-lead-radar/SKILL.md",
+    "size": 2887,
+    "mtime": 1785569004000
+  },
+  {
+    "p": "packages/desktop/resources/skills/boss-lead-radar/新手使用说明.md",
+    "size": 1620,
+    "mtime": 1785569004000
+  },
+  {
+    "p": "packages/desktop/resources/skills/boss-private-lead-manager/agents/openai.yaml",
+    "size": 286,
+    "mtime": 1785569004000
+  },
+  {
+    "p": "packages/desktop/resources/skills/boss-private-lead-manager/SKILL.md",
+    "size": 2370,
+    "mtime": 1785569004000
+  },
+  {
+    "p": "packages/desktop/resources/skills/boss-private-lead-manager/新手使用说明.md",
+    "size": 1409,
+    "mtime": 1785569004000
+  },
+  {
+    "p": "packages/desktop/resources/skills/boss-sales-followup/agents/openai.yaml",
+    "size": 288,
+    "mtime": 1785569004000
+  },
+  {
+    "p": "packages/desktop/resources/skills/boss-sales-followup/SKILL.md",
+    "size": 2484,
+    "mtime": 1785569004000
+  },
+  {
+    "p": "packages/desktop/resources/skills/boss-sales-followup/新手使用说明.md",
+    "size": 1459,
+    "mtime": 1785569004000
+  },
+  {
+    "p": "packages/desktop/resources/skills/boss-video-auto-editor/agents/openai.yaml",
+    "size": 297,
+    "mtime": 1785569004000
+  },
+  {
+    "p": "packages/desktop/resources/skills/boss-video-auto-editor/references/cli-setup.md",
+    "size": 1281,
+    "mtime": 1785569004000
+  },
+  {
+    "p": "packages/desktop/resources/skills/boss-video-auto-editor/scripts/video_cli.py",
+    "size": 9024,
+    "mtime": 1785569004000
+  },
+  {
+    "p": "packages/desktop/resources/skills/boss-video-auto-editor/SKILL.md",
+    "size": 2563,
+    "mtime": 1785569004000
+  },
+  {
+    "p": "packages/desktop/resources/skills/boss-video-auto-editor/新手使用说明.md",
+    "size": 1612,
+    "mtime": 1785569004000
+  },
+  {
+    "p": "packages/desktop/resources/skills/boss-video-lead-script/agents/openai.yaml",
+    "size": 301,
+    "mtime": 1785569004000
+  },
+  {
+    "p": "packages/desktop/resources/skills/boss-video-lead-script/SKILL.md",
+    "size": 2280,
+    "mtime": 1785569004000
+  },
+  {
+    "p": "packages/desktop/resources/skills/boss-video-lead-script/新手使用说明.md",
+    "size": 1372,
+    "mtime": 1785569004000
+  },
+  {
+    "p": "packages/desktop/resources/skills/boss-wechat-publisher/agents/openai.yaml",
+    "size": 291,
+    "mtime": 1785569004000
+  },
+  {
+    "p": "packages/desktop/resources/skills/boss-wechat-publisher/references/cli-setup.md",
+    "size": 1316,
+    "mtime": 1785569004000
+  },
+  {
+    "p": "packages/desktop/resources/skills/boss-wechat-publisher/scripts/wechat_cli.py",
+    "size": 6847,
+    "mtime": 1785569004000
+  },
+  {
+    "p": "packages/desktop/resources/skills/boss-wechat-publisher/SKILL.md",
+    "size": 2360,
+    "mtime": 1785569004000
+  },
+  {
+    "p": "packages/desktop/resources/skills/boss-wechat-publisher/新手使用说明.md",
+    "size": 1678,
+    "mtime": 1785569004000
+  },
+  {
+    "p": "packages/desktop/resources/skills/boss-xhs-lead-agent/agents/openai.yaml",
+    "size": 283,
+    "mtime": 1785569004000
+  },
+  {
+    "p": "packages/desktop/resources/skills/boss-xhs-lead-agent/SKILL.md",
+    "size": 2285,
+    "mtime": 1785569004000
+  },
+  {
+    "p": "packages/desktop/resources/skills/boss-xhs-lead-agent/新手使用说明.md",
+    "size": 1401,
+    "mtime": 1785569004000
+  },
+  {
+    "p": "packages/desktop/resources/skills/skill-manifest.json",
+    "size": 1781,
+    "mtime": 1785569004000
+  },
+  {
+    "p": "packages/desktop/resources/skills/templates/企业基础资料.md",
+    "size": 1169,
+    "mtime": 1785569004000
+  },
+  {
+    "p": "packages/desktop/resources/skills/templates/同行账号清单.csv",
+    "size": 146,
+    "mtime": 1785569004000
+  },
+  {
+    "p": "packages/desktop/resources/skills/templates/潜在客户导入模板.csv",
+    "size": 245,
+    "mtime": 1785569004000
+  },
+  {
+    "p": "packages/desktop/resources/skills/templates/私域客户导入模板.csv",
+    "size": 265,
+    "mtime": 1785569004000
+  },
+  {
+    "p": "packages/desktop/resources/skills/templates/聊天记录示例.txt",
+    "size": 323,
+    "mtime": 1785569004000
+  },
+  {
+    "p": "packages/desktop/resources/skills/templates/评论导入模板.csv",
+    "size": 237,
+    "mtime": 1785569004000
+  },
+  {
+    "p": "packages/desktop/src/main/gateway.ts",
+    "size": 6711,
+    "mtime": 1793332023232
+  },
+  {
+    "p": "packages/desktop/src/main/index.ts",
+    "size": 11302,
+    "mtime": 1793799524143
+  }
+]

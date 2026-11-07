@@ -1,0 +1,4 @@
+interface:
+  display_name: "投资研究咨询官"
+  short_description: "从商业模式、财务、竞争、估值和风险分析项目并同时输出支持与反对观点"
+  default_prompt: "使用 $boss-investment-researcher 分析这个项目是否值得进一步投资研究。"

@@ -1,0 +1,337 @@
+[
+  {
+    "p": "scripts/audit/01-collect.mjs",
+    "size": 6106,
+    "mtime": 1793801148948
+  },
+  {
+    "p": "scripts/audit/02-verify-ipc.mjs",
+    "size": 2099,
+    "mtime": 1793800703152
+  },
+  {
+    "p": "scripts/audit/03-diff.mjs",
+    "size": 4841,
+    "mtime": 1793801222962
+  },
+  {
+    "p": "scripts/audit/04-copy-diff.mjs",
+    "size": 2149,
+    "mtime": 1793785418518
+  },
+  {
+    "p": "scripts/audit/05-report.mjs",
+    "size": 9091,
+    "mtime": 1793867655024
+  },
+  {
+    "p": "scripts/audit/lib.mjs",
+    "size": 6397,
+    "mtime": 1793825400794
+  },
+  {
+    "p": "scripts/audit/_probe.mjs",
+    "size": 318,
+    "mtime": 1793785461079
+  },
+  {
+    "p": "scripts/check-skills-content.mjs",
+    "size": 3572,
+    "mtime": 1793910159058
+  },
+  {
+    "p": "scripts/coord.mjs",
+    "size": 21473,
+    "mtime": 1793800348581
+  },
+  {
+    "p": "scripts/dev-down.ps1",
+    "size": 743,
+    "mtime": 1793786371116
+  },
+  {
+    "p": "scripts/dev-up.ps1",
+    "size": 2772,
+    "mtime": 1793786371116
+  },
+  {
+    "p": "scripts/diagnose-oss-cleanup.mjs",
+    "size": 1032,
+    "mtime": 1793906548284
+  },
+  {
+    "p": "scripts/diagnose-oss-curl.mjs",
+    "size": 2071,
+    "mtime": 1793906830465
+  },
+  {
+    "p": "scripts/diagnose-oss-list.mjs",
+    "size": 900,
+    "mtime": 1793906351909
+  },
+  {
+    "p": "scripts/diagnose-oss-readonly.mjs",
+    "size": 2494,
+    "mtime": 1793908784307
+  },
+  {
+    "p": "scripts/diagnose-oss-write.mjs",
+    "size": 2898,
+    "mtime": 1793906718379
+  },
+  {
+    "p": "scripts/e2e-acceptance-prod.mjs",
+    "size": 6787,
+    "mtime": 1793899441218
+  },
+  {
+    "p": "scripts/e2e-compose-prod.mjs",
+    "size": 3401,
+    "mtime": 1793888961591
+  },
+  {
+    "p": "scripts/e2e-compose.mjs",
+    "size": 3837,
+    "mtime": 1793887998482
+  },
+  {
+    "p": "scripts/e2e-extapps.mjs",
+    "size": 3949,
+    "mtime": 1793891539990
+  },
+  {
+    "p": "scripts/e2e-gateway.ps1",
+    "size": 3590,
+    "mtime": 1793332028039
+  },
+  {
+    "p": "scripts/e2e-imagevideo.mjs",
+    "size": 3228,
+    "mtime": 1793897358964
+  },
+  {
+    "p": "scripts/e2e-mixcut.mjs",
+    "size": 2634,
+    "mtime": 1793891639164
+  },
+  {
+    "p": "scripts/e2e-video.mjs",
+    "size": 2479,
+    "mtime": 1793897761818
+  },
+  {
+    "p": "scripts/gen-skills-content.mjs",
+    "size": 3196,
+    "mtime": 1793910159033
+  },
+  {
+    "p": "scripts/import-secrets.mjs",
+    "size": 4602,
+    "mtime": 1793872059851
+  },
+  {
+    "p": "scripts/live-t32-status.mjs",
+    "size": 1426,
+    "mtime": 1793905510790
+  },
+  {
+    "p": "scripts/live-t32.mjs",
+    "size": 4064,
+    "mtime": 1793905368108
+  },
+  {
+    "p": "scripts/reconcile-local-t32.mjs",
+    "size": 2689,
+    "mtime": 1793907443756
+  },
+  {
+    "p": "scripts/release-desktop.ps1",
+    "size": 2414,
+    "mtime": 1793889759480
+  },
+  {
+    "p": "scripts/shot-admin.mjs",
+    "size": 3935,
+    "mtime": 1793869909150
+  },
+  {
+    "p": "scripts/smoke-admin-ui.mjs",
+    "size": 3120,
+    "mtime": 1793869837780
+  },
+  {
+    "p": "scripts/smoke-capabilities.mjs",
+    "size": 5359,
+    "mtime": 1793904833062
+  },
+  {
+    "p": "scripts/smoke-m65.mjs",
+    "size": 3629,
+    "mtime": 1793785873102
+  },
+  {
+    "p": "scripts/smoke-t08.mjs",
+    "size": 10378,
+    "mtime": 1793860007987
+  },
+  {
+    "p": "scripts/smoke-t12.mjs",
+    "size": 9489,
+    "mtime": 1793860470951
+  },
+  {
+    "p": "scripts/smoke-t14.mjs",
+    "size": 13822,
+    "mtime": 1793867578153
+  },
+  {
+    "p": "scripts/smoke-t19.mjs",
+    "size": 6576,
+    "mtime": 1793903782053
+  },
+  {
+    "p": "scripts/smoke-t30.mjs",
+    "size": 10892,
+    "mtime": 1793902876505
+  },
+  {
+    "p": "scripts/smoke-t32-loop.mjs",
+    "size": 2079,
+    "mtime": 1793904241659
+  },
+  {
+    "p": "scripts/smoke-t32-worker.mjs",
+    "size": 3839,
+    "mtime": 1793905738433
+  },
+  {
+    "p": "scripts/smoke-t32.mjs",
+    "size": 3526,
+    "mtime": 1793903954386
+  },
+  {
+    "p": "scripts/smoke-t33.mjs",
+    "size": 10708,
+    "mtime": 1793905500516
+  },
+  {
+    "p": "scripts/smoke-w2-billing.mjs",
+    "size": 3336,
+    "mtime": 1793860007990
+  },
+  {
+    "p": "scripts/smoke-w2.mjs",
+    "size": 4957,
+    "mtime": 1793860007988
+  },
+  {
+    "p": "scripts/smoke-web-safety.mjs",
+    "size": 551,
+    "mtime": 1793904790459
+  },
+  {
+    "p": "scripts/verify.ps1",
+    "size": 5381,
+    "mtime": 1793908736569
+  },
+  {
+    "p": "scripts/_accept_t32_local.mjs",
+    "size": 3554,
+    "mtime": 1793907552675
+  },
+  {
+    "p": "scripts/_accept_t32_prod.mjs",
+    "size": 3387,
+    "mtime": 1793907266284
+  },
+  {
+    "p": "scripts/_assign_t36.mjs",
+    "size": 628,
+    "mtime": 1793910076123
+  },
+  {
+    "p": "scripts/_backfill_cv.mjs",
+    "size": 563,
+    "mtime": 1793892480448
+  },
+  {
+    "p": "scripts/_cu.ps1",
+    "size": 2034,
+    "mtime": 1793870852385
+  },
+  {
+    "p": "scripts/_dns_probe.cjs",
+    "size": 294,
+    "mtime": 1793907818863
+  },
+  {
+    "p": "scripts/_env.mjs",
+    "size": 618,
+    "mtime": 1793860007982
+  },
+  {
+    "p": "scripts/_guard_probe.cjs",
+    "size": 987,
+    "mtime": 1793907930907
+  },
+  {
+    "p": "scripts/_lipsync_e2e.mjs",
+    "size": 2228,
+    "mtime": 1793880970860
+  },
+  {
+    "p": "scripts/_poll-mixcut.mjs",
+    "size": 1507,
+    "mtime": 1793892366607
+  },
+  {
+    "p": "scripts/_probe_cv.mjs",
+    "size": 618,
+    "mtime": 1793892355880
+  },
+  {
+    "p": "scripts/_probe_extract.mjs",
+    "size": 829,
+    "mtime": 1793907747188
+  },
+  {
+    "p": "scripts/_rh-query.mjs",
+    "size": 612,
+    "mtime": 1793892073967
+  },
+  {
+    "p": "scripts/_rh.mjs",
+    "size": 639,
+    "mtime": 1793873992512
+  },
+  {
+    "p": "scripts/_rhq.mjs",
+    "size": 428,
+    "mtime": 1793897633880
+  },
+  {
+    "p": "scripts/_rh_e2e.mjs",
+    "size": 2563,
+    "mtime": 1793876506938
+  },
+  {
+    "p": "scripts/_rule_probe.cjs",
+    "size": 973,
+    "mtime": 1793907955175
+  },
+  {
+    "p": "scripts/_v6rule.cjs",
+    "size": 458,
+    "mtime": 1793907976167
+  },
+  {
+    "p": "scripts/_verify_employee_crawl.mjs",
+    "size": 1990,
+    "mtime": 1793908475841
+  },
+  {
+    "p": "scripts/_xlsx.mjs",
+    "size": 1072,
+    "mtime": 1793873947614
+  }
+]

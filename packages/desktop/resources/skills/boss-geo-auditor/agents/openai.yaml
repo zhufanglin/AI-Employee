@@ -1,0 +1,4 @@
+interface:
+  display_name: "GEO商机诊断官"
+  short_description: "诊断品牌在主流AI回答中的可见度，分析竞品占位、问题缺口和内容机会"
+  default_prompt: "使用 $boss-geo-auditor 诊断我的品牌为什么没有被AI优先推荐。"

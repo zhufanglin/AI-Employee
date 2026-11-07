@@ -1,0 +1,317 @@
+[
+  {
+    "p": "packages/server/src/media/media.controller.ts",
+    "size": 2328,
+    "mtime": 1793876240316
+  },
+  {
+    "p": "packages/server/src/media/media.module.ts",
+    "size": 243,
+    "mtime": 1793812215091
+  },
+  {
+    "p": "packages/server/src/media/media.service.ts",
+    "size": 16398,
+    "mtime": 1793880704889
+  },
+  {
+    "p": "packages/desktop/src/main/executor.ts",
+    "size": 7569,
+    "mtime": 1793867805119
+  },
+  {
+    "p": "packages/desktop/src/main/gateway.ts",
+    "size": 7089,
+    "mtime": 1793800107393
+  },
+  {
+    "p": "packages/desktop/src/main/index.ts",
+    "size": 16312,
+    "mtime": 1793876488124
+  },
+  {
+    "p": "packages/desktop/src/main/update.ts",
+    "size": 3871,
+    "mtime": 1793864059011
+  },
+  {
+    "p": "packages/desktop/src/main/workspace-assets.ts",
+    "size": 3461,
+    "mtime": 1793800169364
+  },
+  {
+    "p": "packages/desktop/src/preload/index.ts",
+    "size": 4727,
+    "mtime": 1793867844247
+  },
+  {
+    "p": "packages/desktop/src/renderer/index.html",
+    "size": 391,
+    "mtime": 1793329302019
+  },
+  {
+    "p": "packages/desktop/src/renderer/src/App.tsx",
+    "size": 1244,
+    "mtime": 1793864106194
+  },
+  {
+    "p": "packages/desktop/src/renderer/src/main.tsx",
+    "size": 229,
+    "mtime": 1793329315334
+  },
+  {
+    "p": "packages/desktop/src/renderer/src/pages/Chat.tsx",
+    "size": 4174,
+    "mtime": 1793329333329
+  },
+  {
+    "p": "packages/desktop/src/renderer/src/pages/Credits.tsx",
+    "size": 1614,
+    "mtime": 1793329333394
+  },
+  {
+    "p": "packages/desktop/src/renderer/src/pages/EmployeeOffice.tsx",
+    "size": 10665,
+    "mtime": 1793867851204
+  },
+  {
+    "p": "packages/desktop/src/renderer/src/pages/Gateway.tsx",
+    "size": 2626,
+    "mtime": 1793330370686
+  },
+  {
+    "p": "packages/desktop/src/renderer/src/pages/Login.tsx",
+    "size": 3189,
+    "mtime": 1793329315489
+  },
+  {
+    "p": "packages/desktop/src/renderer/src/pages/Onboarding.tsx",
+    "size": 3375,
+    "mtime": 1793876498704
+  },
+  {
+    "p": "packages/desktop/src/renderer/src/pages/Settings.tsx",
+    "size": 1894,
+    "mtime": 1793864122015
+  },
+  {
+    "p": "packages/desktop/src/renderer/src/pages/Shell.tsx",
+    "size": 2515,
+    "mtime": 1793799524153
+  },
+  {
+    "p": "packages/desktop/src/renderer/src/styles.css",
+    "size": 11765,
+    "mtime": 1793867862984
+  },
+  {
+    "p": "packages/desktop/src/renderer/src/types.ts",
+    "size": 2224,
+    "mtime": 1793799524151
+  },
+  {
+    "p": "packages/server/prisma/employees.ts",
+    "size": 24715,
+    "mtime": 1793785773192
+  },
+  {
+    "p": "packages/server/prisma/migrations/20261029145143_init/migration.sql",
+    "size": 28161,
+    "mtime": 1793285503222
+  },
+  {
+    "p": "packages/server/prisma/migrations/20261030021514_w2_provider_and_quota/migration.sql",
+    "size": 1037,
+    "mtime": 1793326514155
+  },
+  {
+    "p": "packages/server/prisma/migrations/20261104094917_m65_employee/migration.sql",
+    "size": 4138,
+    "mtime": 1793785757669
+  },
+  {
+    "p": "packages/server/prisma/migrations/20261104131526_t08_package_grant/migration.sql",
+    "size": 1001,
+    "mtime": 1793798126630
+  },
+  {
+    "p": "packages/server/prisma/migrations/20261104214000_t23_usage_needs_review/migration.sql",
+    "size": 138,
+    "mtime": 1793799168401
+  },
+  {
+    "p": "packages/server/prisma/migrations/20261104214446_employee_execution_nodes/migration.sql",
+    "size": 979,
+    "mtime": 1793828686431
+  },
+  {
+    "p": "packages/server/prisma/migrations/20261105063459_t12_payments/migration.sql",
+    "size": 357,
+    "mtime": 1793860499661
+  },
+  {
+    "p": "packages/server/prisma/migrations/20261105105808_t30_media_result/migration.sql",
+    "size": 168,
+    "mtime": 1793876288222
+  },
+  {
+    "p": "packages/server/prisma/migrations/migration_lock.toml",
+    "size": 123,
+    "mtime": 1793876288222
+  },
+  {
+    "p": "packages/server/prisma/schema.prisma",
+    "size": 26804,
+    "mtime": 1793876240008
+  },
+  {
+    "p": "packages/server/prisma/seed.ts",
+    "size": 7687,
+    "mtime": 1793862118085
+  },
+  {
+    "p": "scripts/audit/01-collect.mjs",
+    "size": 6106,
+    "mtime": 1793801148948
+  },
+  {
+    "p": "scripts/audit/02-verify-ipc.mjs",
+    "size": 2099,
+    "mtime": 1793800703152
+  },
+  {
+    "p": "scripts/audit/03-diff.mjs",
+    "size": 4841,
+    "mtime": 1793801222962
+  },
+  {
+    "p": "scripts/audit/04-copy-diff.mjs",
+    "size": 2149,
+    "mtime": 1793785418518
+  },
+  {
+    "p": "scripts/audit/05-report.mjs",
+    "size": 9091,
+    "mtime": 1793867655024
+  },
+  {
+    "p": "scripts/audit/lib.mjs",
+    "size": 6397,
+    "mtime": 1793825400794
+  },
+  {
+    "p": "scripts/audit/_probe.mjs",
+    "size": 318,
+    "mtime": 1793785461079
+  },
+  {
+    "p": "scripts/coord.mjs",
+    "size": 21473,
+    "mtime": 1793800348581
+  },
+  {
+    "p": "scripts/dev-down.ps1",
+    "size": 743,
+    "mtime": 1793786371116
+  },
+  {
+    "p": "scripts/dev-up.ps1",
+    "size": 2772,
+    "mtime": 1793786371116
+  },
+  {
+    "p": "scripts/e2e-gateway.ps1",
+    "size": 3590,
+    "mtime": 1793332028039
+  },
+  {
+    "p": "scripts/import-secrets.mjs",
+    "size": 4602,
+    "mtime": 1793872059851
+  },
+  {
+    "p": "scripts/release-desktop.ps1",
+    "size": 2067,
+    "mtime": 1793864705223
+  },
+  {
+    "p": "scripts/shot-admin.mjs",
+    "size": 3935,
+    "mtime": 1793869909150
+  },
+  {
+    "p": "scripts/smoke-admin-ui.mjs",
+    "size": 3120,
+    "mtime": 1793869837780
+  },
+  {
+    "p": "scripts/smoke-m65.mjs",
+    "size": 3629,
+    "mtime": 1793785873102
+  },
+  {
+    "p": "scripts/smoke-t08.mjs",
+    "size": 10378,
+    "mtime": 1793860007987
+  },
+  {
+    "p": "scripts/smoke-t12.mjs",
+    "size": 9489,
+    "mtime": 1793860470951
+  },
+  {
+    "p": "scripts/smoke-t14.mjs",
+    "size": 13822,
+    "mtime": 1793867578153
+  },
+  {
+    "p": "scripts/smoke-t19.mjs",
+    "size": 6576,
+    "mtime": 1793867996336
+  },
+  {
+    "p": "scripts/smoke-w2-billing.mjs",
+    "size": 3336,
+    "mtime": 1793860007990
+  },
+  {
+    "p": "scripts/smoke-w2.mjs",
+    "size": 4957,
+    "mtime": 1793860007988
+  },
+  {
+    "p": "scripts/verify.ps1",
+    "size": 3961,
+    "mtime": 1793869837797
+  },
+  {
+    "p": "scripts/_cu.ps1",
+    "size": 2034,
+    "mtime": 1793870852385
+  },
+  {
+    "p": "scripts/_env.mjs",
+    "size": 618,
+    "mtime": 1793860007982
+  },
+  {
+    "p": "scripts/_lipsync_e2e.mjs",
+    "size": 2228,
+    "mtime": 1793880970860
+  },
+  {
+    "p": "scripts/_rh.mjs",
+    "size": 639,
+    "mtime": 1793873992512
+  },
+  {
+    "p": "scripts/_rh_e2e.mjs",
+    "size": 2563,
+    "mtime": 1793876506938
+  },
+  {
+    "p": "scripts/_xlsx.mjs",
+    "size": 1072,
+    "mtime": 1793873947614
+  }
+]

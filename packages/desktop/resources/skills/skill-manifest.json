@@ -1,0 +1,23 @@
+{
+  "package": "老板必装的17个AI员工Skill",
+  "version": "1.0.0",
+  "skills": [
+    {"name":"boss-lead-radar","display_name":"AI获客线索雷达","cli":"optional"},
+    {"name":"boss-sales-followup","display_name":"AI销售跟进销冠","cli":"optional"},
+    {"name":"boss-comment-opportunity","display_name":"评论区商机识别官","cli":"optional"},
+    {"name":"boss-chat-deal-analyzer","display_name":"客户聊天成交分析官","cli":"none"},
+    {"name":"boss-competitor-viral-radar","display_name":"同行爆款雷达","cli":"optional"},
+    {"name":"boss-daily-lead-topics","display_name":"每日精准获客选题官","cli":"none"},
+    {"name":"boss-export-sales-agent","display_name":"AI外贸开发客户员工","cli":"optional"},
+    {"name":"boss-xhs-lead-agent","display_name":"小红书精准获客员工","cli":"optional"},
+    {"name":"boss-private-lead-manager","display_name":"私域客户分层跟进官","cli":"optional"},
+    {"name":"boss-geo-auditor","display_name":"GEO商机诊断官","cli":"optional"},
+    {"name":"boss-ai-team-orchestrator","display_name":"一人公司AI员工调度官","cli":"none"},
+    {"name":"boss-video-lead-script","display_name":"老板短视频获客脚本官","cli":"none"},
+    {"name":"boss-blogger-deconstructor","display_name":"博主账号深度拆解官","cli":"optional"},
+    {"name":"boss-video-auto-editor","display_name":"AI短视频自动剪辑师","cli":"required_for_render"},
+    {"name":"boss-wechat-publisher","display_name":"公众号自动运营发布官","cli":"required_for_publish"},
+    {"name":"boss-industry-researcher","display_name":"行业深度分析师","cli":"optional"},
+    {"name":"boss-investment-researcher","display_name":"投资研究咨询官","cli":"optional"}
+  ]
+}

@@ -1,0 +1,4 @@
+interface:
+  display_name: "客户聊天成交分析官"
+  short_description: "分析销售聊天中的预算、决策权、真实顾虑、成交概率与下一句回复"
+  default_prompt: "使用 $boss-chat-deal-analyzer 分析这段客户聊天并给出下一句回复。"

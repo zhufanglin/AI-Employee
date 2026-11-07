@@ -1,0 +1,102 @@
+[
+  {
+    "p": "packages/desktop/src/main/executor.ts",
+    "size": 7569,
+    "mtime": 1793867805119
+  },
+  {
+    "p": "packages/desktop/src/main/gateway.ts",
+    "size": 7089,
+    "mtime": 1793800107393
+  },
+  {
+    "p": "packages/desktop/src/main/index.ts",
+    "size": 17800,
+    "mtime": 1793885647017
+  },
+  {
+    "p": "packages/desktop/src/main/update.ts",
+    "size": 3871,
+    "mtime": 1793864059011
+  },
+  {
+    "p": "packages/desktop/src/main/workspace-assets.ts",
+    "size": 3461,
+    "mtime": 1793800169364
+  },
+  {
+    "p": "packages/desktop/src/preload/index.ts",
+    "size": 5670,
+    "mtime": 1793885647070
+  },
+  {
+    "p": "packages/desktop/src/renderer/index.html",
+    "size": 391,
+    "mtime": 1793329302019
+  },
+  {
+    "p": "packages/desktop/src/renderer/src/App.tsx",
+    "size": 1244,
+    "mtime": 1793864106194
+  },
+  {
+    "p": "packages/desktop/src/renderer/src/main.tsx",
+    "size": 229,
+    "mtime": 1793329315334
+  },
+  {
+    "p": "packages/desktop/src/renderer/src/pages/Chat.tsx",
+    "size": 4174,
+    "mtime": 1793329333329
+  },
+  {
+    "p": "packages/desktop/src/renderer/src/pages/Credits.tsx",
+    "size": 1614,
+    "mtime": 1793329333394
+  },
+  {
+    "p": "packages/desktop/src/renderer/src/pages/EmployeeOffice.tsx",
+    "size": 10665,
+    "mtime": 1793867851204
+  },
+  {
+    "p": "packages/desktop/src/renderer/src/pages/Gateway.tsx",
+    "size": 2626,
+    "mtime": 1793330370686
+  },
+  {
+    "p": "packages/desktop/src/renderer/src/pages/Login.tsx",
+    "size": 3189,
+    "mtime": 1793329315489
+  },
+  {
+    "p": "packages/desktop/src/renderer/src/pages/MediaStudio.tsx",
+    "size": 10727,
+    "mtime": 1793892567462
+  },
+  {
+    "p": "packages/desktop/src/renderer/src/pages/Onboarding.tsx",
+    "size": 3375,
+    "mtime": 1793876498704
+  },
+  {
+    "p": "packages/desktop/src/renderer/src/pages/Settings.tsx",
+    "size": 1894,
+    "mtime": 1793864122015
+  },
+  {
+    "p": "packages/desktop/src/renderer/src/pages/Shell.tsx",
+    "size": 2935,
+    "mtime": 1793885379461
+  },
+  {
+    "p": "packages/desktop/src/renderer/src/styles.css",
+    "size": 12686,
+    "mtime": 1793885689243
+  },
+  {
+    "p": "packages/desktop/src/renderer/src/types.ts",
+    "size": 2224,
+    "mtime": 1793799524151
+  }
+]

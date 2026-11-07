@@ -1,0 +1,4 @@
+interface:
+  display_name: "AI短视频自动剪辑师"
+  short_description: "分析本地视频并生成删停顿、加字幕、拆高光片段和多平台导出的剪辑方案"
+  default_prompt: "使用 $boss-video-auto-editor 处理这段本地视频并输出适合短视频平台的成片。"

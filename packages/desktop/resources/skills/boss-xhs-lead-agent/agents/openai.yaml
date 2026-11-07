@@ -1,0 +1,4 @@
+interface:
+  display_name: "小红书精准获客员工"
+  short_description: "研究搜索关键词与竞品笔记，生成小红书获客选题、笔记和私信承接方案"
+  default_prompt: "使用 $boss-xhs-lead-agent 为我的产品设计一套小红书精准获客内容。"

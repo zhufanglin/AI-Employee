@@ -1,0 +1,39 @@
+# FCMediaAgent 个人微信本地网桥 —— 完整依赖（真实模式 + Mock 模式）
+# 适用平台：Windows 10/11 x64
+#
+# !! Python 版本硬约束 !!：真实模式驱动 wxauto4 要求 Python >=3.9,<3.14。
+# 本机系统默认的 Python 3.14 装不上 wxauto4，请统一用 Python 3.12 建 venv：
+#   py -3.12 -m venv %LOCALAPPDATA%\FCMediaAgent\wechat-bridge\venv
+# scripts/setup-windows.ps1 已自动完成这一步（找 3.12 → 建 venv → 装依赖）。
+#
+# 国内安装建议（在 venv 里执行）：
+#   py -3.12 -m pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
+#
+# Web 框架：三个版本与自检通过的环境完全一致，避免 FastAPI/Pydantic 漂移。
+fastapi==0.143.0
+# 纯 Python uvicorn：不要写 uvicorn[standard]，它会拉 httptools/uvloop（需要 C 扩展，
+# 新版 Python 上常无预编译包，安装会失败；网桥不需要这两个加速件）。
+uvicorn==0.54.0
+pydantic==2.14.0
+
+# 真实模式驱动 A（推荐）：wechatauto-replica —— GUI 自动化 + 屏幕 OCR。
+# 不依赖微信主窗口的 UIA 无障碍树，因此兼容最新的微信 4.1.15.x（实测可用）；
+# 需要 Python 3.12（与 wxauto4 相同）。
+wechatauto-replica==1.2.9
+
+# 真实模式驱动 B：wxauto4（纯 UIA）。
+# wxauto4 的版本号跟微信客户端版本走：40.1.x 配微信 4.0.x，41.1.x 配微信 4.1.x。
+# 但免费版只支持到微信 4.1.8.107 —— 微信 4.1.15 起主窗口 UIA 树为空，会报
+# 「未找到已登录的客户端主窗口」。只有在把微信降级到 4.1.8.107 时才有意义。
+# 注意：41.x 发行包是编译版 .pyd（cp312-win_amd64），只有 .pyi 存根可读，
+# 只能在 Python 3.12 上运行（Python 3.14 会直接导入失败）。
+# 保留安装（可作为降级路线或对比用）；网桥默认 auto 会优先选 wechatauto。
+wxauto4==41.1.7
+
+# ---- 旧版回退（微信 3.9.x），默认不安装 ----
+# 微信 3.9.x 已被腾讯封停登录（扫码报「当前微信版本过低」），实际不可用；
+# 这里保留只是为了 WECHAT_BRIDGE_BACKEND=wxauto 时还能手工装回旧库对比。
+# wxauto 已从 PyPI 下架，锁定 GitHub 指定 commit（pyproject 版本 39.2.1）。
+# 需要时手动执行：
+#   py -3.12 -m pip install "wxauto @ https://github.com/cluic/wxauto/archive/05e5a52379c99f401dc512acfdd811b3d701da8b.zip"
+# wxauto @ https://github.com/cluic/wxauto/archive/05e5a52379c99f401dc512acfdd811b3d701da8b.zip

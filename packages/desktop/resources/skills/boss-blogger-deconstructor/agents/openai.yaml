@@ -1,0 +1,4 @@
+interface:
+  display_name: "博主账号深度拆解官"
+  short_description: "拆解博主定位、人设、选题、爆款结构、表达风格、引流路径和变现模式"
+  default_prompt: "使用 $boss-blogger-deconstructor 深度拆解这个博主账号的流量和变现逻辑。"

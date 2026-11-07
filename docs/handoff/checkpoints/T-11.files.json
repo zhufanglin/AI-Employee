@@ -1,0 +1,17 @@
+[
+  {
+    "p": "packages/desktop/src/main/gateway.ts",
+    "size": 7089,
+    "mtime": 1793800107393
+  },
+  {
+    "p": "packages/desktop/src/main/index.ts",
+    "size": 11510,
+    "mtime": 1793800107395
+  },
+  {
+    "p": "packages/desktop/src/main/workspace-assets.ts",
+    "size": 3461,
+    "mtime": 1793800169364
+  }
+]

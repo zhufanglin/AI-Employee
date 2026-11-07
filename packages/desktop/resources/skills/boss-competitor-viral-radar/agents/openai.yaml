@@ -1,0 +1,4 @@
+interface:
+  display_name: "同行爆款雷达"
+  short_description: "持续拆解同行高互动内容，提炼爆款选题、内容结构、开头和转化方式"
+  default_prompt: "使用 $boss-competitor-viral-radar 分析这些同行账号最近的爆款内容。"

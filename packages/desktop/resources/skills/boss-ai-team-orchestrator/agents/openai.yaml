@@ -1,0 +1,4 @@
+interface:
+  display_name: "一人公司AI员工调度官"
+  short_description: "把老板经营目标拆给内容、销售、客服、运营和数据角色并汇总执行结果"
+  default_prompt: "使用 $boss-ai-team-orchestrator 把这个经营目标拆成一支AI团队的执行计划。"

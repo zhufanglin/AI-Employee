@@ -1,0 +1,187 @@
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from "@nestjs/common";
+import { PrismaService } from "../prisma/prisma.service";
+
+/** 原版 employee-order.service.js 的购买时长选项 */
+export const DURATION_OPTIONS = [
+  { label: "1天", days: 1 },
+  { label: "周", days: 7 },
+  { label: "月", days: 30 },
+  { label: "季度", days: 90 },
+  { label: "年", days: 365 },
+];
+const VALID_DAYS = DURATION_OPTIONS.map((o) => o.days);
+/** 未支付订单 30 分钟过期（原版 expiredAt = now + 30min） */
+const ORDER_TTL_MS = 30 * 60 * 1000;
+
+function generateOrderNo(): string {
+  const d = new Date();
+  const pad = (n: number, w = 2) => String(n).padStart(w, "0");
+  const stamp =
+    d.getFullYear().toString() +
+    pad(d.getMonth() + 1) +
+    pad(d.getDate()) +
+    pad(d.getHours()) +
+    pad(d.getMinutes()) +
+    pad(d.getSeconds());
+  return `EO${stamp}${Math.floor(Math.random() * 1000000).toString().padStart(6, "0")}`;
+}
+
+@Injectable()
+export class EmployeeOrderService {
+  constructor(private readonly prisma: PrismaService) {}
+
+  durationOptions() {
+    return DURATION_OPTIONS;
+  }
+
+  /** 按天购买员工：totalAmount = pricePerDay * durationDays（原版语义） */
+  async createOrder(userId: string, slug: string, durationDaysRaw: unknown) {
+    const emp = await this.prisma.aiEmployee.findUnique({ where: { slug } });
+    if (!emp || !emp.isActive) throw new NotFoundException("员工不存在或已下架");
+    if (emp.isBundled) throw new BadRequestException("预装员工无需购买");
+    if (emp.price <= 0) throw new BadRequestException("免费员工请直接添加，无需下单");
+    const durationDays = Number(durationDaysRaw);
+    if (!VALID_DAYS.includes(durationDays)) throw new BadRequestException("无效的购买天数");
+
+    const now = new Date();
+    const order = await this.prisma.employeeOrder.create({
+      data: {
+        userId,
+        employeeId: emp.id,
+        employeeSlug: emp.slug,
+        orderNo: generateOrderNo(),
+        durationDays,
+        pricePerDay: emp.price,
+        totalAmount: emp.price * durationDays,
+        payMethod: "wechat",
+        status: "pending",
+        expiredAt: new Date(now.getTime() + ORDER_TTL_MS),
+      },
+    });
+    return {
+      order,
+      employee: { slug: emp.slug, name: emp.name, price: emp.price, priceDisplay: emp.priceDisplay },
+      amount: order.totalAmount,
+      /** 微信支付在 T-12 接入；未配置时只能用管理员 mark-paid 手工开通 */
+      payHint: "支付渠道尚未开通，请联系管理员在后台确认收款后开通",
+    };
+  }
+
+  async mine(userId: string) {
+    const rows = await this.prisma.employeeOrder.findMany({
+      where: { userId },
+      orderBy: { createdAt: "desc" },
+      take: 100,
+    });
+    const now = Date.now();
+    const items = rows.map((o) => ({
+      ...o,
+      /** pending 且已过期 → 视为 closed */
+      expired: o.status === "pending" && o.expiredAt.getTime() <= now,
+    }));
+    return { items, total: items.length, durationOptions: DURATION_OPTIONS };
+  }
+
+  private async findOwn(userId: string, orderNo: string) {
+    const order = await this.prisma.employeeOrder.findUnique({ where: { orderNo } });
+    if (!order) throw new NotFoundException("订单不存在");
+    if (order.userId !== userId) throw new ForbiddenException("无权查看该订单");
+    return order;
+  }
+
+  async status(userId: string, orderNo: string) {
+    const order = await this.findOwn(userId, orderNo);
+    const now = Date.now();
+    return { ...order, expired: order.status === "pending" && order.expiredAt.getTime() <= now };
+  }
+
+  /** 管理员确认收款（手工开通；支付回调在 T-12 复用同一函数） */
+  async markPaid(orderId: string, params: { transactionId?: string } = {}) {
+    const order = await this.prisma.employeeOrder.findUnique({ where: { id: orderId } });
+    if (!order) throw new NotFoundException("订单不存在");
+    if (order.status === "paid") return this.statusForAdmin(order.id);
+    if (order.status !== "pending") throw new BadRequestException("订单状态不允许确认收款");
+
+    const now = new Date();
+    const expiresAt = new Date(now.getTime() + order.durationDays * 86400000);
+    await this.prisma.$transaction(async (tx) => {
+      // 条件更新占位：并发回调/重复点击只有一次能把 pending 改成 paid，避免重复续期
+      const claimed = await tx.employeeOrder.updateMany({
+        where: { id: order.id, status: "pending" },
+        data: {
+          status: "paid",
+          paidAt: now,
+          wechatTransactionId: params.transactionId ?? null,
+          employeeExpiresAt: expiresAt,
+        },
+      });
+      if (claimed.count === 0) return;
+      const existing = await tx.aiEmployeePurchase.findUnique({
+        where: { userId_employeeId: { userId: order.userId, employeeId: order.employeeId } },
+      });
+      const base =
+        existing?.expiresAt && existing.expiresAt.getTime() > now.getTime() ? existing.expiresAt : now;
+      const newExpiry = new Date(base.getTime() + order.durationDays * 86400000);
+      await tx.aiEmployeePurchase.upsert({
+        where: { userId_employeeId: { userId: order.userId, employeeId: order.employeeId } },
+        update: {
+          status: "active",
+          expiresAt: newExpiry,
+          durationDays: order.durationDays,
+          orderNo: order.orderNo,
+          pricePerDay: order.pricePerDay,
+          purchasedAt: now,
+        },
+        create: {
+          userId: order.userId,
+          employeeId: order.employeeId,
+          employeeSlug: order.employeeSlug,
+          status: "active",
+          purchasedAt: now,
+          expiresAt: newExpiry,
+          durationDays: order.durationDays,
+          orderNo: order.orderNo,
+          pricePerDay: order.pricePerDay,
+        },
+      });
+      // 授权后立即把安装记录的到期时间同步（幂等）
+      await tx.aiEmployeeInstall.updateMany({
+        where: { userId: order.userId, employeeId: order.employeeId },
+        data: { enabled: true, expiresAt: newExpiry },
+      });
+    });
+    return this.statusForAdmin(order.id);
+  }
+
+  private async statusForAdmin(id: string) {
+    const rows = await this.prisma.employeeOrder.findMany({ where: { id } });
+    return rows[0];
+  }
+
+  /** 管理员订单列表 */
+  async adminList(query: any) {
+    const page = Math.max(1, Number(query?.page) || 1);
+    const limit = Math.min(100, Math.max(1, Number(query?.limit) || 20));
+    const where: any = {};
+    if (query?.status) where.status = query.status;
+    const [total, items] = await Promise.all([
+      this.prisma.employeeOrder.count({ where }),
+      this.prisma.employeeOrder.findMany({ where, orderBy: { createdAt: "desc" }, skip: (page - 1) * limit, take: limit }),
+    ]);
+    return { total, page, limit, items };
+  }
+
+  /** 到期失效扫描（供定时任务/巡检调用；install/run 已实时判定） */
+  async expireEmployees() {
+    const now = new Date();
+    const res = await this.prisma.aiEmployeePurchase.updateMany({
+      where: { status: "active", expiresAt: { lte: now } },
+      data: { status: "expired" },
+    });
+    const closed = await this.prisma.employeeOrder.updateMany({
+      where: { status: "pending", expiredAt: { lte: now } },
+      data: { status: "closed" },
+    });
+    return { expiredPurchases: res.count, closedOrders: closed.count };
+  }
+}

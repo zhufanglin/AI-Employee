@@ -1,0 +1,4 @@
+interface:
+  display_name: "AI销售跟进销冠"
+  short_description: "分析客户沟通和成交阶段，给出下一步跟进动作、成交话术与节奏建议"
+  default_prompt: "使用 $boss-sales-followup 分析这份客户沟通记录并告诉我下一步怎么跟进成交。"

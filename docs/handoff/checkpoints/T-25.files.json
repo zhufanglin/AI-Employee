@@ -1,0 +1,82 @@
+[
+  {
+    "p": "scripts/audit/01-collect.mjs",
+    "size": 5141,
+    "mtime": 1793785245075
+  },
+  {
+    "p": "scripts/audit/02-verify-ipc.mjs",
+    "size": 1783,
+    "mtime": 1793785307498
+  },
+  {
+    "p": "scripts/audit/03-diff.mjs",
+    "size": 3970,
+    "mtime": 1793785385255
+  },
+  {
+    "p": "scripts/audit/04-copy-diff.mjs",
+    "size": 2149,
+    "mtime": 1793785418518
+  },
+  {
+    "p": "scripts/audit/05-report.mjs",
+    "size": 4533,
+    "mtime": 1793785734487
+  },
+  {
+    "p": "scripts/audit/lib.mjs",
+    "size": 5747,
+    "mtime": 1793785232068
+  },
+  {
+    "p": "scripts/audit/_probe.mjs",
+    "size": 318,
+    "mtime": 1793785461079
+  },
+  {
+    "p": "scripts/coord.mjs",
+    "size": 21160,
+    "mtime": 1793790052313
+  },
+  {
+    "p": "scripts/dev-down.ps1",
+    "size": 743,
+    "mtime": 1793786371116
+  },
+  {
+    "p": "scripts/dev-up.ps1",
+    "size": 2772,
+    "mtime": 1793786371116
+  },
+  {
+    "p": "scripts/e2e-gateway.ps1",
+    "size": 3590,
+    "mtime": 1793332028039
+  },
+  {
+    "p": "scripts/smoke-m65.mjs",
+    "size": 3629,
+    "mtime": 1793785873102
+  },
+  {
+    "p": "scripts/smoke-t08.mjs",
+    "size": 10317,
+    "mtime": 1793798000195
+  },
+  {
+    "p": "scripts/smoke-w2-billing.mjs",
+    "size": 3124,
+    "mtime": 1793326895497
+  },
+  {
+    "p": "scripts/smoke-w2.mjs",
+    "size": 4745,
+    "mtime": 1793799388520
+  },
+  {
+    "p": "scripts/verify.ps1",
+    "size": 3381,
+    "mtime": 1793799388521
+  }
+]

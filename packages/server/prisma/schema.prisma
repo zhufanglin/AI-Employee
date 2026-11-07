@@ -1,0 +1,815 @@
+// 中科元晟复刻版 · prisma schema（由原版 47 表裁剪至 33 表，2026-10-29）
+// 裁剪：飞书/多维表格、公众号登录、会员订阅、录音器、场景视频（见 复刻-范围对齐-v2.md）
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                    String               @id @default(cuid())
+  phone                 String?              @unique
+  email                 String?              @unique
+  passwordHash          String
+  nickname              String?
+  avatar                String?
+  role                  String               @default("user")
+  status                String               @default("active")
+  credits               Int                  @default(0)
+  totalCreditsConsumed  Int                  @default(0)
+  totalCreditsRecharged Int                  @default(0)
+  createdAt             DateTime             @default(now())
+  updatedAt             DateTime             @updatedAt
+  source                String               @default("register")
+  wechatOpenId          String?              @unique
+  wechatUnionId         String?
+  wechatNickname        String?
+  wechatAvatar          String?
+  employeePurchases     AiEmployeePurchase[]
+  aiUsageRecords        AiUsageRecord[]
+  creditTransactions    CreditTransaction[]
+  employeeOrders        EmployeeOrder[]
+  orders                Order[]
+  sessions              Session[]
+  verificationCodes     VerificationCode[]
+  proxyTokens           ProxyToken[]
+  monthlyUsages         UserMonthlyUsage[]
+  packageGrants         UserPackageGrant[]
+  executionNodes        EmployeeExecutionNode[]
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  userId       String
+  accessToken  String   @unique @db.VarChar(512)
+  refreshToken String   @unique @db.VarChar(128)
+  expiresAt    DateTime
+  deviceId     String?
+  createdAt    DateTime @default(now())
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([accessToken])
+  @@index([refreshToken])
+}
+
+model ProxyToken {
+  id         String    @id @default(cuid())
+  userId     String
+  token      String    @unique
+  expiresAt  DateTime
+  createdAt  DateTime  @default(now())
+  lastUsedAt DateTime?
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([userId])
+}
+
+model VerificationCode {
+  id        String   @id @default(cuid())
+  phone     String
+  code      String
+  purpose   String
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+
+  @@index([phone, code, purpose])
+  @@index([userId], map: "VerificationCode_userId_fkey")
+}
+
+model SmsConfig {
+  id           String   @id @default(cuid())
+  provider     String   @default("tencent")
+  secretId     String
+  secretKey    String
+  signName     String
+  templateCode String
+  sdkAppId     String?
+  region       String   @default("ap-guangzhou")
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model ModelPricing {
+  id                  String   @id @default(cuid())
+  modelId             String   @unique
+  modelName           String
+  pricingMode         String   @default("per_request")
+  pricePerRequest     Int      @default(1)
+  pricePerInputToken  Int      @default(0)
+  pricePerOutputToken Int      @default(0)
+  /** 上游供应商：ark | deepseek | moonshot | siliconflow（W2 新增） */
+  provider            String?  @default("ark")
+  /** 真正发给上游的模型 id（如 doubao-seed-2-1-pro-260628，W2 新增） */
+  upstreamModelId     String?
+  isActive            Boolean  @default(true)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+}
+
+model MediaPricing {
+  id                      String   @id @default(cuid())
+  taskType                String   @unique // indextts | lipsync | smart_clip | file_upload
+  taskName                String
+  pricingMode             String // per_request | per_input_second
+  pricePerRequest         Int      @default(1)
+  pricePerInputSecond     Float    @default(0)
+  defaultEstimatedSeconds Int      @default(60)
+  isActive                Boolean  @default(true)
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+}
+
+model MediaTaskRecord {
+  id                 String    @id @default(cuid())
+  taskId             String    @unique
+  userId             String
+  taskType           String
+  estimatedAmount    Int
+  settledAmount      Int?
+  status             String    @default("pending") // pending | settled | refunded
+  inputSeconds       Float?
+  agentSettledAmount Int? // agent 侧实扣站点额度（成本记录）
+  resultUrl          String?   @db.Text
+  providerStatus     String?
+  resultMeta         Json?
+  createdAt          DateTime  @default(now())
+  settledAt          DateTime?
+
+  @@index([userId])
+  @@index([status])
+}
+
+model AiUsageRecord {
+  id                  String             @id @default(cuid())
+  userId              String
+  sessionId           String?
+  modelId             String
+  inputTokens         Int                @default(0)
+  outputTokens        Int                @default(0)
+  totalTokens         Int                @default(0)
+  creditsCharged      Int                @default(0)
+  pricingMode         String
+  requestId           String?
+  isPartialDeduct     Boolean            @default(false)
+  /// 上游未返回实际用量 / 补扣失败等，需人工核对（T-23）
+  needsReview         Boolean            @default(false)
+  reviewNote          String?            @db.Text
+  creditTransactionId String?            @unique
+  channelType         String?
+  channelId           String?
+  correlationId       String?
+  createdAt           DateTime           @default(now())
+  requestContent      String?            @db.MediumText
+  responseContent     String?            @db.MediumText
+  creditTransaction   CreditTransaction? @relation(fields: [creditTransactionId], references: [id])
+  user                User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([modelId, createdAt])
+  @@index([channelType, createdAt])
+  @@index([correlationId])
+}
+
+model SiteConfig {
+  id                       String   @id @default(cuid())
+  siteName                 String   @default("AI员工")
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
+  defaultModelDisplayName  String   @default("40+模型自动切换")
+  defaultProviderName      String   @default("超级大模型")
+  customerServiceQrCodeUrl String?  @db.MediumText
+  aiApiToken               String?  @db.MediumText
+  aiApiBaseUrl             String?  @default("https://zaozao.34ai.cc/api/v1")
+  aiApiChatModel           String?  @default("gpt-5.2")
+  aiApiImageModel          String?  @default("gpt-image-2")
+  freeMonthlyQuota         Int      @default(10)
+  winClientUrl             String?  @db.MediumText
+  macClientUrl             String?  @db.MediumText
+  activeVolcPlanType       String   @default("coding")
+  codingPlanDefaultModel   String   @default("deepseek-v4-flash")
+  agentPlanDefaultModel    String   @default("deepseek-v4-flash")
+  smsLoginEnabled          Boolean  @default(true)
+  voiceAsrApiKey           String   @default("")
+}
+
+model CreditPackage {
+  id           String   @id @default(cuid())
+  name         String
+  credits      Int
+  price        Int
+  priceDisplay String
+  description  String?
+  sort         Int      @default(0)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  orders       Order[]
+}
+
+model CreditTransaction {
+  id             String         @id @default(cuid())
+  userId         String
+  type           String
+  amount         Int
+  balanceBefore  Int
+  balanceAfter   Int
+  description    String
+  relatedOrderId String?
+  createdBy      String?
+  createdAt      DateTime       @default(now())
+  aiUsageRecord  AiUsageRecord?
+  order          Order?         @relation(fields: [relatedOrderId], references: [id])
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([type])
+  @@index([createdAt])
+  @@index([relatedOrderId], map: "CreditTransaction_relatedOrderId_fkey")
+}
+
+model Order {
+  id                  String              @id @default(cuid())
+  userId              String
+  packageId           String
+  orderNo             String              @unique
+  amount              Int
+  credits             Int
+  payMethod           String              @default("wechat")
+  status              String              @default("pending")
+  wechatTransactionId String?
+  prepayId            String?
+  codeUrl             String?             @db.Text
+  payChannel          String              @default("native")
+  notifyAt            DateTime?
+  adminNote           String?             @db.Text
+  paidAt              DateTime?
+  expiredAt           DateTime
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+  creditTransactions  CreditTransaction[]
+  package             CreditPackage       @relation(fields: [packageId], references: [id])
+  user                User                @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+  @@index([wechatTransactionId])
+  @@index([packageId], map: "Order_packageId_fkey")
+}
+
+model WechatPayConfig {
+  id           String   @id @default(cuid())
+  appId        String
+  mchId        String
+  apiKey       String   @db.MediumText
+  apiV3Key     String?  @db.MediumText
+  certSerialNo String?
+  privateKey   String?  @db.MediumText
+  description  String?
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  publicKey    String?  @db.MediumText
+}
+
+model AudioMaterial {
+  id        String   @id @default(cuid())
+  audioUrl  String   @db.MediumText
+  phone     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([phone])
+  @@index([createdAt])
+}
+
+model FusionFolder {
+  id        String        @id @default(cuid())
+  phone     String
+  name      String
+  parentId  String?
+  parent    FusionFolder? @relation("FolderTree", fields: [parentId], references: [id], onDelete: Cascade)
+  children  FusionFolder[] @relation("FolderTree")
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  materials FusionMaterial[]
+
+  @@index([phone])
+  @@index([parentId])
+}
+
+model FusionMaterial {
+  id          String   @id @default(cuid())
+  phone       String
+  folderId    String
+  folder      FusionFolder @relation(fields: [folderId], references: [id], onDelete: Cascade)
+  fileUrl     String   @db.MediumText
+  fileName    String   @default("")
+  type        String   @default("video")
+  title       String   @default("")
+  duration    Float    @default(0)
+  tags        String   @default("") @db.VarChar(1000)
+  isBroadcast Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([phone])
+  @@index([folderId])
+}
+
+model CloneRecord {
+  id        String   @id @default(cuid())
+  phone     String
+  type      String
+  sourceUrl String   @db.MediumText
+  taskId    String
+  status    String   @default("polling")
+  resultUrl String?  @db.MediumText
+  text      String?  @db.MediumText
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([phone])
+  @@index([type])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model ComposeVideo {
+  id              String   @id @default(cuid())
+  phone           String
+  videoUrl        String?  @db.MediumText
+  sceneTaskId     String?
+  sourceAudioUrl  String?  @db.MediumText
+  composeType     String   @default("lipsync")
+  styleId         String?
+  styleName       String?
+  title           String?  @db.MediumText
+  materials       String?  @db.MediumText
+  cloneAudioUrl   String?  @db.MediumText
+  text            String?  @db.MediumText
+  cloneTaskId     String?
+  musetalkTaskId  String?
+  smartClipTaskId String?
+  status          String   @default("cloning_audio")
+  resultUrl       String?  @db.MediumText
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([phone])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model OssConfig {
+  id              String   @id @default(cuid())
+  accessKeyId     String
+  accessKeySecret String   @db.MediumText
+  bucketName      String
+  endpoint        String
+  region          String   @default("oss-cn-hangzhou")
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model AiEmployee {
+  id            String               @id @default(cuid())
+  slug          String               @unique
+  name          String
+  nameEn        String               @default("")
+  title         String               @default("")
+  titleEn       String               @default("")
+  avatarUrl     String               @default("")
+  description   String               @default("")
+  mission       String               @default("")
+  coreDirective String               @default("")
+  price         Int                  @default(0)
+  priceDisplay  String               @default("")
+  tags          String               @default("[]")
+  capabilities  String               @default("[]")
+  kpi           String               @default("[]")
+  tools         String               @default("[]")
+  systemLogs    String               @default("[]")
+  parentSlug    String?
+  center        String               @default("")
+  sortOrder     Int                  @default(0)
+  soulContent   String?              @db.MediumText
+  agentConfig   String?              @db.MediumText
+  skillSlugs    String               @default("[]")
+  /** 技能原文（SKILL.md），执行器注入 system prompt 用；catalog 列表不返回 */
+  skillMd       String?              @db.Text
+  isActive      Boolean              @default(true)
+  isBundled     Boolean              @default(false)
+  downloads     Int                  @default(0)
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+  purchases     AiEmployeePurchase[]
+  orders        EmployeeOrder[]
+
+  // ===== M6.5 员工域（skill 化，2026-11-04）=====
+  avatarEmoji    String @default("")
+  /** 分类：获客|销售|内容情报|内容|编排|内容生产|内容分发|研究 */
+  category       String @default("")
+  skillName      String @default("")
+  skillVersion   String @default("1.0.0")
+  /** none|optional|required（原版资产清单里的 CLI 依赖等级） */
+  cliRequirement String @default("none")
+  /** trial|standard|flagship（体验/标准/旗舰套餐） */
+  tier           String @default("standard")
+  usageExample   String @default("")
+  /** 推荐定时器预设：[{label,cron,timezone,workflowKey}] */
+  cronPresets    Json?
+  /** 需要的团队套餐 id（traffic|private-domain|flagship）；null=不需要套餐授权 */
+  requiredPackage String?
+
+  @@index([category])
+  @@index([tier])
+
+  @@index([parentSlug])
+  @@index([isActive])
+}
+
+model AiEmployeePurchase {
+  id           String     @id @default(cuid())
+  userId       String
+  employeeId   String
+  employeeSlug String
+  status       String     @default("active")
+  purchasedAt  DateTime   @default(now())
+  expiresAt    DateTime?
+  durationDays Int?
+  orderNo      String?
+  pricePerDay  Int        @default(0)
+  employee     AiEmployee @relation(fields: [employeeId], references: [id])
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, employeeId])
+  @@index([userId])
+  @@index([employeeId])
+  @@index([status])
+  @@index([expiresAt])
+}
+
+model EmployeeOrder {
+  id                  String     @id @default(cuid())
+  userId              String
+  employeeId          String
+  employeeSlug        String
+  orderNo             String     @unique
+  durationDays        Int
+  pricePerDay         Int
+  totalAmount         Int
+  payMethod           String     @default("wechat")
+  status              String     @default("pending")
+  wechatTransactionId String?
+  paidAt              DateTime?
+  expiredAt           DateTime
+  employeeExpiresAt   DateTime?
+  createdAt           DateTime   @default(now())
+  updatedAt           DateTime   @updatedAt
+  employee            AiEmployee @relation(fields: [employeeId], references: [id])
+  user                User       @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([status])
+  @@index([employeeSlug])
+  @@index([createdAt])
+  @@index([employeeId], map: "EmployeeOrder_employeeId_fkey")
+}
+
+model ContentCollection {
+  id             String   @id @default(cuid())
+  phone          String
+  title          String
+  link           String?  @db.MediumText
+  contentSummary String   @db.MediumText
+  category       String
+  mustUse        Boolean  @default(false)
+  isUsed         Boolean  @default(false)
+  operationType  String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([phone])
+  @@index([category])
+  @@index([mustUse])
+  @@index([createdAt])
+}
+
+model DailyDistribution {
+  id             String    @id @default(cuid())
+  phone          String
+  summaryContent String    @db.MediumText
+  posterImage    String?   @db.MediumText
+  createdAt      DateTime  @default(now())
+  distributedAt  DateTime?
+
+  @@index([phone])
+  @@index([createdAt])
+}
+
+model PotentialCustomer {
+  id             String    @id @default(cuid())
+  phone          String
+  company        String?
+  wechatNickname String?
+  industry       String?
+  position       String?
+  lastCommDate   DateTime?
+  addWechatDate  DateTime?
+  interaction    String?   @db.MediumText
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([phone])
+  @@index([lastCommDate])
+  @@index([addWechatDate])
+}
+
+model TodayCommunication {
+  id                    String   @id @default(cuid())
+  phone                 String
+  potentialCustomerId   String? // 潜在客户表ID（逻辑关联）
+  wechatNickname        String?
+  seedingContent        String?  @db.MediumText
+  communicationStrategy String?  @db.MediumText
+  commDate              DateTime @default(now())
+  actualCommContent     String?  @db.MediumText
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@index([phone])
+  @@index([commDate])
+  @@index([wechatNickname])
+}
+
+model CustomerProfile {
+  id                  String    @id @default(cuid())
+  phone               String
+  company             String?
+  wechatNickname      String?
+  industry            String?
+  position            String?
+  customerId          String?
+  potentialCustomerId String? // 潜在客户表ID（逻辑关联）
+  lastCommDate        DateTime?
+  dealAmount          Float     @default(0)
+  collectDate         DateTime?
+  responsiblePerson   String?
+  addWechatDate       DateTime?
+  satisfaction        String?
+  dealDate            DateTime?
+  remark              String?   @db.MediumText
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  @@index([phone])
+  @@index([wechatNickname])
+}
+
+model StrategySummary {
+  id        String   @id @default(cuid())
+  phone     String
+  name      String
+  content   String   @db.MediumText
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([phone])
+}
+
+model CustomerCollection {
+  id            String    @id @default(cuid())
+  phone         String
+  platform      String?
+  link          String?   @db.MediumText
+  wechat        String?
+  introduction  String?   @db.MediumText
+  followerCount Int?
+  collectTime   DateTime?
+  isWechatAdded Boolean   @default(false)
+  wechatAddedAt DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([phone])
+  @@index([isWechatAdded])
+}
+
+model UserChatPrompt {
+  id             String   @id @default(cuid())
+  phone          String
+  wechatNickname String
+  prompt         String   @db.MediumText
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([phone, wechatNickname])
+  @@index([phone])
+  @@index([wechatNickname])
+}
+
+model SystemInfo {
+  id                  String    @id @default(cuid())
+  agentServerUrl      String    @default("https://agent.topagent.cc")
+  computeApiToken     String?
+  siteDomain          String?
+  serverIp            String?
+  isAuthorized        Boolean   @default(false)
+  lastVerifiedAt      DateTime?
+  authorizedAt        DateTime?
+  piracyContactWechat String    @default("18625522203")
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  // ===== Agent Plan 字段 =====
+  // Agent Plan 总开关（默认启用，新站点无需手动开启）
+  agentPlanEnabled          Boolean @default(true)
+  // Layer 2 旋钮：1 AFP = N 算力（admin 赚用户）
+  agentPlanAfpToCreditsRate Float   @default(5)
+  // Layer 1 旋钮：agent 报给 admin 的单价（agent 赚 admin）
+  agentQuoteRateToAdmin     Float   @default(0.005)
+  // agent 的火山实际成本系数（仅利润分析显示用，1 AFP = 0.002 成本）
+  agentVolcCostRate         Float   @default(0.002)
+  // 预留扩展配置（JSON 字符串）
+  agentPlanExtraConfig      String? @db.MediumText
+}
+
+model RedemptionCode {
+  id           String    @id @default(cuid())
+  code         String    @unique
+  packageId    String
+  batchId      String?
+  status       String    @default("unused")
+  expiresAt    DateTime?
+  validDays    Int?
+  usedByUserId String?
+  usedAt       DateTime?
+  note         String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([status, packageId])
+  @@index([batchId])
+  @@index([createdAt])
+}
+
+model UserMonthlyUsage {
+  id             String   @id @default(cuid())
+  userId         String
+  year           Int
+  month          Int
+  quotaLimit     Int
+  quotaUsed      Int      @default(0)
+  quotaRemaining Int
+  resetAt        DateTime
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, year, month])
+  @@index([userId])
+  @@index([resetAt])
+}
+
+// ========== M6.5 员工域：安装 / 定时器 / 任务 / 产物（2026-11-04） ==========
+// AI员工采用 skill 模型：Employee(角色卡) -> Skill(能力包) -> Cron(触发时机)。
+// 安装关系、任务、产物均只存 userId / employeeId 字符串（不建 FK），
+// 便于管理员/桌面端代理身份与后续分库；关联由服务层校验。
+
+model AiEmployeeInstall {
+  id            String    @id @default(cuid())
+  userId        String
+  employeeId    String
+  /** 安装时的 skill 版本，用于升级判定（skill-manifest version） */
+  version       String    @default("1.0.0")
+  enabled       Boolean   @default(true)
+  expiresAt     DateTime?
+  /** 端上 skill 落地目录：<userData>/openclaw/skills/<skillName> */
+  workspacePath String?   @db.MediumText
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@unique([userId, employeeId])
+  @@index([userId])
+  @@index([employeeId])
+  @@index([enabled, expiresAt])
+}
+
+model EmployeeCron {
+  id          String    @id @default(cuid())
+  userId      String
+  employeeId  String
+  /** 定时器绑定的 skill workflow key（如 daily / weekly） */
+  workflowKey String    @default("default")
+  cronExpr    String
+  timezone    String    @default("Asia/Shanghai")
+  enabled     Boolean   @default(true)
+  lastRunAt   DateTime?
+  nextRunAt   DateTime?
+  missedCount Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([userId])
+  @@index([employeeId])
+  @@index([enabled, nextRunAt])
+  @@index([userId, employeeId])
+}
+
+model EmployeeTask {
+  id             String    @id @default(cuid())
+  userId         String
+  employeeId     String
+  /** 由定时器触发的任务指向 EmployeeCron.id */
+  cronId         String?
+  title          String    @default("")
+  input          Json?
+  /** queued|running|succeeded|failed|needs_input|awaiting_approval */
+  status         String    @default("queued")
+  /** text|file|link|video|image */
+  outputKind     String    @default("text")
+  outputText     String?   @db.MediumText
+  outputPath     String?   @db.MediumText
+  outputMeta     Json?
+  error          String?   @db.MediumText
+  /** cloud|desktop */
+  executor       String    @default("cloud")
+  runAt          DateTime  @default(now())
+  startedAt      DateTime?
+  finishedAt     DateTime?
+  creditsCharged Int       @default(0)
+  /** 补跑任务指向原始任务 id */
+  missedOf       String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([userId, createdAt])
+  @@index([userId, status])
+  @@index([status, executor, runAt])
+  @@index([employeeId])
+  @@index([cronId])
+}
+
+model EmployeeTaskArtifact {
+  id        String   @id @default(cuid())
+  taskId    String
+  kind      String   @default("text")
+  path      String?  @db.MediumText
+  url       String?  @db.MediumText
+  text      String?  @db.MediumText
+  mime      String?
+  createdAt DateTime @default(now())
+
+  @@index([taskId])
+}
+
+model EmployeeExecutionNode {
+  id          String   @id @default(cuid())
+  userId      String
+  deviceId    String
+  executor    String   @default("desktop")
+  status      String   @default("online")
+  lastSeenAt  DateTime @default(now())
+  metadata    Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, deviceId])
+  @@index([userId, status])
+  @@index([status, lastSeenAt])
+}
+
+
+/// 团队套餐授权（原版兑换码解锁 traffic/private-domain/flagship，到期失效）
+model UserPackageGrant {
+  id        String   @id @default(cuid())
+  userId    String
+  packageId String
+  /// redemption | admin | trial
+  source    String   @default("redemption")
+  validDays Int
+  grantedAt DateTime @default(now())
+  expiresAt DateTime
+  codeId    String?
+  note      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, packageId])
+  @@index([expiresAt])
+}

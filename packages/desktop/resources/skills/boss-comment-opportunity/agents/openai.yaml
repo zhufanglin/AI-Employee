@@ -1,0 +1,4 @@
+interface:
+  display_name: "评论区商机识别官"
+  short_description: "批量分析平台评论，识别询价、需求、老板身份和高意向潜在商机"
+  default_prompt: "使用 $boss-comment-opportunity 分析这批评论并输出高意向商机清单。"

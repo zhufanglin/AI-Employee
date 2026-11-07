@@ -1,0 +1,4 @@
+interface:
+  display_name: "私域客户分层跟进官"
+  short_description: "对私域客户进行分层和优先级排序，生成每日跟进名单、节奏及成交动作"
+  default_prompt: "使用 $boss-private-lead-manager 分析这份客户表并生成今天的跟进名单。"

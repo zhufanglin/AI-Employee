@@ -1,0 +1,2633 @@
+{
+  "project": "中科元晟 AI员工 0.4.29 完全复刻",
+  "version": 1,
+  "updatedAt": "2026-11-07T05:29:45.534Z",
+  "phase": "P10（先能用三件事）派工完成，看板 29/33",
+  "phaseGoal": "用户要求先能用、定价后置：T-31 桌面端出图出片 / T-32 员工多步干活 / T-33 成本护栏 已派 Codex；dsh-lead 推主线（生产可用性收口 + 复核），T-11 渠道仍 blocked(env)。",
+  "owners": {
+    "dsh-lead": "DeepSeek Harness（本项目 Lead，负责架构/后端口径）",
+    "codex": "Codex（OpenAI Codex CLI，负责独立模块实现）",
+    "workbuddy": "WorkBuddy（负责独立模块实现/UI 或脚本）"
+  },
+  "rules": [
+    "每做一小步就 `coord save <ID> --note \"做了什么\" --next \"下一步\"`：额度/限流/崩溃随时会来，断点是唯一保险。",
+    "任务做不动了（额度不足、限流、API 报错、环境坏、需要人决策）→ 立刻 `coord block <ID> --reason quota|ratelimit|api|env|human --note \"...\"`，不许静默停。",
+    "接手别人：`coord takeover <ID> --from <原agent> --agent <你>`，先看接手简报（断点 + 文件改动 + 最近 verify），再跑 `scripts/verify.ps1` 确认当前红绿，从「下一步」继续。",
+    "同一写作用域同一时刻只允许一个 Agent 写；跨域修改先 `msg`。",
+    "完成必须 `scripts/verify.ps1` 绿灯，然后 `coord done`。",
+    "禁止改 packages/server/.env 与任何密钥；新增配置只写 .env.example。",
+    "数据库 schema 只有一人能改：改前 claim 并在 JOURNAL 声明迁移名。",
+    "服务端用 tsc 编译跑 dist/main.js，不要用 tsx 跑 Nest（装饰器元数据会丢）。"
+  ],
+  "env": [
+    "Node（唯一被验证过的）：C:\\Users\\30290\\Desktop\\REA逆向\\toolchain\\node-v24.22.1-win-x64\\node.exe（npm/npx 用同名 .cmd）",
+    "MySQL：Docker 容器 fcm-mysql，127.0.0.1:3306，库 fcmediaagent_v2，用户 fcm / fcm_dev_pass（root/root_dev_pass）",
+    "服务端：cd packages/server && tsc -p tsconfig.json && node dist/main.js（端口 3000，前缀 /api，Swagger /api/docs）",
+    "桌面端：cd packages/desktop && node ..\\..\\node_modules\\electron-vite\\bin\\electron-vite.js build（不要用包内路径）",
+    "启动依赖：docker start fcm-mysql 并等 mysqld alive，否则 Prisma P1001",
+    "长任务必须后台跑（单次 exec 有 120s 上限）；PowerShell 不走 npx.ps1（执行策略），用 npx.cmd"
+  ],
+  "readFirst": [
+    "AGENTS.md（开工契约 + 故障接管协议）",
+    "docs/handoff/BOARD.md（当前任务与负责人）",
+    "docs/handoff/checkpoints/（正在进行的任务的断点；接手先读这个）",
+    "docs/复刻-总纲-v3.md（五层忠实度 F4→F0 与 P1–P8 排期）",
+    "docs/fidelity-matrix.md（F2 契约基线：237 路由 / 147 IPC / 47 表）",
+    "docs/M6.5-AI员工团队域.md（员工域设计）",
+    "contracts/（ipc_handles_147.tsv、http_routes_238.txt、schema_original_47.prisma）",
+    "docs/handoff/CODEX-交接说明.md",
+    "docs/handoff/T30-媒体编排-任务书.md",
+    "docs/handoff/T31-T33-任务书.md",
+    "docs/handoff/T36-T37-技能注入-任务书.md"
+  ],
+  "tasks": [
+    {
+      "history": [],
+      "lease": null,
+      "checkpoint": null,
+      "id": "T-01",
+      "title": "服务端骨架（NestJS11 + Prisma + 短信/JWT 登录 + 站点配置 + health）",
+      "status": "done",
+      "owner": "dsh-lead",
+      "scope": [
+        "packages/server/src"
+      ],
+      "accept": "GET /api/health 200；短信登录拿到 JWT",
+      "blockedBy": [],
+      "deps": []
+    },
+    {
+      "history": [],
+      "lease": null,
+      "checkpoint": null,
+      "id": "T-02",
+      "title": "模型代理 + 按次计费（compute 代理、proxy-token、额度/积分、用量流水）",
+      "status": "done",
+      "owner": "dsh-lead",
+      "scope": [
+        "packages/server/src/compute",
+        "packages/server/src/billing",
+        "packages/server/src/providers"
+      ],
+      "accept": "非流式/流式均落 AiUsageRecord；余额不足 402",
+      "blockedBy": [],
+      "deps": []
+    },
+    {
+      "history": [],
+      "lease": null,
+      "checkpoint": null,
+      "id": "T-03",
+      "title": "桌面端骨架 + 聊天链路 + openclaw 网关接入",
+      "status": "done",
+      "owner": "dsh-lead",
+      "scope": [
+        "packages/desktop"
+      ],
+      "accept": "UI 流式回复；网关 /health live；agent 端到端返回",
+      "blockedBy": [],
+      "deps": []
+    },
+    {
+      "history": [],
+      "lease": null,
+      "checkpoint": null,
+      "id": "T-04",
+      "title": "F2 契约基线矩阵（路由/IPC/表/字段/文案）",
+      "status": "done",
+      "owner": "dsh-lead",
+      "scope": [
+        "docs/fidelity-matrix.md",
+        "scripts/audit"
+      ],
+      "accept": "四张 diff 表产出，可重跑",
+      "blockedBy": [],
+      "deps": []
+    },
+    {
+      "history": [],
+      "lease": null,
+      "checkpoint": null,
+      "id": "T-05",
+      "title": "M6.5 员工域后端 W4（5 表 + 17 员工 seed + 11 API + 冒烟）",
+      "status": "done",
+      "owner": "dsh-lead",
+      "scope": [
+        "packages/server/src/employee",
+        "packages/server/prisma"
+      ],
+      "accept": "scripts/smoke-m65.mjs 全绿",
+      "blockedBy": [],
+      "deps": []
+    },
+    {
+      "history": [],
+      "lease": null,
+      "checkpoint": null,
+      "id": "T-06",
+      "title": "原版资产考古（预装技能/提示词/插件/语音/离线缓存）",
+      "status": "done",
+      "owner": "dsh-lead",
+      "scope": [
+        "docs/assets-inventory.md"
+      ],
+      "accept": "11 个预装技能能力地图 + 复用判定",
+      "blockedBy": [],
+      "deps": []
+    },
+    {
+      "history": [
+        {
+          "at": "2026-11-04T11:02:14.792Z",
+          "by": "dsh-lead",
+          "what": "RESTORE 恢复被故障接管演练覆盖的完成状态（codex 于 10:42 DONE）"
+        }
+      ],
+      "lease": null,
+      "checkpoint": null,
+      "id": "T-07",
+      "title": "W5：定时器 + 补跑 + 任务看板后端（EmployeeCron 落地）",
+      "status": "done",
+      "owner": "codex",
+      "scope": [
+        "packages/server/src/employee"
+      ],
+      "accept": "cron 到点生成 EmployeeTask；停机后补跑 missedOf；看板接口按员工聚合",
+      "blockedBy": [],
+      "deps": [
+        "依赖 T-05"
+      ],
+      "startedAt": "2026-11-04T10:40:27.806Z",
+      "finishedAt": "2026-11-04T10:42:36.283Z",
+      "result": "已完成员工定时器 CRUD、持久化调度与 missedOf 补跑、员工看板汇总；实现于 packages/server/src/employee，verify 绿灯，MySQL 验证补跑上限/并发/隔离。后续需接入 cloud 任务执行器及桌面端心跳离线处理；每轮每个定时器最多补 3 条。"
+    },
+    {
+      "history": [
+        {
+          "at": "2026-11-04T11:09:25.196Z",
+          "by": "codex",
+          "what": "claim"
+        },
+        {
+          "at": "2026-11-04T11:09:29.253Z",
+          "by": "codex",
+          "what": "save: 已读交接与看板并认领套餐授权任务"
+        },
+        {
+          "at": "2026-11-04T11:09:52.434Z",
+          "by": "codex",
+          "what": "save: 已核对原版订单路由及支付流程：按员工下单、待支付不能授权；现有安装接口可自定过期时间，套餐定价和支付开通尚未实现"
+        },
+        {
+          "at": "2026-11-04T11:10:03.227Z",
+          "by": "codex",
+          "what": "save: 已在员工 run 前检查用户安装、启用及到期状态"
+        },
+        {
+          "at": "2026-11-04T11:10:35.174Z",
+          "by": "codex",
+          "what": "save: run 已拦截未安装、禁用和到期员工；四种状态单测通过，verify GREEN。原版订单为单员工、微信支付待实现；现有安装接口可自定期限，全部员工 isBundled=true。"
+        },
+        {
+          "at": "2026-11-04T11:10:40.584Z",
+          "by": "codex",
+          "what": "blocked: human 套餐体验版员工选择、价格/期限、开通规则未定义；原版订单为单员工且微信支付在 T-12。run 到期校验已完成并 verify GREEN，剩余套餐与订单不可安全臆定。"
+        },
+        {
+          "at": "2026-11-04T13:11:30.419Z",
+          "by": "dsh-lead",
+          "what": "takeover from codex"
+        },
+        {
+          "at": "2026-11-04T13:21:25.875Z",
+          "by": "dsh-lead",
+          "what": "save: 套餐授权+员工订单已实现并冒烟全绿"
+        },
+        {
+          "at": "2026-11-04T13:21:27.304Z",
+          "by": "dsh-lead",
+          "what": "done: 完成"
+        }
+      ],
+      "lease": {
+        "at": "2026-11-04T11:09:25.195Z",
+        "heartbeat": "2026-11-04T13:21:25.875Z",
+        "reason": null
+      },
+      "checkpoint": {
+        "progress": [
+          {
+            "text": "UserPackageGrant 表与迁移",
+            "done": true
+          },
+          {
+            "text": "package.service(redeem/createCodes/adminGrant/assertAccess)",
+            "done": true
+          },
+          {
+            "text": "employee-order.service(createOrder/markPaid/expireEmployees)",
+            "done": true
+          },
+          {
+            "text": "install/run 授权硬化",
+            "done": true
+          },
+          {
+            "text": "14 条路由",
+            "done": true
+          },
+          {
+            "text": "smoke-t08 25 项全绿",
+            "done": true
+          },
+          {
+            "text": "verify GREEN",
+            "done": true
+          }
+        ],
+        "notes": [
+          "11:09 已读交接与看板并认领套餐授权任务",
+          "11:09 已核对原版订单路由及支付流程：按员工下单、待支付不能授权；现有安装接口可自定过期时间，套餐定价和支付开通尚未实现",
+          "11:10 已在员工 run 前检查用户安装、启用及到期状态",
+          "11:10 run 已拦截未安装、禁用和到期员工；四种状态单测通过，verify GREEN。原版订单为单员工、微信支付待实现；现有安装接口可自定期限，全部员工 isBundled=true。",
+          "BLOCKED: 套餐体验版员工选择、价格/期限、开通规则未定义；原版订单为单员工且微信支付在 T-12。run 到期校验已完成并 verify GREEN，剩余套餐与订单不可安全臆定。",
+          "dsh-lead 已给出证据与建议口径：docs/handoff/T08-决策依据.md（原版套餐=团队预设包+兑换码+validDays；无会员订阅；员工订单 1/7/30/90/365 天、pending 30 分钟）",
+          "13:21 套餐授权+员工订单已实现并冒烟全绿"
+        ],
+        "files": [
+          "packages/server/src/employee/package.service.ts",
+          "packages/server/src/employee/employee-order.service.ts",
+          "packages/server/src/employee/package.controller.ts",
+          "packages/server/prisma/schema.prisma",
+          "scripts/smoke-t08.mjs"
+        ],
+        "next": "T-12 微信支付回调直接复用 markPaid()；定价与体验版规则待用户拍板"
+      },
+      "id": "T-08",
+      "title": "W5：团队套餐授权（兑换码 traffic/private-domain/flagship）+ 员工订单 + 到期失效",
+      "status": "done",
+      "owner": "dsh-lead",
+      "scope": [
+        "packages/server/src/employee",
+        "packages/server/src/orders"
+      ],
+      "accept": "到期后 install/run 被拒；兑换码核销写 UserPackageGrant；员工订单 pending 未支付不得授权",
+      "blockedBy": [],
+      "deps": [
+        "依赖 T-05"
+      ],
+      "finishedAt": "2026-11-04T13:21:27.303Z",
+      "result": "完成"
+    },
+    {
+      "history": [
+        {
+          "at": "2026-11-04T13:36:59.460Z",
+          "by": "codex",
+          "what": "claim"
+        },
+        {
+          "at": "2026-11-04T13:38:12.565Z",
+          "by": "codex",
+          "what": "save: 基线 verify GREEN；确认桌面端尚无员工 IPC，服务端已有目录/安装/运行/任务列表/审批 API。将通过 main 进程鉴权 API + preload 白名单接入办公区 UI；不选择云端执行器、不呈现未确认价格规则。"
+        },
+        {
+          "at": "2026-11-04T13:40:29.393Z",
+          "by": "codex",
+          "what": "save: 完成办公区接线：employee IPC 白名单与主进程鉴权 API、团队卡片/目录安装卸载/任务发起与列表/审批界面。未提供云执行选择或定价信息。开始模块代码审查与构建验证。"
+        },
+        {
+          "at": "2026-11-04T13:41:39.856Z",
+          "by": "codex",
+          "what": "save: 代码审查修复员工卸载后任务表单残留选择；确认接口路径/鉴权与服务端控制器匹配。复验即将完成。"
+        },
+        {
+          "at": "2026-11-04T13:41:52.480Z",
+          "by": "codex",
+          "what": "done: 交付员工办公区：主进程登录鉴权 API、preload 白名单与类型、获客成交三员工卡片和17员工目录、安装/卸载、任务提交/列表/产物、待验收通过/驳回。代码审查修复卸载后残留选择；verify.ps1 GREEN。限制：任务实际执行器与云端托管、套餐授权映射仍是独立未完成/未决范围。"
+        }
+      ],
+      "lease": {
+        "at": "2026-11-04T13:36:59.458Z",
+        "heartbeat": "2026-11-04T13:41:39.856Z",
+        "reason": null
+      },
+      "checkpoint": {
+        "progress": [
+          {
+            "text": "[x]基线验证与契约检查",
+            "done": false
+          },
+          {
+            "text": "[x]员工 IPC 与 preload 白名单",
+            "done": false
+          },
+          {
+            "text": "[x]办公区目录/安装/任务/审批界面",
+            "done": false
+          },
+          {
+            "text": "[x]模块代码审查与verify",
+            "done": false
+          }
+        ],
+        "notes": [
+          "13:38 基线 verify GREEN；确认桌面端尚无员工 IPC，服务端已有目录/安装/运行/任务列表/审批 API。将通过 main 进程鉴权 API + preload 白名单接入办公区 UI；不选择云端执行器、不呈现未确认价格规则。",
+          "13:40 完成办公区接线：employee IPC 白名单与主进程鉴权 API、团队卡片/目录安装卸载/任务发起与列表/审批界面。未提供云执行选择或定价信息。开始模块代码审查与构建验证。",
+          "13:41 代码审查修复员工卸载后任务表单残留选择；确认接口路径/鉴权与服务端控制器匹配。复验即将完成。"
+        ],
+        "files": [],
+        "next": "复验通过后记录已知执行链路依赖，再标记 T-09 完成。"
+      },
+      "id": "T-09",
+      "title": "桌面端「办公区」员工 UI（目录/安装/运行/任务流/审批）",
+      "status": "done",
+      "owner": "codex",
+      "scope": [
+        "packages/desktop/src"
+      ],
+      "accept": "能装 17 员工、发起任务、看到产物并审批",
+      "blockedBy": [],
+      "deps": [
+        "依赖 T-05"
+      ],
+      "finishedAt": "2026-11-04T13:41:52.479Z",
+      "result": "交付员工办公区：主进程登录鉴权 API、preload 白名单与类型、获客成交三员工卡片和17员工目录、安装/卸载、任务提交/列表/产物、待验收通过/驳回。代码审查修复卸载后残留选择；verify.ps1 GREEN。限制：任务实际执行器与云端托管、套餐授权映射仍是独立未完成/未决范围。"
+    },
+    {
+      "history": [
+        {
+          "at": "2026-11-04T13:43:53.749Z",
+          "by": "codex",
+          "what": "claim"
+        },
+        {
+          "at": "2026-11-04T13:49:02.210Z",
+          "by": "codex",
+          "what": "save: 新增安全预装路径：网关启动时查询当前账号有效已安装员工，只同步对应技能；将 AGENTS.md/TOOLS.md 首次写入 OpenClaw workspace，保护用户现有文件；卸载权限变化后把本程序管理技能移出活动扫描目录并保留在 skills-disabled。当前没有复制原版 11 项中的任何 .pyc/平台自动化资产。"
+        },
+        {
+          "at": "2026-11-04T13:50:15.639Z",
+          "by": "codex",
+          "what": "save: 审查确认资源路径固定于 app.getAppPath/resources、技能 slug 使用 allowlist 格式、仅管理本程序写入的技能目录，现有用户文件不覆盖；撤销授权会保留技能目录但移出活动扫描路径。verify.ps1 GREEN。剩余原版11项分发与市场范围涉及用户未决决策。"
+        },
+        {
+          "at": "2026-11-04T13:50:15.749Z",
+          "by": "codex",
+          "what": "blocked: human 安全的工作区提示词注入和按当前已安装员工同步技能已完成并verify GREEN；T-10要求复用原版11项预装资产，其中 agent-tool-box 含 .pyc、另含抖音/多平台/公众号自动化，项目记录明确要求用户拍板随包分发。已询问用户，在答复前不复制这些资产或宣称完整模块完成。"
+        },
+        {
+          "at": "2026-11-05T09:07:45.145Z",
+          "by": "dsh-lead",
+          "what": "takeover from codex"
+        },
+        {
+          "at": "2026-11-05T09:07:45.237Z",
+          "by": "dsh-lead",
+          "what": "save: 范围裁决：原版 7 个 .pyc 预装技能不随包（无 LICENSE、CPython3.13 字节码不可审计、平台自动化合规风险），Anthropic 4 个可随包，17 个明文员工技能已随包"
+        },
+        {
+          "at": "2026-11-05T09:07:45.332Z",
+          "by": "dsh-lead",
+          "what": "done: 完成"
+        }
+      ],
+      "lease": {
+        "at": "2026-11-04T13:43:53.742Z",
+        "heartbeat": "2026-11-05T09:07:45.237Z",
+        "reason": null
+      },
+      "checkpoint": {
+        "progress": [
+          {
+            "text": "提示词注入 AGENTS.md/TOOLS.md（codex 已实现）",
+            "done": true
+          },
+          {
+            "text": "17 员工技能随包与撤销",
+            "done": true
+          },
+          {
+            "text": ".pyc 裁决文档 docs/决策-预装技能分发.md",
+            "done": true
+          },
+          {
+            "text": ".pyc 不随包/交给 T-28 重写",
+            "done": true
+          }
+        ],
+        "notes": [
+          "13:49 新增安全预装路径：网关启动时查询当前账号有效已安装员工，只同步对应技能；将 AGENTS.md/TOOLS.md 首次写入 OpenClaw workspace，保护用户现有文件；卸载权限变化后把本程序管理技能移出活动扫描目录并保留在 skills-disabled。当前没有复制原版 11 项中的任何 .pyc/平台自动化资产。",
+          "13:50 审查确认资源路径固定于 app.getAppPath/resources、技能 slug 使用 allowlist 格式、仅管理本程序写入的技能目录，现有用户文件不覆盖；撤销授权会保留技能目录但移出活动扫描路径。verify.ps1 GREEN。剩余原版11项分发与市场范围涉及用户未决决策。",
+          "BLOCKED: 安全的工作区提示词注入和按当前已安装员工同步技能已完成并verify GREEN；T-10要求复用原版11项预装资产，其中 agent-tool-box 含 .pyc、另含抖音/多平台/公众号自动化，项目记录明确要求用户拍板随包分发。已询问用户，在答复前不复制这些资产或宣称完整模块完成。",
+          "09:07 范围裁决：原版 7 个 .pyc 预装技能不随包（无 LICENSE、CPython3.13 字节码不可审计、平台自动化合规风险），Anthropic 4 个可随包，17 个明文员工技能已随包"
+        ],
+        "files": [],
+        "next": "剩余能力重写转 T-28；若用户要求随包可 reopen"
+      },
+      "id": "T-10",
+      "title": "P3：预装 11 技能落地 + AGENTS/TOOLS 提示词注入 + bundles 技能市场",
+      "status": "done",
+      "owner": "dsh-lead",
+      "scope": [
+        "packages/desktop/resources",
+        "packages/desktop/src/main"
+      ],
+      "accept": "首启复制技能到 userData/openclaw/skills；注入 clawx 提示词",
+      "blockedBy": [],
+      "deps": [
+        "依赖 T-06"
+      ],
+      "finishedAt": "2026-11-05T09:07:45.330Z",
+      "result": "完成"
+    },
+    {
+      "history": [
+        {
+          "at": "2026-11-04T21:13:33.427Z",
+          "by": "codex",
+          "what": "claim"
+        },
+        {
+          "at": "2026-11-04T21:14:48.574Z",
+          "by": "codex",
+          "what": "save: 新增个人微信 UIAutomation bridge 适配层：server channels 模块提供 status/contacts/messages/send/send-file/listen 六类契约，未配置 WECHAT_UIA_BASE_URL 返回 WECHAT_UIA_NOT_CONFIGURED；desktop main/preload 增加对应 IPC 通道。"
+        },
+        {
+          "at": "2026-11-04T21:15:55.798Z",
+          "by": "codex",
+          "what": "save: T-11 bridge 契约层完成并 verify GREEN；本机 Python3.12 已有 uiautomation/Flask，微信客户端运行中。真实 UIAutomation 联系人/消息/发送验证需要用户指定 DEMO 会话，当前不接触真实联系人、不发送消息。"
+        },
+        {
+          "at": "2026-11-04T21:15:55.977Z",
+          "by": "codex",
+          "what": "blocked: human 真实 UIAutomation 行为验证涉及当前微信账号和消息数据，需用户指定测试会话或明确仅做只读窗口探测；不能自行选择联系人或发送消息。"
+        },
+        {
+          "at": "2026-11-04T21:19:14.017Z",
+          "by": "codex",
+          "what": "save: 用户授权测试联系人 Stu；尝试读取微信 UIA 控件时发现微信主窗口句柄已消失，仅有进程无可操作窗口，之前处于公众号文章子窗口；未读取 Stu、未发送测试消息。"
+        },
+        {
+          "at": "2026-11-04T21:19:14.256Z",
+          "by": "codex",
+          "what": "blocked: env 微信进程存在但主窗口句柄消失，UIAutomation 无可操作窗口；需用户打开并保持登录的微信主聊天窗口后继续"
+        },
+        {
+          "at": "2026-11-04T21:20:44.255Z",
+          "by": "codex",
+          "what": "save: 用户授权 DEMO 联系人 Stu；微信主窗口恢复后通过 UIAutomation 成功定位 Stu 并发送测试文本【AI员工UIAutomation联通测试】收到请回复：OK，截图确认绿色发送气泡出现。当前微信版本可操作，真实发送路径已验证。"
+        },
+        {
+          "at": "2026-11-04T21:23:38.074Z",
+          "by": "codex",
+          "what": "save: 探测当前微信版本：窗口可识别为微信，但内部为 MMUIRenderSubWindow，Python uiautomation 无法找到 EditControl 等标准控件；真实发送只能通过 CUA/坐标路径完成。已验证 Stu 测试消息成功，尚未形成稳定 bridge。"
+        },
+        {
+          "at": "2026-11-04T21:23:38.285Z",
+          "by": "codex",
+          "what": "blocked: human 当前微信内部控件不暴露标准 UIA，稳定 bridge 需采用坐标/视觉定位，存在分辨率和布局风险；需用户确认该实现基础"
+        },
+        {
+          "at": "2026-11-04T21:24:17.420Z",
+          "by": "codex",
+          "what": "claim"
+        },
+        {
+          "at": "2026-11-04T21:25:26.371Z",
+          "by": "codex",
+          "what": "save: 按用户确认实现坐标+视觉 bridge 初版：packages/desktop/resources/wechat-uiautomation/bridge.py；校验微信窗口句柄/尺寸，发送前后截图哈希，目标联系人需 WECHAT_UIA_CURRENT_CHAT 且显式开启 allow；联系人读取和未实现动作明确失败，不伪造成功。"
+        },
+        {
+          "at": "2026-11-04T21:26:06.708Z",
+          "by": "codex",
+          "what": "save: 代码审查修正截图校验：从全窗口改为聊天输入区/最新消息区哈希，避免时钟和侧栏动画导致误判发送成功；verify GREEN。"
+        },
+        {
+          "at": "2026-11-04T21:26:39.788Z",
+          "by": "codex",
+          "what": "save: bridge 只读 smoke 成功：/api/v1/bot/status 返回 running=true、mode=coordinate_visual；微信当前矩形为 159x27 且位于 -25600,-25600（最小化/异常状态），发送保护会因尺寸校验拒绝，不会误发。"
+        },
+        {
+          "at": "2026-11-04T21:36:04.151Z",
+          "by": "codex",
+          "what": "save: 视觉校验升级：发送前要求聊天编辑区暗色布局，发送后要求新增绿色消息气泡像素；当前公众号文章页被正确拒绝为 WECHAT_UIA_CHAT_COMPOSER_NOT_VISIBLE，未发送内容。DPI修正后状态矩形为1132x1028；未继续盲发。verify GREEN。"
+        },
+        {
+          "at": "2026-11-04T21:38:13.963Z",
+          "by": "codex",
+          "what": "save: 最终 bridge 验证：当前微信窗口矩形变为577x1028，bridge按保护规则返回 WECHAT_UIA_WINDOW_NOT_READY，未发送视觉验证消息；此前 CUA 直接发送成功，但自动 bridge 尚未通过动态布局稳定性验证。"
+        },
+        {
+          "at": "2026-11-04T21:38:14.178Z",
+          "by": "codex",
+          "what": "blocked: env 微信窗口在操作期间动态变为577x1028分栏/异常布局，bridge安全拒绝；需要固定正常单栏主聊天布局后继续"
+        },
+        {
+          "at": "2026-11-04T21:39:58.675Z",
+          "by": "codex",
+          "what": "save: 最终 bridge 调用未通过绿色气泡校验，且窗口映射不稳定无法可靠截图确认；修正 bridge 状态语义：Enter 已执行但气泡未确认时返回 data.success=false、sent_unknown=true、不可重试，避免重复发送。verify GREEN。"
+        }
+      ],
+      "lease": {
+        "at": "2026-11-04T21:24:17.419Z",
+        "heartbeat": "2026-11-04T21:39:58.675Z",
+        "reason": "env",
+        "blockedAt": "2026-11-04T21:38:14.176Z"
+      },
+      "checkpoint": {
+        "progress": [],
+        "notes": [
+          "21:14 新增个人微信 UIAutomation bridge 适配层：server channels 模块提供 status/contacts/messages/send/send-file/listen 六类契约，未配置 WECHAT_UIA_BASE_URL 返回 WECHAT_UIA_NOT_CONFIGURED；desktop main/preload 增加对应 IPC 通道。",
+          "21:15 T-11 bridge 契约层完成并 verify GREEN；本机 Python3.12 已有 uiautomation/Flask，微信客户端运行中。真实 UIAutomation 联系人/消息/发送验证需要用户指定 DEMO 会话，当前不接触真实联系人、不发送消息。",
+          "BLOCKED: 真实 UIAutomation 行为验证涉及当前微信账号和消息数据，需用户指定测试会话或明确仅做只读窗口探测；不能自行选择联系人或发送消息。",
+          "21:19 用户授权测试联系人 Stu；尝试读取微信 UIA 控件时发现微信主窗口句柄已消失，仅有进程无可操作窗口，之前处于公众号文章子窗口；未读取 Stu、未发送测试消息。",
+          "BLOCKED: 微信进程存在但主窗口句柄消失，UIAutomation 无可操作窗口；需用户打开并保持登录的微信主聊天窗口后继续",
+          "21:20 用户授权 DEMO 联系人 Stu；微信主窗口恢复后通过 UIAutomation 成功定位 Stu 并发送测试文本【AI员工UIAutomation联通测试】收到请回复：OK，截图确认绿色发送气泡出现。当前微信版本可操作，真实发送路径已验证。",
+          "21:23 探测当前微信版本：窗口可识别为微信，但内部为 MMUIRenderSubWindow，Python uiautomation 无法找到 EditControl 等标准控件；真实发送只能通过 CUA/坐标路径完成。已验证 Stu 测试消息成功，尚未形成稳定 bridge。",
+          "BLOCKED: 当前微信内部控件不暴露标准 UIA，稳定 bridge 需采用坐标/视觉定位，存在分辨率和布局风险；需用户确认该实现基础",
+          "21:25 按用户确认实现坐标+视觉 bridge 初版：packages/desktop/resources/wechat-uiautomation/bridge.py；校验微信窗口句柄/尺寸，发送前后截图哈希，目标联系人需 WECHAT_UIA_CURRENT_CHAT 且显式开启 allow；联系人读取和未实现动作明确失败，不伪造成功。",
+          "21:26 代码审查修正截图校验：从全窗口改为聊天输入区/最新消息区哈希，避免时钟和侧栏动画导致误判发送成功；verify GREEN。",
+          "21:26 bridge 只读 smoke 成功：/api/v1/bot/status 返回 running=true、mode=coordinate_visual；微信当前矩形为 159x27 且位于 -25600,-25600（最小化/异常状态），发送保护会因尺寸校验拒绝，不会误发。",
+          "21:36 视觉校验升级：发送前要求聊天编辑区暗色布局，发送后要求新增绿色消息气泡像素；当前公众号文章页被正确拒绝为 WECHAT_UIA_CHAT_COMPOSER_NOT_VISIBLE，未发送内容。DPI修正后状态矩形为1132x1028；未继续盲发。verify GREEN。",
+          "21:38 最终 bridge 验证：当前微信窗口矩形变为577x1028，bridge按保护规则返回 WECHAT_UIA_WINDOW_NOT_READY，未发送视觉验证消息；此前 CUA 直接发送成功，但自动 bridge 尚未通过动态布局稳定性验证。",
+          "BLOCKED: 微信窗口在操作期间动态变为577x1028分栏/异常布局，bridge安全拒绝；需要固定正常单栏主聊天布局后继续",
+          "21:39 最终 bridge 调用未通过绿色气泡校验，且窗口映射不稳定无法可靠截图确认；修正 bridge 状态语义：Enter 已执行但气泡未确认时返回 data.success=false、sent_unknown=true、不可重试，避免重复发送。verify GREEN。"
+        ],
+        "files": [],
+        "next": "固定微信窗口和截图映射后人工确认最后一次 bridge 结果；联系人读取/文件发送仍待实现"
+      },
+      "id": "T-11",
+      "title": "P4：渠道接入（企微 / 公众号 / 个人微信自研 UIAutomation）",
+      "status": "blocked",
+      "owner": "codex",
+      "scope": [
+        "packages/server/src/channels",
+        "packages/desktop/src/main"
+      ],
+      "accept": "至少一条外部 IM 消息走通 网关→agent→计费→回复",
+      "blockedBy": [],
+      "deps": [
+        "有凭证才做"
+      ]
+    },
+    {
+      "history": [
+        {
+          "at": "2026-11-05T06:32:02.372Z",
+          "by": "dsh-lead",
+          "what": "claim"
+        },
+        {
+          "at": "2026-11-05T06:38:28.128Z",
+          "by": "dsh-lead",
+          "what": "save: 微信支付V3 + 积分订单 + 最小后台完成，冒烟30/30，verify GREEN"
+        },
+        {
+          "at": "2026-11-05T06:38:28.812Z",
+          "by": "dsh-lead",
+          "what": "done: 完成"
+        }
+      ],
+      "lease": {
+        "at": "2026-11-05T06:32:02.366Z",
+        "heartbeat": "2026-11-05T06:38:28.128Z",
+        "reason": null
+      },
+      "checkpoint": {
+        "progress": [],
+        "notes": [
+          "06:38 微信支付V3 + 积分订单 + 最小后台完成，冒烟30/30，verify GREEN"
+        ],
+        "files": [
+          "packages/server/src/payments",
+          "packages/server/src/orders",
+          "packages/server/src/admin",
+          "docs/handoff/T12-支付与后台.md"
+        ],
+        "next": "无（已完成）；后续 T-14 契约收口时补团队套餐购买联动"
+      },
+      "id": "T-12",
+      "title": "P5：微信支付 V3 + 订单 + 兑换码 + 最小后台（admin 路由子集）",
+      "status": "done",
+      "owner": "dsh-lead",
+      "scope": [
+        "packages/server/src/payments",
+        "packages/server/src/orders",
+        "packages/server/src/admin"
+      ],
+      "accept": "下单→支付回调→加积分→后台可查",
+      "blockedBy": [],
+      "deps": [
+        "用户已有商户号"
+      ],
+      "finishedAt": "2026-11-05T06:38:28.811Z",
+      "result": "完成"
+    },
+    {
+      "history": [
+        {
+          "at": "2026-11-04T14:42:36.444Z",
+          "by": "codex",
+          "what": "claim"
+        },
+        {
+          "at": "2026-11-04T14:43:16.752Z",
+          "by": "codex",
+          "what": "save: 检查确认 packages/desktop 无 electron-builder.yml；dist 脚本存在但安装资源/NSIS 行为未声明。将添加不含发布地址的NSIS配置，把 out、openclaw、skills/context 随包打入。"
+        },
+        {
+          "at": "2026-11-04T15:17:54.932Z",
+          "by": "codex",
+          "what": "save: 新增 packages/desktop/electron-builder.yml：固定Electron38、NSIS可改安装目录、快捷方式、卸载保留用户数据、随包openclaw/skills/context；第一次dist因electron版本范围拒绝，补electronVersion后进入packaging。NSIS及--dir均在资源打包阶段长时间无产物，最终dist因外部请求600s超时；verify.ps1仍GREEN。代码审查确认配置不含发布地址，不声明不可验证自动更新。"
+        },
+        {
+          "at": "2026-11-04T15:17:55.048Z",
+          "by": "codex",
+          "what": "blocked: env electron-builder 已通过配置加载和 Electron 38 固定检查，资源打包阶段无产物；NSIS dist 最终因外部 request 600s timeout，--dir 也在同阶段长时间挂起。需要网络/缓存或单独打包环境后才能验证安装包。verify.ps1 GREEN。"
+        },
+        {
+          "at": "2026-11-05T07:31:40.781Z",
+          "by": "dsh-lead",
+          "what": "takeover from codex"
+        },
+        {
+          "at": "2026-11-05T08:14:23.175Z",
+          "by": "dsh-lead",
+          "what": "save: T-13 完成：NSIS 安装包已产出并实测。产物 packages/desktop/release/中科元晟 AI员工-0.1.0-win-x64.exe 127.7MB + blockmap + latest.yml（0.1.0, sha512 Usz95MJgYq1jdlj...）；win-unpacked 434.7MB/20152 文件。关键解法：ELECTRON_BUILDER_BINARIES_MIRROR 指 npmmirror，否则拉 7zip/NSIS 600s 超时（这是你 blocked 的根因）。已加 electron-updater（main/update.ts）+ 首启三步引导 + 设置页更新按钮；修正 electron.vite.config.ts 缺 externalizeDepsPlugin 导致 updater 被 bundle 的 bug；图标取自原版 icon.ico，config 由 signAndEditExecutable 改为 signExecutable: false（保留图标/元数据只跳签名）；补 package.json author（CompanyName 下次构建生效）。实测：静默安装 /S /D 成功（解压 2-4 分钟，NSIS 先解到 %TEMP%\\nsn*.tmp，中途目标目录为空是正常）、安装版 GUI 冒烟通过、verify -Smoke GREEN。未验证：升级链路（更新源未部署）、卸载流程、公司名。"
+        },
+        {
+          "at": "2026-11-05T08:14:23.441Z",
+          "by": "dsh-lead",
+          "what": "done: NSIS 安装包 127.7MB + latest.yml 产出，静默安装+安装版 GUI 冒烟+verify -Smoke 全绿"
+        }
+      ],
+      "lease": {
+        "at": "2026-11-04T14:42:36.443Z",
+        "heartbeat": "2026-11-05T08:14:23.175Z",
+        "reason": null
+      },
+      "checkpoint": {
+        "progress": [
+          {
+            "text": "[x]检查现有桌面构建和资源",
+            "done": false
+          },
+          {
+            "text": "[x]NSIS配置",
+            "done": false
+          },
+          {
+            "text": "[x]electron-vite/verify验证",
+            "done": false
+          },
+          {
+            "text": "[ ]NSIS实际安装包（环境阻塞）",
+            "done": false
+          }
+        ],
+        "notes": [
+          "14:43 检查确认 packages/desktop 无 electron-builder.yml；dist 脚本存在但安装资源/NSIS 行为未声明。将添加不含发布地址的NSIS配置，把 out、openclaw、skills/context 随包打入。",
+          "15:17 新增 packages/desktop/electron-builder.yml：固定Electron38、NSIS可改安装目录、快捷方式、卸载保留用户数据、随包openclaw/skills/context；第一次dist因electron版本范围拒绝，补electronVersion后进入packaging。NSIS及--dir均在资源打包阶段长时间无产物，最终dist因外部请求600s超时；verify.ps1仍GREEN。代码审查确认配置不含发布地址，不声明不可验证自动更新。",
+          "BLOCKED: electron-builder 已通过配置加载和 Electron 38 固定检查，资源打包阶段无产物；NSIS dist 最终因外部 request 600s timeout，--dir 也在同阶段长时间挂起。需要网络/缓存或单独打包环境后才能验证安装包。verify.ps1 GREEN。",
+          "08:14 T-13 完成：NSIS 安装包已产出并实测。产物 packages/desktop/release/中科元晟 AI员工-0.1.0-win-x64.exe 127.7MB + blockmap + latest.yml（0.1.0, sha512 Usz95MJgYq1jdlj...）；win-unpacked 434.7MB/20152 文件。关键解法：ELECTRON_BUILDER_BINARIES_MIRROR 指 npmmirror，否则拉 7zip/NSIS 600s 超时（这是你 blocked 的根因）。已加 electron-updater（main/update.ts）+ 首启三步引导 + 设置页更新按钮；修正 electron.vite.config.ts 缺 externalizeDepsPlugin 导致 updater 被 bundle 的 bug；图标取自原版 icon.ico，config 由 signAndEditExecutable 改为 signExecutable: false（保留图标/元数据只跳签名）；补 package.json author（CompanyName 下次构建生效）。实测：静默安装 /S /D 成功（解压 2-4 分钟，NSIS 先解到 %TEMP%\\nsn*.tmp，中途目标目录为空是正常）、安装版 GUI 冒烟通过、verify -Smoke GREEN。未验证：升级链路（更新源未部署）、卸载流程、公司名。"
+        ],
+        "files": [],
+        "next": "T-13 已交付，看板仅剩 T-10/T-11/T-14/T-19 四个待外部条件的任务；等用户部署更新源后补验升级链路"
+      },
+      "id": "T-13",
+      "title": "P6：NSIS 安装包 + 自动更新（含 asar 热更）+ 首启引导",
+      "status": "done",
+      "owner": "dsh-lead",
+      "scope": [
+        "packages/desktop/electron-builder.yml",
+        "scripts"
+      ],
+      "accept": "安装包可装可升可卸载",
+      "blockedBy": [],
+      "deps": [],
+      "finishedAt": "2026-11-05T08:14:23.440Z",
+      "result": "NSIS 安装包 127.7MB + latest.yml 产出，静默安装+安装版 GUI 冒烟+verify -Smoke 全绿"
+    },
+    {
+      "history": [
+        {
+          "at": "2026-11-04T13:50:40.898Z",
+          "by": "codex",
+          "what": "claim"
+        },
+        {
+          "at": "2026-11-04T13:52:49.097Z",
+          "by": "codex",
+          "what": "save: T-14 初次 claim 暴露 snapshotScopes 对 docs/fidelity-matrix.md 文件 scope 调 readdir 而 ENOTDIR；已通过 T-25 修复快照后重新登记断点。"
+        },
+        {
+          "at": "2026-11-04T14:09:07.952Z",
+          "by": "codex",
+          "what": "save: 重新生成契约矩阵：确认原版237 HTTP路由/147 IPC handle/47表588字段；复刻44路由（16精确/221缺失/28额外）、30 IPC（8精确/139缺失/22额外）、39模型（34匹配/13缺失/5新增）、504字段（159缺失/75额外，0类型/可空性差异）；F1文本命中36/281。只把项目明确记录的范围列为CUT，其他缺口保留待实施/评估。"
+        },
+        {
+          "at": "2026-11-04T14:41:46.084Z",
+          "by": "codex",
+          "what": "save: T-27补齐公开 GET /auth/check，当前复刻77路由；T-16补齐toolapi 32路由后，原版路由精确命中进一步增加。微信登录状态依赖已裁剪表，仍不擅自恢复。"
+        },
+        {
+          "at": "2026-11-04T15:17:55.176Z",
+          "by": "codex",
+          "what": "save: T-27补齐auth/check后审计精确路由命中49/237，当前auth剩余注册/微信/refresh等旧契约涉及已裁剪或未确认会话规则；T-13已补打包配置但环境阻塞，未计为F2完成。"
+        },
+        {
+          "at": "2026-11-04T15:58:53.790Z",
+          "by": "codex",
+          "what": "save: 修正审计器对单文件多 Controller 的解析：package.controller.ts 中 employee-orders、admin/redemption、admin/packages、admin/employee-orders 不再继承 packages 前缀；重跑后原版237路由、复刻82路由、精确命中50，员工订单模块正确识别为4条实现路由。"
+        },
+        {
+          "at": "2026-11-04T16:36:28.035Z",
+          "by": "codex",
+          "what": "save: 依据原版 auth.controller.d.ts/js 补齐 register、login/sms、logout、refresh 四条路由，复用现有 User/Session 表；未实现需要 T-11 的微信会话。"
+        },
+        {
+          "at": "2026-11-04T16:37:10.659Z",
+          "by": "codex",
+          "what": "save: 代码审查通过：auth 注册校验手机号/邮箱至少一项，注册码按 register purpose 核销，refresh 校验/轮换 Session 并返回 Bearer 元数据，logout 删除当前用户会话；verify GREEN。重跑完整审计后复刻86路由，精确命中54/237。"
+        },
+        {
+          "at": "2026-11-04T20:47:12.673Z",
+          "by": "codex",
+          "what": "save: 补齐原版证据明确的契约路由：GET /packages、GET /employee-orders/my、GET /employee-orders/:id/status；复用现有 presets/mine/status 服务，无新增表、支付或价格逻辑。"
+        },
+        {
+          "at": "2026-11-04T20:47:59.221Z",
+          "by": "codex",
+          "what": "save: 补齐员工目录旧契约别名：GET /employees/marketplace、GET /employees/my、DELETE /employees/my/:slug，均复用 catalog/mine/uninstall；购买路由仍未臆造。verify GREEN。"
+        },
+        {
+          "at": "2026-11-04T20:50:12.261Z",
+          "by": "codex",
+          "what": "save: 回滚了不可用的原版 dist 多 Controller 切片尝试：编译产物路由装饰器位于 Controller 类装饰器之前，切片会把原版237条误算成6条；已恢复原版解析器，保留TS多Controller修正。当前审计恢复原版237、复刻104，矩阵可用。"
+        },
+        {
+          "at": "2026-11-04T20:52:10.077Z",
+          "by": "codex",
+          "what": "save: 最新矩阵复核：原版237、复刻104、精确命中71；剩余核心缺口 GET/POST auth/wechat、POST employees/:slug/purchase、packages 管理写接口均依赖 T-11/T-12 或价格/会话表决策，继续实现会猜测业务语义。当前代码审查通过，verify GREEN。"
+        },
+        {
+          "at": "2026-11-04T20:52:10.345Z",
+          "by": "codex",
+          "what": "blocked: human 剩余可识别缺口均依赖未决业务或独立任务：微信会话需T-11和会话表，员工购买需价格/支付，套餐管理需T-12后台；继续实现会违反先问再做纪律。"
+        },
+        {
+          "at": "2026-11-05T08:26:40.524Z",
+          "by": "dsh-lead",
+          "what": "takeover from codex"
+        },
+        {
+          "at": "2026-11-05T08:34:49.578Z",
+          "by": "dsh-lead",
+          "what": "save: 管理端扩展 77 路由落地，冒烟 58/58，verify GREEN，F2 路由命中 130/237"
+        },
+        {
+          "at": "2026-11-05T08:34:49.842Z",
+          "by": "dsh-lead",
+          "what": "done: 完成"
+        }
+      ],
+      "lease": {
+        "at": "2026-11-04T13:50:40.897Z",
+        "heartbeat": "2026-11-05T08:34:49.578Z",
+        "reason": null
+      },
+      "checkpoint": {
+        "progress": [
+          {
+            "text": "admin-extra service/controller",
+            "done": true
+          },
+          {
+            "text": "58 项冒烟",
+            "done": true
+          },
+          {
+            "text": "verify 集成",
+            "done": true
+          },
+          {
+            "text": "处置台账",
+            "done": true
+          },
+          {
+            "text": "文档与 README",
+            "done": true
+          }
+        ],
+        "notes": [
+          "13:52 T-14 初次 claim 暴露 snapshotScopes 对 docs/fidelity-matrix.md 文件 scope 调 readdir 而 ENOTDIR；已通过 T-25 修复快照后重新登记断点。",
+          "14:09 重新生成契约矩阵：确认原版237 HTTP路由/147 IPC handle/47表588字段；复刻44路由（16精确/221缺失/28额外）、30 IPC（8精确/139缺失/22额外）、39模型（34匹配/13缺失/5新增）、504字段（159缺失/75额外，0类型/可空性差异）；F1文本命中36/281。只把项目明确记录的范围列为CUT，其他缺口保留待实施/评估。",
+          "14:41 T-27补齐公开 GET /auth/check，当前复刻77路由；T-16补齐toolapi 32路由后，原版路由精确命中进一步增加。微信登录状态依赖已裁剪表，仍不擅自恢复。",
+          "15:17 T-27补齐auth/check后审计精确路由命中49/237，当前auth剩余注册/微信/refresh等旧契约涉及已裁剪或未确认会话规则；T-13已补打包配置但环境阻塞，未计为F2完成。",
+          "15:58 修正审计器对单文件多 Controller 的解析：package.controller.ts 中 employee-orders、admin/redemption、admin/packages、admin/employee-orders 不再继承 packages 前缀；重跑后原版237路由、复刻82路由、精确命中50，员工订单模块正确识别为4条实现路由。",
+          "16:36 依据原版 auth.controller.d.ts/js 补齐 register、login/sms、logout、refresh 四条路由，复用现有 User/Session 表；未实现需要 T-11 的微信会话。",
+          "16:37 代码审查通过：auth 注册校验手机号/邮箱至少一项，注册码按 register purpose 核销，refresh 校验/轮换 Session 并返回 Bearer 元数据，logout 删除当前用户会话；verify GREEN。重跑完整审计后复刻86路由，精确命中54/237。",
+          "20:47 补齐原版证据明确的契约路由：GET /packages、GET /employee-orders/my、GET /employee-orders/:id/status；复用现有 presets/mine/status 服务，无新增表、支付或价格逻辑。",
+          "20:47 补齐员工目录旧契约别名：GET /employees/marketplace、GET /employees/my、DELETE /employees/my/:slug，均复用 catalog/mine/uninstall；购买路由仍未臆造。verify GREEN。",
+          "20:50 回滚了不可用的原版 dist 多 Controller 切片尝试：编译产物路由装饰器位于 Controller 类装饰器之前，切片会把原版237条误算成6条；已恢复原版解析器，保留TS多Controller修正。当前审计恢复原版237、复刻104，矩阵可用。",
+          "20:52 最新矩阵复核：原版237、复刻104、精确命中71；剩余核心缺口 GET/POST auth/wechat、POST employees/:slug/purchase、packages 管理写接口均依赖 T-11/T-12 或价格/会话表决策，继续实现会猜测业务语义。当前代码审查通过，verify GREEN。",
+          "BLOCKED: 剩余可识别缺口均依赖未决业务或独立任务：微信会话需T-11和会话表，员工购买需价格/支付，套餐管理需T-12后台；继续实现会违反先问再做纪律。",
+          "08:34 管理端扩展 77 路由落地，冒烟 58/58，verify GREEN，F2 路由命中 130/237"
+        ],
+        "files": [],
+        "next": "如需继续：管理后台 Web 控制台、IPC 135 条缺口按功能面收口"
+      },
+      "id": "T-14",
+      "title": "P7：F2 契约收口（路由/IPC/表三张 diff 打到约定线）+ 文案对齐",
+      "status": "done",
+      "owner": "dsh-lead",
+      "scope": [
+        "docs/fidelity-matrix.md"
+      ],
+      "accept": "契约测试全绿，缺口清单归零或显式 CUT",
+      "blockedBy": [],
+      "deps": [],
+      "finishedAt": "2026-11-05T08:34:49.841Z",
+      "result": "完成"
+    },
+    {
+      "history": [
+        {
+          "at": "2026-11-04T17:08:31.202Z",
+          "by": "codex",
+          "what": "claim"
+        },
+        {
+          "at": "2026-11-04T17:11:44.079Z",
+          "by": "codex",
+          "what": "save: 补齐 RunningHub 兼容媒体适配层：11条原版 /media 路由、任务提交、按现有 MediaPricing 估算并封顶扣积分、供应商失败退款、任务轮询状态同步、临时文件和 OSS 转移占位返回；供应商参数通过 RUNNINGHUB_BASE_URL/RUNNINGHUB_API_KEY 和请求体透传。"
+        },
+        {
+          "at": "2026-11-04T17:13:18.114Z",
+          "by": "codex",
+          "what": "save: 媒体模块代码审查完成：确认所有任务查询按 userId 隔离，供应商未配置时不泄露上游错误，扣费采用余额封顶并在提交失败退款；修正 temp/OSS 返回体顺序防止请求体覆盖服务端字段。审计显示 media 11/11 精确命中，整体 97 路由、65/237 精确命中。"
+        },
+        {
+          "at": "2026-11-04T18:37:56.275Z",
+          "by": "codex",
+          "what": "save: 根据 RunningHub 页面真实契约改造：AI App 提交 POST /openapi/v2/run/ai-app/{apiId}，请求 nodeInfoList，Bearer API Key；查询 POST /openapi/v2/query；支持 webhookUrl、回调签名、taskId/status/results；2031016553440878594 仅默认绑定 lipsync，其余媒体类型分别要求独立 API ID 配置，避免错误复用数字人工作流。"
+        },
+        {
+          "at": "2026-11-04T18:58:16.902Z",
+          "by": "codex",
+          "what": "save: 使用用户提供的 RunningHub API Key 通过 POST /uc/openapi/accountStatus 完成只读验证：HTTP 200、code 0、apiType NORMAL、currentTaskCounts 0；余额已脱敏，密钥未写入仓库或日志。"
+        },
+        {
+          "at": "2026-11-04T19:43:49.411Z",
+          "by": "codex",
+          "what": "save: 真实 RunningHub 提交未创建任务：上传 PNG/M4A 成功，但 AI App 响应 errorCode 820、taskId 为空；未重复提交。修正媒体适配器：errorCode、非零 code 或缺少 taskId 一律抛错并退款，禁止错误响应落库为随机任务。verify GREEN。"
+        },
+        {
+          "at": "2026-11-04T19:56:17.007Z",
+          "by": "codex",
+          "what": "save: 再次提交 RunningHub AI App（usePersonalQueue 按页面示例发送字符串 false）后得到明确错误：HTTP 200，errorCode 820，errorMessage=付费RH币余额不足，消费级 API 调用仅支持付费RH币，免费RH币不可用于 API 调用；请求格式和素材节点已通过参数校验，未创建 taskId。"
+        },
+        {
+          "at": "2026-11-04T20:08:25.773Z",
+          "by": "codex",
+          "what": "save: 充值后真实提交成功：RunningHub AI App 返回 taskId 2118072331952021506、状态 RUNNING；已连续轮询24次（约2分钟）仍运行中，未重复提交。"
+        },
+        {
+          "at": "2026-11-04T20:09:29.393Z",
+          "by": "codex",
+          "what": "save: 真实任务完成：taskId=2118072331952021506，轮询最终 SUCCESS，输出 mp4，nodeId=1747；结果 URL=https://rh-hk-images-1252422369.cos.ap-hongkong.myqcloud.com/5d86daccd1091f66b0cb85edcd22601f/output/ltx23-kj-aijuxi-r_00001_p83-audio_sjpgm_1793822943.mp4。"
+        },
+        {
+          "at": "2026-11-04T20:12:49.643Z",
+          "by": "codex",
+          "what": "blocked: human RunningHub 真实任务已成功并得到 MP4；OSS bucket/region/endpoint 已配置，但 OSS_ACCESS_KEY_ID 与 OSS_ACCESS_KEY_SECRET 缺失，无法执行转存。补齐凭证后继续完成 T-15 验收。"
+        },
+        {
+          "at": "2026-11-04T20:12:49.764Z",
+          "by": "codex",
+          "what": "save: 检查 .env 仅确认 OSS 凭证存在性，未读取或输出密钥；当前缺少 OSS_ACCESS_KEY_ID/OSS_ACCESS_KEY_SECRET。"
+        },
+        {
+          "at": "2026-11-04T20:42:49.574Z",
+          "by": "codex",
+          "what": "save: OSS 转存已真实验证成功：结果视频写入 zhongke001/media/tasks/2118072331952021506.mp4，上传 1,403,550 字节；新增 media/files/oss-transfer 的 ali-oss 实现，校验 URL、凭证、bucket、region、endpoint，下载结果后按用户/任务生成对象键并返回 OSS URL。verify GREEN。"
+        },
+        {
+          "at": "2026-11-04T20:43:00.180Z",
+          "by": "codex",
+          "what": "claim"
+        },
+        {
+          "at": "2026-11-04T20:43:37.722Z",
+          "by": "codex",
+          "what": "done: T-15 完成：RunningHub AI App 真实提交/轮询成功（taskId 2118072331952021506，输出 MP4），结果已转存 OSS；新增 ali-oss 转存实现，补齐凭证校验、来源域名限制、用户对象前缀隔离；代码审查及 verify GREEN。"
+        }
+      ],
+      "lease": {
+        "at": "2026-11-04T20:43:00.179Z",
+        "heartbeat": "2026-11-04T20:43:00.180Z",
+        "reason": null
+      },
+      "checkpoint": {
+        "progress": [],
+        "notes": [
+          "17:11 补齐 RunningHub 兼容媒体适配层：11条原版 /media 路由、任务提交、按现有 MediaPricing 估算并封顶扣积分、供应商失败退款、任务轮询状态同步、临时文件和 OSS 转移占位返回；供应商参数通过 RUNNINGHUB_BASE_URL/RUNNINGHUB_API_KEY 和请求体透传。",
+          "17:13 媒体模块代码审查完成：确认所有任务查询按 userId 隔离，供应商未配置时不泄露上游错误，扣费采用余额封顶并在提交失败退款；修正 temp/OSS 返回体顺序防止请求体覆盖服务端字段。审计显示 media 11/11 精确命中，整体 97 路由、65/237 精确命中。",
+          "18:37 根据 RunningHub 页面真实契约改造：AI App 提交 POST /openapi/v2/run/ai-app/{apiId}，请求 nodeInfoList，Bearer API Key；查询 POST /openapi/v2/query；支持 webhookUrl、回调签名、taskId/status/results；2031016553440878594 仅默认绑定 lipsync，其余媒体类型分别要求独立 API ID 配置，避免错误复用数字人工作流。",
+          "18:58 使用用户提供的 RunningHub API Key 通过 POST /uc/openapi/accountStatus 完成只读验证：HTTP 200、code 0、apiType NORMAL、currentTaskCounts 0；余额已脱敏，密钥未写入仓库或日志。",
+          "19:43 真实 RunningHub 提交未创建任务：上传 PNG/M4A 成功，但 AI App 响应 errorCode 820、taskId 为空；未重复提交。修正媒体适配器：errorCode、非零 code 或缺少 taskId 一律抛错并退款，禁止错误响应落库为随机任务。verify GREEN。",
+          "19:56 再次提交 RunningHub AI App（usePersonalQueue 按页面示例发送字符串 false）后得到明确错误：HTTP 200，errorCode 820，errorMessage=付费RH币余额不足，消费级 API 调用仅支持付费RH币，免费RH币不可用于 API 调用；请求格式和素材节点已通过参数校验，未创建 taskId。",
+          "20:08 充值后真实提交成功：RunningHub AI App 返回 taskId 2118072331952021506、状态 RUNNING；已连续轮询24次（约2分钟）仍运行中，未重复提交。",
+          "20:09 真实任务完成：taskId=2118072331952021506，轮询最终 SUCCESS，输出 mp4，nodeId=1747；结果 URL=https://rh-hk-images-1252422369.cos.ap-hongkong.myqcloud.com/5d86daccd1091f66b0cb85edcd22601f/output/ltx23-kj-aijuxi-r_00001_p83-audio_sjpgm_1793822943.mp4。",
+          "BLOCKED: RunningHub 真实任务已成功并得到 MP4；OSS bucket/region/endpoint 已配置，但 OSS_ACCESS_KEY_ID 与 OSS_ACCESS_KEY_SECRET 缺失，无法执行转存。补齐凭证后继续完成 T-15 验收。",
+          "20:12 检查 .env 仅确认 OSS 凭证存在性，未读取或输出密钥；当前缺少 OSS_ACCESS_KEY_ID/OSS_ACCESS_KEY_SECRET。",
+          "20:42 OSS 转存已真实验证成功：结果视频写入 zhongke001/media/tasks/2118072331952021506.mp4，上传 1,403,550 字节；新增 media/files/oss-transfer 的 ali-oss 实现，校验 URL、凭证、bucket、region、endpoint，下载结果后按用户/任务生成对象键并返回 OSS URL。verify GREEN。"
+        ],
+        "files": [],
+        "next": "代码审查完成后重新检查 T-15 验收项并收口"
+      },
+      "id": "T-15",
+      "title": "P8：媒体链路（数字人/对口型/混剪）走第三方云 API",
+      "status": "done",
+      "owner": "codex",
+      "scope": [
+        "packages/server/src/media"
+      ],
+      "accept": "提交任务→轮询/回调→转 OSS→扣积分",
+      "blockedBy": [],
+      "deps": [
+        "等用户定云端平台与 GPU 方案"
+      ],
+      "finishedAt": "2026-11-04T20:43:37.720Z",
+      "result": "T-15 完成：RunningHub AI App 真实提交/轮询成功（taskId 2118072331952021506，输出 MP4），结果已转存 OSS；新增 ali-oss 转存实现，补齐凭证校验、来源域名限制、用户对象前缀隔离；代码审查及 verify GREEN。"
+    },
+    {
+      "history": [
+        {
+          "at": "2026-11-04T14:09:38.062Z",
+          "by": "codex",
+          "what": "claim"
+        },
+        {
+          "at": "2026-11-04T14:26:22.320Z",
+          "by": "codex",
+          "what": "save: 实现toolapi 32路由中的资料库/晨报/潜客/沟通/画像/策略/采集/提示词 29个CRUD和文本AI入口；文本调用ComputeService并沿用模型计费。海报与wxauto明确返回迁移提示，分别留给T-15/T-11。所有数据从JWT phone归属，拒绝body/query跨用户phone。"
+        },
+        {
+          "at": "2026-11-04T14:28:41.351Z",
+          "by": "codex",
+          "what": "save: 代码审查完成：32条toolapi路由与原版路径一一匹配；跨用户访问在controller拒绝body/query phone不一致、service所有id变更先按phone查找；文本AI经ComputeService processComputeRequest计费；海报接口明确迁移T-15、wxauto明确迁移T-11；补充空内容BadRequest。verify GREEN。"
+        },
+        {
+          "at": "2026-11-04T14:28:41.452Z",
+          "by": "codex",
+          "what": "done: 交付toolapi 32路由：内容库、晨报/分发记录、潜在客户、今日沟通、客户画像、策略摘要、客户采集、聊天提示词全链路CRUD/生成；ai/chat走ComputeService已计费模型代理。按用户决定不接原34ai旧图片接口和wxauto：poster返回迁移T-15提示，wxauto三路由返回迁移T-11提示。全用户数据按JWT phone隔离，verify GREEN，完成代码审查。"
+        }
+      ],
+      "lease": {
+        "at": "2026-11-04T14:09:38.061Z",
+        "heartbeat": "2026-11-04T14:28:41.351Z",
+        "reason": null
+      },
+      "checkpoint": {
+        "progress": [
+          {
+            "text": "[x]原版路由/模型/DTO证据盘点",
+            "done": false
+          },
+          {
+            "text": "[x]资料库/晨报/潜客/沟通/画像/策略/采集/提示词接口",
+            "done": false
+          },
+          {
+            "text": "[x]文本AI接Compute计费",
+            "done": false
+          },
+          {
+            "text": "[x]verify与代码审查",
+            "done": false
+          }
+        ],
+        "notes": [
+          "14:26 实现toolapi 32路由中的资料库/晨报/潜客/沟通/画像/策略/采集/提示词 29个CRUD和文本AI入口；文本调用ComputeService并沿用模型计费。海报与wxauto明确返回迁移提示，分别留给T-15/T-11。所有数据从JWT phone归属，拒绝body/query跨用户phone。",
+          "14:28 代码审查完成：32条toolapi路由与原版路径一一匹配；跨用户访问在controller拒绝body/query phone不一致、service所有id变更先按phone查找；文本AI经ComputeService processComputeRequest计费；海报接口明确迁移T-15、wxauto明确迁移T-11；补充空内容BadRequest。verify GREEN。"
+        ],
+        "files": [],
+        "next": "标记T-16完成；T-15/T-11接手媒体与微信迁移点。"
+      },
+      "id": "T-16",
+      "title": "toolapi 私域销售助手（32 路由 / 8 表）",
+      "status": "done",
+      "owner": "codex",
+      "scope": [
+        "packages/server/src/toolapi"
+      ],
+      "accept": "素材库/晨报/海报/潜在客户/今日沟通/画像/策略 全链路",
+      "blockedBy": [],
+      "deps": [],
+      "finishedAt": "2026-11-04T14:28:41.451Z",
+      "result": "交付toolapi 32路由：内容库、晨报/分发记录、潜在客户、今日沟通、客户画像、策略摘要、客户采集、聊天提示词全链路CRUD/生成；ai/chat走ComputeService已计费模型代理。按用户决定不接原34ai旧图片接口和wxauto：poster返回迁移T-15提示，wxauto三路由返回迁移T-11提示。全用户数据按JWT phone隔离，verify GREEN，完成代码审查。"
+    },
+    {
+      "history": [
+        {
+          "at": "2026-11-05T07:01:30.769Z",
+          "by": "dsh-lead",
+          "what": "claim"
+        },
+        {
+          "at": "2026-11-05T07:05:26.790Z",
+          "by": "dsh-lead",
+          "what": "save: 定价批注完成；顺带上游 fetch 网络重试"
+        },
+        {
+          "at": "2026-11-05T07:05:27.321Z",
+          "by": "dsh-lead",
+          "what": "done: 完成"
+        }
+      ],
+      "lease": {
+        "at": "2026-11-05T07:01:30.768Z",
+        "heartbeat": "2026-11-05T07:05:26.790Z",
+        "reason": null
+      },
+      "checkpoint": {
+        "progress": [
+          {
+            "text": "docs/定价-占位与待批注.md",
+            "done": true
+          },
+          {
+            "text": "seed.ts 占位价注释",
+            "done": true
+          },
+          {
+            "text": "README 定价段",
+            "done": true
+          },
+          {
+            "text": "providers fetchWithRetry",
+            "done": true
+          }
+        ],
+        "notes": [
+          "07:05 定价批注完成；顺带上游 fetch 网络重试"
+        ],
+        "files": [
+          "docs/定价-占位与待批注.md",
+          "packages/server/prisma/seed.ts",
+          "packages/server/src/providers/providers.service.ts"
+        ],
+        "next": "无（已完成）。具体数值待用户拍板：积分-人民币换算率、模型是否改 per_token、媒体单价"
+      },
+      "id": "T-17",
+      "title": "定价批注：积分包 + 媒体计价（原版为占位价）",
+      "status": "done",
+      "owner": "dsh-lead",
+      "scope": [
+        "packages/server/prisma/seed.ts"
+      ],
+      "accept": "seed 与后台价格表经用户确认",
+      "blockedBy": [],
+      "deps": [
+        "等用户"
+      ],
+      "finishedAt": "2026-11-05T07:05:27.320Z",
+      "result": "完成"
+    },
+    {
+      "history": [],
+      "lease": null,
+      "checkpoint": null,
+      "id": "T-18",
+      "title": "协作基础设施：coord 总线 + AGENTS.md + dev/verify 脚本",
+      "status": "done",
+      "owner": "dsh-lead",
+      "scope": [
+        "AGENTS.md",
+        "scripts/coord.mjs",
+        "docs/handoff"
+      ],
+      "accept": "任一 agent 能 resume/claim/done 并跑通 verify",
+      "blockedBy": [],
+      "deps": []
+    },
+    {
+      "id": "T-19",
+      "title": "T-19 云端任务执行器 + 桌面心跳离线判定（承接 codex T-07 遗留）",
+      "status": "done",
+      "owner": "dsh-lead",
+      "scope": [
+        "packages/server/src/employee"
+      ],
+      "accept": "",
+      "blockedBy": [],
+      "createdAt": "2026-11-04T11:02:37.084Z",
+      "history": [
+        {
+          "at": "2026-11-04T21:42:09.170Z",
+          "by": "codex",
+          "what": "claim"
+        },
+        {
+          "at": "2026-11-04T21:45:22.914Z",
+          "by": "codex",
+          "what": "save: 新增 EmployeeExecutionNode 持久化模型与 employee_execution_nodes 迁移；新增 /employee-execution/heartbeat、/nodes、/nodes/:deviceId/heartbeat、/pull，支持桌面/ECS节点心跳、超时离线判定和云任务原子领取。"
+        },
+        {
+          "at": "2026-11-04T21:46:35.970Z",
+          "by": "codex",
+          "what": "save: 补齐桌面端执行心跳：设备ID基于 userData 路径稳定生成，登录后立即及每30秒调用 /employee-execution/heartbeat；preload 暴露 heartbeat/nodes。代码审查确认未写入密钥，verify GREEN。"
+        },
+        {
+          "at": "2026-11-04T21:46:51.046Z",
+          "by": "codex",
+          "what": "save: T-19 服务端/桌面端代码完成：EmployeeExecutionNode 迁移、心跳、节点离线判定、cloud pull 原子领取、桌面30秒心跳；verify GREEN。实际 ECS 部署未执行，因项目契约禁止直接操作当前生产地址。"
+        },
+        {
+          "at": "2026-11-04T21:46:51.192Z",
+          "by": "codex",
+          "what": "blocked: env 代码已完成，但不能连接当前生产服务器部署；需要隔离 ECS 测试入口/部署授权后验证 worker 实际运行"
+        },
+        {
+          "at": "2026-11-05T08:35:33.086Z",
+          "by": "dsh-lead",
+          "what": "takeover from codex"
+        },
+        {
+          "at": "2026-11-05T08:38:34.492Z",
+          "by": "dsh-lead",
+          "what": "save: 桌面端本机执行器 executor.ts + 服务端失联兜底 recoverStalledTasks + recover 路由 + 办公区执行器状态；tsc/build 通过"
+        },
+        {
+          "at": "2026-11-05T09:05:50.604Z",
+          "by": "dsh-lead",
+          "what": "save: 云端执行器已部署到隔离机 154.64.255.36 并端到端验证；桌面执行器同链路冒烟通过"
+        },
+        {
+          "at": "2026-11-05T09:05:50.722Z",
+          "by": "dsh-lead",
+          "what": "done: 完成"
+        }
+      ],
+      "lease": {
+        "at": "2026-11-04T21:42:09.168Z",
+        "heartbeat": "2026-11-05T09:05:50.604Z",
+        "reason": null
+      },
+      "checkpoint": {
+        "progress": [
+          {
+            "text": "桌面 TaskExecutor(executor.ts)+IPC+办公区徽标",
+            "done": true
+          },
+          {
+            "text": "服务端 recoverStalledTasks 失联回收",
+            "done": true
+          },
+          {
+            "text": "scripts/smoke-t19.mjs 12/12",
+            "done": true
+          },
+          {
+            "text": "staging 隔离机 systemd + MySQL 3307 + worker",
+            "done": true
+          },
+          {
+            "text": "cloud 端到端 awaiting_approval 实测",
+            "done": true
+          },
+          {
+            "text": "桌面端 FCM_SMOKE_EXECUTOR 实测",
+            "done": true
+          }
+        ],
+        "notes": [
+          "21:45 新增 EmployeeExecutionNode 持久化模型与 employee_execution_nodes 迁移；新增 /employee-execution/heartbeat、/nodes、/nodes/:deviceId/heartbeat、/pull，支持桌面/ECS节点心跳、超时离线判定和云任务原子领取。",
+          "21:46 补齐桌面端执行心跳：设备ID基于 userData 路径稳定生成，登录后立即及每30秒调用 /employee-execution/heartbeat；preload 暴露 heartbeat/nodes。代码审查确认未写入密钥，verify GREEN。",
+          "21:46 T-19 服务端/桌面端代码完成：EmployeeExecutionNode 迁移、心跳、节点离线判定、cloud pull 原子领取、桌面30秒心跳；verify GREEN。实际 ECS 部署未执行，因项目契约禁止直接操作当前生产地址。",
+          "BLOCKED: 代码已完成，但不能连接当前生产服务器部署；需要隔离 ECS 测试入口/部署授权后验证 worker 实际运行",
+          "08:38 桌面端本机执行器 executor.ts + 服务端失联兜底 recoverStalledTasks + recover 路由 + 办公区执行器状态；tsc/build 通过",
+          "09:05 云端执行器已部署到隔离机 154.64.255.36 并端到端验证；桌面执行器同链路冒烟通过"
+        ],
+        "files": [
+          "docs/handoff/T19-云端执行器与隔离机.md"
+        ],
+        "next": "T-19 收尾完成，转 T-28 能力重写与后台 Web 控制台"
+      },
+      "finishedAt": "2026-11-05T09:05:50.722Z",
+      "result": "完成"
+    },
+    {
+      "id": "T-20",
+      "title": "模型接口 JWT 签名与过期验证修复",
+      "status": "done",
+      "owner": "codex",
+      "scope": [
+        "packages/server/src/compute"
+      ],
+      "accept": "有效 JWT 与代理令牌可用；伪造签名及过期 JWT 被拒；完成代码审查与验证",
+      "blockedBy": [],
+      "createdAt": "2026-11-04T12:42:44.719Z",
+      "history": [
+        {
+          "at": "2026-11-04T12:42:49.421Z",
+          "by": "codex",
+          "what": "claim"
+        },
+        {
+          "at": "2026-11-04T12:42:55.883Z",
+          "by": "codex",
+          "what": "save: 已认领模型接口鉴权修复，用户确认首个获客成交团队"
+        },
+        {
+          "at": "2026-11-04T12:43:06.715Z",
+          "by": "codex",
+          "what": "save: 模型接口改为验证 JWT 签名和有效期，代理令牌分支不变"
+        },
+        {
+          "at": "2026-11-04T12:44:01.708Z",
+          "by": "codex",
+          "what": "save: 验证有效/伪造/过期 JWT 和有效/无效代理令牌，新增回归测试；verify 绿灯"
+        },
+        {
+          "at": "2026-11-04T12:44:13.051Z",
+          "by": "codex",
+          "what": "save: 代码审查：与全局 JWT 签名配置一致，保留代理令牌及用户 active 检查；测试隔离数据库且覆盖拒绝场景。尚需单独处理默认密钥与会话撤销。"
+        },
+        {
+          "at": "2026-11-04T12:44:17.790Z",
+          "by": "codex",
+          "what": "done: 修复模型接口 JWT 验签和过期检查；新增 compute-auth.guard.test.cjs，5 种情况通过，verify GREEN；代码审查完成。默认密钥和撤销会话另行处理。"
+        }
+      ],
+      "lease": {
+        "at": "2026-11-04T12:42:49.420Z",
+        "heartbeat": "2026-11-04T12:44:13.051Z",
+        "reason": null
+      },
+      "checkpoint": {
+        "progress": [],
+        "notes": [
+          "12:42 已认领模型接口鉴权修复，用户确认首个获客成交团队",
+          "12:43 模型接口改为验证 JWT 签名和有效期，代理令牌分支不变",
+          "12:44 验证有效/伪造/过期 JWT 和有效/无效代理令牌，新增回归测试；verify 绿灯",
+          "12:44 代码审查：与全局 JWT 签名配置一致，保留代理令牌及用户 active 检查；测试隔离数据库且覆盖拒绝场景。尚需单独处理默认密钥与会话撤销。"
+        ],
+        "files": [],
+        "next": "标记完成，继续处理计费模块的重复扣费"
+      },
+      "finishedAt": "2026-11-04T12:44:17.789Z",
+      "result": "修复模型接口 JWT 验签和过期检查；新增 compute-auth.guard.test.cjs，5 种情况通过，verify GREEN；代码审查完成。默认密钥和撤销会话另行处理。"
+    },
+    {
+      "id": "T-21",
+      "title": "README 当前决策更新与原版拆解覆盖评估",
+      "status": "done",
+      "owner": "codex",
+      "scope": [
+        "README.md"
+      ],
+      "accept": "README 明确现行决策和历史内容边界；拆解评分有依据且披露未验证范围；完成文档审查与 verify",
+      "blockedBy": [],
+      "createdAt": "2026-11-04T13:03:57.144Z",
+      "history": [
+        {
+          "at": "2026-11-04T13:04:01.831Z",
+          "by": "codex",
+          "what": "claim"
+        },
+        {
+          "at": "2026-11-04T13:04:36.529Z",
+          "by": "codex",
+          "what": "save: 已认领并记录 README 修改前文件快照；coord 文件作用域快照报 ENOTDIR，已手工按同格式记录"
+        },
+        {
+          "at": "2026-11-04T13:05:26.791Z",
+          "by": "codex",
+          "what": "save: README 已增加当前产品决策、拆解估计及未验证范围，并标识历史进度和 GPU 旧决策"
+        },
+        {
+          "at": "2026-11-04T13:06:13.680Z",
+          "by": "codex",
+          "what": "save: 文档审查确认当前决策、历史区分与链接；237/238 路由与 147/222 IPC 统计口径不等同；REA 本次抽查未返回结果；verify GREEN"
+        },
+        {
+          "at": "2026-11-04T13:06:19.249Z",
+          "by": "codex",
+          "what": "done: README 更新当前团队和第三方媒体决策、拆解证据及历史记录边界；已文档审查、链接核验、verify GREEN。REA 抽查未取得结果；文件作用域快照错误 workaround 已记录。"
+        }
+      ],
+      "lease": {
+        "at": "2026-11-04T13:04:01.830Z",
+        "heartbeat": "2026-11-04T13:06:13.680Z",
+        "reason": null
+      },
+      "checkpoint": {
+        "progress": [],
+        "notes": [
+          "13:04 已认领并记录 README 修改前文件快照；coord 文件作用域快照报 ENOTDIR，已手工按同格式记录",
+          "13:05 README 已增加当前产品决策、拆解估计及未验证范围，并标识历史进度和 GPU 旧决策",
+          "13:06 文档审查确认当前决策、历史区分与链接；237/238 路由与 147/222 IPC 统计口径不等同；REA 本次抽查未返回结果；verify GREEN"
+        ],
+        "files": [
+          "README.md"
+        ],
+        "next": "标记完成并说明评分边界与未拆解事项"
+      },
+      "finishedAt": "2026-11-04T13:06:19.248Z",
+      "result": "README 更新当前团队和第三方媒体决策、拆解证据及历史记录边界；已文档审查、链接核验、verify GREEN。REA 抽查未取得结果；文件作用域快照错误 workaround 已记录。"
+    },
+    {
+      "id": "T-22",
+      "title": "原版关键流程证据台账、改进计划与执行提示词",
+      "status": "done",
+      "owner": "codex",
+      "scope": [
+        "docs/execution"
+      ],
+      "accept": "基于原版产物补充可追溯证据并列明未知；输出计划和执行提示词；审查文档并 verify",
+      "blockedBy": [],
+      "createdAt": "2026-11-04T13:14:13.248Z",
+      "history": [
+        {
+          "at": "2026-11-04T13:14:18.270Z",
+          "by": "codex",
+          "what": "claim"
+        },
+        {
+          "at": "2026-11-04T13:14:26.256Z",
+          "by": "codex",
+          "what": "save: 确认团队组合及 T-08 他人占用；已认领 docs/execution 证据和计划目录"
+        },
+        {
+          "at": "2026-11-04T13:15:01.650Z",
+          "by": "codex",
+          "what": "save: 已抽查原版 auth、员工订单、兑换码、模型流式计费和 IPC：原版流式代码也含预扣后再 processBilling 的风险；均为静态证据未做原版运行验证"
+        },
+        {
+          "at": "2026-11-04T13:17:08.185Z",
+          "by": "codex",
+          "what": "save: 已写改进执行计划与执行提示词，含原版静态证据、未知、依赖和逐模块审查要求"
+        },
+        {
+          "at": "2026-11-04T13:17:45.638Z",
+          "by": "codex",
+          "what": "save: 完成文档审查：明确静态证据与动态未知、团队/媒体决策、范围和逐模块审查；链接与 verify 均通过"
+        },
+        {
+          "at": "2026-11-04T13:17:53.211Z",
+          "by": "codex",
+          "what": "done: 交付 docs/execution/改进执行计划.md 和 执行提示词.md；附首批原版静态证据与动态未知；文档审查、链接核验和 verify GREEN。真实原版动态证据仍未全部补齐。"
+        }
+      ],
+      "lease": {
+        "at": "2026-11-04T13:14:18.267Z",
+        "heartbeat": "2026-11-04T13:17:45.638Z",
+        "reason": null
+      },
+      "checkpoint": {
+        "progress": [],
+        "notes": [
+          "13:14 确认团队组合及 T-08 他人占用；已认领 docs/execution 证据和计划目录",
+          "13:15 已抽查原版 auth、员工订单、兑换码、模型流式计费和 IPC：原版流式代码也含预扣后再 processBilling 的风险；均为静态证据未做原版运行验证",
+          "13:17 已写改进执行计划与执行提示词，含原版静态证据、未知、依赖和逐模块审查要求",
+          "13:17 完成文档审查：明确静态证据与动态未知、团队/媒体决策、范围和逐模块审查；链接与 verify 均通过"
+        ],
+        "files": [
+          "docs/execution"
+        ],
+        "next": "结束文件交付并认领计费隔离复现任务"
+      },
+      "finishedAt": "2026-11-04T13:17:53.210Z",
+      "result": "交付 docs/execution/改进执行计划.md 和 执行提示词.md；附首批原版静态证据与动态未知；文档审查、链接核验和 verify GREEN。真实原版动态证据仍未全部补齐。"
+    },
+    {
+      "id": "T-23",
+      "title": "模型流式扣费风险隔离复现与修复",
+      "status": "done",
+      "owner": "dsh-lead",
+      "scope": [
+        "packages/server/src/compute",
+        "packages/server/src/billing"
+      ],
+      "accept": "隔离测试验证一次请求余额、流水、免费额度与异常行为一致；代码审查及 verify 通过；未决收费规则先问用户",
+      "blockedBy": [],
+      "createdAt": "2026-11-04T13:18:01.293Z",
+      "history": [
+        {
+          "at": "2026-11-04T13:18:08.165Z",
+          "by": "codex",
+          "what": "claim"
+        },
+        {
+          "at": "2026-11-04T13:18:14.300Z",
+          "by": "codex",
+          "what": "save: 按新计划认领计费隔离复现，使用模拟上游和内存余额，避免调用付费服务"
+        },
+        {
+          "at": "2026-11-04T13:18:58.782Z",
+          "by": "codex",
+          "what": "save: 新增隔离回归测试 compute-billing.test.cjs，证实余额10成功流一次定价1实际变8，usage记录1；未接真实模型/DB。用户已被询问流中断计费与余额不足策略。"
+        },
+        {
+          "at": "2026-11-04T13:19:43.950Z",
+          "by": "codex",
+          "what": "save: 用户决定：请求中断但已有部分回复时按实际产生用量计费；余额不足策略待答。基础 verify GREEN；专门复现测试按预期 RED（余额8而非9）。"
+        },
+        {
+          "at": "2026-11-04T13:19:58.272Z",
+          "by": "codex",
+          "what": "blocked: human 用户已确认中断按实际用量；余额不足和上游不返回实际用量时的结算策略正在等待用户决定。隔离回归测试已复现重复扣费并预期失败，基础 verify GREEN，未修改生产计费逻辑。"
+        },
+        {
+          "at": "2026-11-04T13:31:43.486Z",
+          "by": "dsh-lead",
+          "what": "takeover from codex"
+        },
+        {
+          "at": "2026-11-04T13:34:07.681Z",
+          "by": "dsh-lead",
+          "what": "save: 修复流式重复扣费：预扣改走 consumeCredits(有流水), processBilling 用 preCharged 只记账；无 usage 全额退回并标记 needsReview；新增 4 项隔离测试全绿；迁移 t23_usage_needs_review"
+        },
+        {
+          "at": "2026-11-05T06:24:36.343Z",
+          "by": "coord-check",
+          "what": "stalled: 1010min 无心跳"
+        },
+        {
+          "at": "2026-11-05T06:25:01.309Z",
+          "by": "dsh-lead",
+          "what": "save: 按用户 2026-11-05 决定实现余额封顶：实际费用>余额只扣到余额、差额不追扣，records 记实扣金额并标记 isPartialDeduct；新增超额用例"
+        },
+        {
+          "at": "2026-11-05T06:28:57.609Z",
+          "by": "dsh-lead",
+          "what": "save: 余额封顶实现+5项隔离测试全绿+verify GREEN；补 T23-计费口径.md"
+        },
+        {
+          "at": "2026-11-05T06:28:57.757Z",
+          "by": "dsh-lead",
+          "what": "done: 流式计费修复完成：预扣/补扣/退回走流水，processBilling 不再二次扣款；无 usage 不计费并标记待核对；余额封顶不追扣；5 项隔离测试 + verify -Smoke 全绿"
+        }
+      ],
+      "lease": {
+        "at": "2026-11-04T13:18:08.163Z",
+        "heartbeat": "2026-11-05T06:28:57.609Z",
+        "reason": null
+      },
+      "checkpoint": {
+        "progress": [
+          {
+            "text": "预扣走流水",
+            "done": false
+          },
+          {
+            "text": "只记账不二次扣款",
+            "done": false
+          },
+          {
+            "text": "无usage退回+待核对",
+            "done": false
+          },
+          {
+            "text": "余额封顶",
+            "done": false
+          },
+          {
+            "text": "文档",
+            "done": false
+          }
+        ],
+        "notes": [
+          "13:18 按新计划认领计费隔离复现，使用模拟上游和内存余额，避免调用付费服务",
+          "13:18 新增隔离回归测试 compute-billing.test.cjs，证实余额10成功流一次定价1实际变8，usage记录1；未接真实模型/DB。用户已被询问流中断计费与余额不足策略。",
+          "13:19 用户决定：请求中断但已有部分回复时按实际产生用量计费；余额不足策略待答。基础 verify GREEN；专门复现测试按预期 RED（余额8而非9）。",
+          "BLOCKED: 用户已确认中断按实际用量；余额不足和上游不返回实际用量时的结算策略正在等待用户决定。隔离回归测试已复现重复扣费并预期失败，基础 verify GREEN，未修改生产计费逻辑。",
+          "13:34 修复流式重复扣费：预扣改走 consumeCredits(有流水), processBilling 用 preCharged 只记账；无 usage 全额退回并标记 needsReview；新增 4 项隔离测试全绿；迁移 t23_usage_needs_review",
+          "06:25 按用户 2026-11-05 决定实现余额封顶：实际费用>余额只扣到余额、差额不追扣，records 记实扣金额并标记 isPartialDeduct；新增超额用例",
+          "06:28 余额封顶实现+5项隔离测试全绿+verify GREEN；补 T23-计费口径.md"
+        ],
+        "files": [
+          "packages/server/src/compute/compute-billing.test.cjs"
+        ],
+        "next": "重建+跑隔离测试，再 verify -Smoke 回归真实链路"
+      },
+      "finishedAt": "2026-11-05T06:28:57.756Z",
+      "result": "流式计费修复完成：预扣/补扣/退回走流水，processBilling 不再二次扣款；无 usage 不计费并标记待核对；余额封顶不追扣；5 项隔离测试 + verify -Smoke 全绿"
+    },
+    {
+      "id": "T-24",
+      "title": "短信验证码生成与并发核销安全修复",
+      "status": "done",
+      "owner": "codex",
+      "scope": [
+        "packages/server/src/auth"
+      ],
+      "accept": "验证码使用密码学安全随机数；同一验证码并发至多核销一次；回归测试、代码审查及 verify 通过",
+      "blockedBy": [],
+      "createdAt": "2026-11-04T13:24:03.554Z",
+      "history": [
+        {
+          "at": "2026-11-04T13:24:07.864Z",
+          "by": "codex",
+          "what": "claim"
+        },
+        {
+          "at": "2026-11-04T13:24:13.579Z",
+          "by": "codex",
+          "what": "save: 发现验证码 Math.random 和先读再无条件更新使并发重放可能成功；认领 auth 作用域"
+        },
+        {
+          "at": "2026-11-04T13:24:32.432Z",
+          "by": "codex",
+          "what": "save: 生成使用 crypto.randomInt，核销使用 id/未使用/未过期条件更新"
+        },
+        {
+          "at": "2026-11-04T13:25:30.914Z",
+          "by": "codex",
+          "what": "save: 3项模拟回归通过；本地MySQL 10个并发核销实测1成功9拒绝，按ID清理测试记录；verify GREEN。审查确认条件更新保留原校验，正式短信、失败次数限制与开发默认凭据仍未完成。"
+        },
+        {
+          "at": "2026-11-04T13:25:36.655Z",
+          "by": "codex",
+          "what": "done: 验证码改用crypto.randomInt和原子条件核销；3项回归及MySQL十并发通过；代码审查完成、verify GREEN。正式短信和登录限流仍待后续。"
+        }
+      ],
+      "lease": {
+        "at": "2026-11-04T13:24:07.863Z",
+        "heartbeat": "2026-11-04T13:25:30.914Z",
+        "reason": null
+      },
+      "checkpoint": {
+        "progress": [],
+        "notes": [
+          "13:24 发现验证码 Math.random 和先读再无条件更新使并发重放可能成功；认领 auth 作用域",
+          "13:24 生成使用 crypto.randomInt，核销使用 id/未使用/未过期条件更新",
+          "13:25 3项模拟回归通过；本地MySQL 10个并发核销实测1成功9拒绝，按ID清理测试记录；verify GREEN。审查确认条件更新保留原校验，正式短信、失败次数限制与开发默认凭据仍未完成。"
+        ],
+        "files": [
+          "packages/server/src/auth/auth.service.ts",
+          "packages/server/src/auth/auth-code.test.cjs"
+        ],
+        "next": "完成本模块并继续处理未决计费与授权审查问题"
+      },
+      "finishedAt": "2026-11-04T13:25:36.654Z",
+      "result": "验证码改用crypto.randomInt和原子条件核销；3项回归及MySQL十并发通过；代码审查完成、verify GREEN。正式短信和登录限流仍待后续。"
+    },
+    {
+      "id": "T-25",
+      "title": "协作快照支持文件路径作用域",
+      "status": "done",
+      "owner": "codex",
+      "scope": [
+        "scripts"
+      ],
+      "accept": "claim/save 对文件作用域生成快照成功；目录作用域行为不变",
+      "blockedBy": [],
+      "createdAt": "2026-11-04T13:52:16.716Z",
+      "history": [
+        {
+          "at": "2026-11-04T13:52:16.818Z",
+          "by": "codex",
+          "what": "claim"
+        },
+        {
+          "at": "2026-11-04T13:52:48.888Z",
+          "by": "codex",
+          "what": "save: snapshotScopes 对单文件 scope 添加 stat 元信息分支，目录仍走原 walk 逻辑；T-14 文件作用域认领失败场景可用于验证修复。"
+        },
+        {
+          "at": "2026-11-04T13:53:19.591Z",
+          "by": "codex",
+          "what": "done: 修复协作快照对文件作用域报 ENOTDIR；目录作用域走原递归扫描。T-14 单文件 scope save 已成功；verify.ps1 GREEN。代码审查确认相对路径归一化与快照元数据格式保持兼容。"
+        }
+      ],
+      "lease": {
+        "at": "2026-11-04T13:52:16.817Z",
+        "heartbeat": "2026-11-04T13:52:48.888Z",
+        "reason": null
+      },
+      "checkpoint": {
+        "progress": [
+          {
+            "text": "[x]识别 ENOTDIR 根因",
+            "done": false
+          },
+          {
+            "text": "[x]实现文件/目录区分快照",
+            "done": false
+          },
+          {
+            "text": "[ ]协作命令复验与代码审查",
+            "done": false
+          }
+        ],
+        "notes": [
+          "13:52 snapshotScopes 对单文件 scope 添加 stat 元信息分支，目录仍走原 walk 逻辑；T-14 文件作用域认领失败场景可用于验证修复。"
+        ],
+        "files": [],
+        "next": "验证 T-14 单文件作用域可 save，并运行 verify.ps1；审查 coordinator diff。"
+      },
+      "finishedAt": "2026-11-04T13:53:19.589Z",
+      "result": "修复协作快照对文件作用域报 ENOTDIR；目录作用域走原递归扫描。T-14 单文件 scope save 已成功；verify.ps1 GREEN。代码审查确认相对路径归一化与快照元数据格式保持兼容。"
+    },
+    {
+      "id": "T-26",
+      "title": "修正F2审计器的混淆IPC和路由归一化处理",
+      "status": "done",
+      "owner": "codex",
+      "scope": [
+        "scripts/audit"
+      ],
+      "accept": "审计器以147通道已验证动态契约为基线，尾斜线路由归一化后239/238/等口径清晰，当前 replica 指标可重复生成",
+      "blockedBy": [],
+      "createdAt": "2026-11-04T13:55:44.012Z",
+      "history": [
+        {
+          "at": "2026-11-04T13:55:44.116Z",
+          "by": "codex",
+          "what": "claim"
+        },
+        {
+          "at": "2026-11-04T14:08:34.726Z",
+          "by": "codex",
+          "what": "save: 审查修正 routeKey 归一化和按精确路由计算模块状态；复核表匹配口径将新表与原版匹配表分开，避免把新增5表误报为原版已覆盖。审计输出为原版237路由/147 IPC handle/47表588字段；复刻44路由（16精确命中）、30 IPC（8精确命中）、39表（34匹配/13缺失/5新增）、504字段（159缺失/75额外，0类型/可空性差异）；IPC混淆包字符串扫描只找到87/147，不等于运行验证。脚本均可运行，verify GREEN。初始accept文本中的239是我误写，实际归一化后237条与contracts 238行完全一致。"
+        },
+        {
+          "at": "2026-11-04T14:08:34.830Z",
+          "by": "codex",
+          "what": "done: 修复F2审计器：混淆IPC用已捕获动态契约，静态字符串扫描单列证据；路由normalize尾斜线和238行→237唯一项；按精确路由计命中/缺失/新增，表新模型不误算原版匹配。审查后 audit 流水和 verify.ps1 均 GREEN。实际基线237 route、147 IPC；复刻44 route（16命中）、30 IPC（8命中）、34/47原版表匹配（13缺、5新增）。注意：初始验收文字239是误写，复核为归一化237对237，已在记录说明。"
+        }
+      ],
+      "lease": {
+        "at": "2026-11-04T13:55:44.115Z",
+        "heartbeat": "2026-11-04T14:08:34.726Z",
+        "reason": null
+      },
+      "checkpoint": {
+        "progress": [
+          {
+            "text": "[x]原版IPC使用动态导入契约且标注静态字符串扫描证据",
+            "done": false
+          },
+          {
+            "text": "[x]路由尾斜线归一化并区分 raw 与 unique",
+            "done": false
+          },
+          {
+            "text": "[x]精确路由匹配/新增/缺失按模块统计",
+            "done": false
+          },
+          {
+            "text": "[x]修复表计数将新表误计为命中",
+            "done": false
+          },
+          {
+            "text": "[x]生成矩阵并运行verify、代码审查",
+            "done": false
+          }
+        ],
+        "notes": [
+          "14:08 审查修正 routeKey 归一化和按精确路由计算模块状态；复核表匹配口径将新表与原版匹配表分开，避免把新增5表误报为原版已覆盖。审计输出为原版237路由/147 IPC handle/47表588字段；复刻44路由（16精确命中）、30 IPC（8精确命中）、39表（34匹配/13缺失/5新增）、504字段（159缺失/75额外，0类型/可空性差异）；IPC混淆包字符串扫描只找到87/147，不等于运行验证。脚本均可运行，verify GREEN。初始accept文本中的239是我误写，实际归一化后237条与contracts 238行完全一致。"
+        ],
+        "files": [],
+        "next": "结束 T-26；T-14 继续补契约差异与已确认CUT对照。"
+      },
+      "finishedAt": "2026-11-04T14:08:34.829Z",
+      "result": "修复F2审计器：混淆IPC用已捕获动态契约，静态字符串扫描单列证据；路由normalize尾斜线和238行→237唯一项；按精确路由计命中/缺失/新增，表新模型不误算原版匹配。审查后 audit 流水和 verify.ps1 均 GREEN。实际基线237 route、147 IPC；复刻44 route（16命中）、30 IPC（8命中）、34/47原版表匹配（13缺、5新增）。注意：初始验收文字239是误写，复核为归一化237对237，已在记录说明。"
+    },
+    {
+      "id": "T-27",
+      "title": "补齐公开鉴权状态探针",
+      "status": "done",
+      "owner": "codex",
+      "scope": [
+        "packages/server/src/auth"
+      ],
+      "accept": "GET /auth/check公开可用并返回 {authenticated:false}；不新增数据库表",
+      "blockedBy": [],
+      "createdAt": "2026-11-04T14:40:28.800Z",
+      "history": [
+        {
+          "at": "2026-11-04T14:40:28.890Z",
+          "by": "codex",
+          "what": "claim"
+        },
+        {
+          "at": "2026-11-04T14:41:04.566Z",
+          "by": "codex",
+          "what": "save: 补充公开 GET /auth/check，严格按原版控制器行为返回 {authenticated:false}；未新增表、未改变现有登录鉴权。"
+        },
+        {
+          "at": "2026-11-04T14:41:45.987Z",
+          "by": "codex",
+          "what": "done: 公开 GET /auth/check 已按原版返回 {authenticated:false}，@Public 无JWT；审查确认未新增表、未改变现有登录流程。verify GREEN，审计已重采集。"
+        }
+      ],
+      "lease": {
+        "at": "2026-11-04T14:40:28.889Z",
+        "heartbeat": "2026-11-04T14:41:04.566Z",
+        "reason": null
+      },
+      "checkpoint": {
+        "progress": [
+          {
+            "text": "[x]原版auth.check证据",
+            "done": false
+          },
+          {
+            "text": "[x]新增公开GET /auth/check",
+            "done": false
+          },
+          {
+            "text": "[ ]审查/审计/verify",
+            "done": false
+          }
+        ],
+        "notes": [
+          "14:41 补充公开 GET /auth/check，严格按原版控制器行为返回 {authenticated:false}；未新增表、未改变现有登录鉴权。"
+        ],
+        "files": [],
+        "next": "代码审查路由装饰器和公开标记，重采集审计并运行verify。"
+      },
+      "finishedAt": "2026-11-04T14:41:45.986Z",
+      "result": "公开 GET /auth/check 已按原版返回 {authenticated:false}，@Public 无JWT；审查确认未新增表、未改变现有登录流程。verify GREEN，审计已重采集。"
+    },
+    {
+      "id": "T-28",
+      "title": "T-28 能力重写：原版 7 个 .pyc 技能的明文本地实现（agent-tool-box 36 能力中优先 8-10 个）",
+      "status": "done",
+      "owner": "dsh-lead",
+      "scope": [
+        "packages/server/src"
+      ],
+      "accept": "",
+      "blockedBy": [],
+      "createdAt": "2026-11-05T09:05:50.966Z",
+      "history": [
+        {
+          "at": "2026-11-05T14:45:06.384Z",
+          "by": "dsh-lead",
+          "what": "claim"
+        },
+        {
+          "at": "2026-11-05T14:45:07.009Z",
+          "by": "dsh-lead",
+          "what": "save: 能力层首批 7 个能力实现完成，修掉 toolapi.aiText 的 phone/userId 混用真 bug，smoke 13/13，已并入 verify，已部署生产"
+        },
+        {
+          "at": "2026-11-05T14:45:13.286Z",
+          "by": "dsh-lead",
+          "what": "done: 首批 7 项能力上线（web_extract/content_save/content_query/distribution_save/customer_save/customer_query/llm_text），smoke 13/13，已部署生产 /api/capabilities"
+        }
+      ],
+      "lease": {
+        "at": "2026-11-05T14:45:06.383Z",
+        "heartbeat": "2026-11-05T14:45:07.009Z",
+        "reason": null
+      },
+      "checkpoint": {
+        "progress": [
+          {
+            "text": "capability.types/service/controller/module",
+            "done": true
+          },
+          {
+            "text": "web_extract",
+            "done": true
+          },
+          {
+            "text": "content_save/query",
+            "done": true
+          },
+          {
+            "text": "distribution_save",
+            "done": true
+          },
+          {
+            "text": "customer_save/query",
+            "done": true
+          },
+          {
+            "text": "llm_text",
+            "done": true
+          },
+          {
+            "text": "smoke-capabilities 13/13",
+            "done": true
+          },
+          {
+            "text": "verify.ps1 接入",
+            "done": true
+          },
+          {
+            "text": "生产部署",
+            "done": true
+          }
+        ],
+        "notes": [
+          "14:45 能力层首批 7 个能力实现完成，修掉 toolapi.aiText 的 phone/userId 混用真 bug，smoke 13/13，已并入 verify，已部署生产"
+        ],
+        "files": [],
+        "next": "补第二批能力（douyin_* 待合规口径），或转 T-11/桌面安装包验收"
+      },
+      "finishedAt": "2026-11-05T14:45:13.285Z",
+      "result": "首批 7 项能力上线（web_extract/content_save/content_query/distribution_save/customer_save/customer_query/llm_text），smoke 13/13，已部署生产 /api/capabilities"
+    },
+    {
+      "id": "T-29",
+      "title": "T-29 管理后台 Web 控制台（零构建静态 SPA）",
+      "status": "done",
+      "owner": "dsh-lead",
+      "scope": [
+        "packages/server/public,packages/server/src/main.ts,scripts/smoke-admin-ui.mjs"
+      ],
+      "accept": "",
+      "blockedBy": [],
+      "createdAt": "2026-11-05T09:10:49.760Z",
+      "history": [
+        {
+          "at": "2026-11-05T09:10:50.025Z",
+          "by": "dsh-lead",
+          "what": "claim"
+        },
+        {
+          "at": "2026-11-05T09:12:45.038Z",
+          "by": "dsh-lead",
+          "what": "save: 后台静态 SPA 完成：8 个视图 + 11 项冒烟 + CDP 截图 0 异常，verify GREEN"
+        },
+        {
+          "at": "2026-11-05T09:12:45.132Z",
+          "by": "dsh-lead",
+          "what": "done: 运营后台 Web 控制台交付；verify GREEN"
+        }
+      ],
+      "lease": {
+        "at": "2026-11-05T09:10:50.024Z",
+        "heartbeat": "2026-11-05T09:12:45.037Z",
+        "reason": null
+      },
+      "checkpoint": {
+        "progress": [
+          {
+            "text": "index.html/styles.css/app.js",
+            "done": true
+          },
+          {
+            "text": "main.ts 静态托管",
+            "done": true
+          },
+          {
+            "text": "/admin/",
+            "done": false
+          },
+          {
+            "text": "smoke-admin-ui.mjs 并入 verify",
+            "done": true
+          },
+          {
+            "text": "CDP 截图验证",
+            "done": true
+          }
+        ],
+        "notes": [
+          "09:12 后台静态 SPA 完成：8 个视图 + 11 项冒烟 + CDP 截图 0 异常，verify GREEN"
+        ],
+        "files": [
+          "packages/server/public/admin/app.js",
+          "packages/server/src/main.ts"
+        ],
+        "next": "可选：站点配置拆专属表单、统计图表、订单日期筛选与导出"
+      },
+      "finishedAt": "2026-11-05T09:12:45.132Z",
+      "result": "运营后台 Web 控制台交付；verify GREEN"
+    },
+    {
+      "id": "T-30",
+      "title": "W5 媒体编排补齐：compose-videos 状态机 + clone-records + audio-materials + 桌面「数字人」「音色克隆」两页",
+      "status": "done",
+      "owner": "dsh-lead",
+      "scope": [
+        "packages/server/src/media",
+        "packages/server/src/compose-videos",
+        "packages/server/src/clone-records",
+        "packages/server/src/audio-materials",
+        "packages/desktop/src",
+        "packages/server/prisma",
+        "scripts"
+      ],
+      "accept": "verify.ps1 绿灯 + smoke-t30 通过 + docs/handoff/T30-媒体编排.md 落地",
+      "blockedBy": [],
+      "createdAt": "2026-11-05T13:08:02.674Z",
+      "history": [
+        {
+          "at": "2026-11-05T13:26:16.466Z",
+          "by": "codex",
+          "what": "claim"
+        },
+        {
+          "at": "2026-11-05T13:30:03.995Z",
+          "by": "codex",
+          "what": "save: T-30 服务端三模块、状态初始判定、smoke-t30、任务文档、桌面数字人与音色克隆入口页已补齐；verify GREEN。"
+        },
+        {
+          "at": "2026-11-05T13:30:27.008Z",
+          "by": "codex",
+          "what": "blocked: human 代码、三模块路由、状态机、桌面两页、smoke-t30脚本与文档已完成，verify GREEN；smoke-t30真实鉴权验证和编排端到端需TEST_TOKEN，当前未提供且不读取现有凭证。"
+        },
+        {
+          "at": "2026-11-05T13:30:27.140Z",
+          "by": "codex",
+          "what": "save: T-30 当前产物可审查：compose-videos/clone-records/audio-materials + MediaStudio 两页 + scripts/smoke-t30.mjs + docs/handoff/T30-媒体编排.md；未将无token的空跑冒充通过。"
+        },
+        {
+          "at": "2026-11-05T13:32:06.985Z",
+          "by": "dsh-lead",
+          "what": "takeover from codex"
+        },
+        {
+          "at": "2026-11-05T13:41:21.926Z",
+          "by": "dsh-lead",
+          "what": "save: 服务端三模块重写+桌面两页+smoke 27项+verify GREEN"
+        },
+        {
+          "at": "2026-11-05T13:41:22.074Z",
+          "by": "dsh-lead",
+          "what": "done: 媒体编排补齐：compose-videos 状态机/clone-records/audio-materials + 桌面数字人与音色克隆两页；smoke-t30 27项并入 verify，VERIFY GREEN"
+        }
+      ],
+      "brief": "docs/handoff/T30-媒体编排-任务书.md",
+      "assignedAt": "2026-11-05T13:08:24.463Z",
+      "assignedBy": "dsh-lead",
+      "lease": {
+        "at": "2026-11-05T13:26:16.465Z",
+        "heartbeat": "2026-11-05T13:41:21.926Z",
+        "reason": null
+      },
+      "checkpoint": {
+        "progress": [],
+        "notes": [
+          "13:30 T-30 服务端三模块、状态初始判定、smoke-t30、任务文档、桌面数字人与音色克隆入口页已补齐；verify GREEN。",
+          "BLOCKED: 代码、三模块路由、状态机、桌面两页、smoke-t30脚本与文档已完成，verify GREEN；smoke-t30真实鉴权验证和编排端到端需TEST_TOKEN，当前未提供且不读取现有凭证。",
+          "13:30 T-30 当前产物可审查：compose-videos/clone-records/audio-materials + MediaStudio 两页 + scripts/smoke-t30.mjs + docs/handoff/T30-媒体编排.md；未将无token的空跑冒充通过。",
+          "13:41 服务端三模块重写+桌面两页+smoke 27项+verify GREEN"
+        ],
+        "files": [],
+        "next": "已交付,待 codex 复核"
+      },
+      "finishedAt": "2026-11-05T13:41:22.073Z",
+      "result": "媒体编排补齐：compose-videos 状态机/clone-records/audio-materials + 桌面数字人与音色克隆两页；smoke-t30 27项并入 verify，VERIFY GREEN"
+    },
+    {
+      "id": "T-31",
+      "title": "桌面端：文生图与图生视频两个创作 tab（接 MediaStudio + 服务端已通的 /api/media/images/generations 与 /api/media/video/generations）",
+      "status": "done",
+      "owner": "dsh-lead",
+      "scope": [
+        "packages/desktop/src"
+      ],
+      "accept": "客户端内可提交文生图/图生视频、轮询状态、显示成片与积分变化；electron-vite build 通过；截图证据",
+      "blockedBy": [],
+      "createdAt": "2026-11-05T17:22:46.779Z",
+      "history": [
+        {
+          "at": "2026-11-05T17:23:35.669Z",
+          "by": "dsh-lead",
+          "what": "派工给 codex（用户 2026-11-06 指令）"
+        },
+        {
+          "at": "2026-11-05T17:49:23.168Z",
+          "by": "codex",
+          "what": "claim"
+        },
+        {
+          "at": "2026-11-05T17:50:43.396Z",
+          "by": "codex",
+          "what": "save: 新增媒体提交和查询 IPC，以及文生图、图生视频入口、上传、轮询、结果和积分显示。"
+        },
+        {
+          "at": "2026-11-05T17:51:27.675Z",
+          "by": "codex",
+          "what": "save: PowerShell 7 verify GREEN；审查修复相对结果 URL 在配置未加载时可能引发渲染异常，并限制结果链接为 HTTP(S)。"
+        },
+        {
+          "at": "2026-11-05T17:53:27.292Z",
+          "by": "codex",
+          "what": "save: 完整 smoke 已通过；审查修复切换页面导致生成中任务丢失，任务在应用运行期间继续轮询。"
+        },
+        {
+          "at": "2026-11-05T17:55:42.696Z",
+          "by": "codex",
+          "what": "blocked: env 隔离环境启动桌面验收客户端的命令被自动审批策略拦截；GUI 截图与真实文生图尚未验收。完整 smoke 曾绿色，但其口型测试向真实上游提交占位素材并扣减测试账号积分。"
+        },
+        {
+          "at": "2026-11-05T18:01:32.983Z",
+          "by": "dsh-lead",
+          "what": "takeover from codex"
+        },
+        {
+          "at": "2026-11-05T18:09:58.842Z",
+          "by": "dsh-lead",
+          "what": "save: 接手 codex 的 T-31：代码已在（MediaCreation.tsx + 10 条 media IPC + Shell 两个 tab）。补了 FCM_SMOKE_MEDIA 冒烟钩子（点文生图 tab→填提示词→点开始生成→收尾读 main 文本与积分）"
+        },
+        {
+          "at": "2026-11-05T18:27:56.155Z",
+          "by": "dsh-lead",
+          "what": "done: GUI 验收通过：干净 profile + 生产 API，点『文生图』tab→填提示词→开始生成→轮询到『已完成』→展示结果链接，扣 20 积分（流水 媒体任务：image_gen -20，2360→2340），产物 https://zhongke001.oss-cn-beijing.aliyuncs.com/media/auto/2118407399031529474.jpg；图生视频 tab 渲染验收通过（首帧上传/提示词/时长/比例）。截图 docs/handoff/T31-文生图验收.png。新增 FCM_SMOKE_MEDIA 冒烟钩子"
+        }
+      ],
+      "assignedBy": "dsh-lead",
+      "assignedAt": "2026-11-05T17:23:35.669Z",
+      "priority": "P0 先能用①：桌面端出图出片",
+      "taskBook": "docs/handoff/T31-T33-任务书.md",
+      "lease": {
+        "at": "2026-11-05T17:49:23.167Z",
+        "heartbeat": "2026-11-05T18:09:58.842Z",
+        "reason": null
+      },
+      "checkpoint": {
+        "progress": [
+          {
+            "text": "复核 codex 实现",
+            "done": true
+          },
+          {
+            "text": "新增 FCM_SMOKE_MEDIA 冒烟钩子",
+            "done": true
+          },
+          {
+            "text": "electron-vite build 通过",
+            "done": true
+          },
+          {
+            "text": "干净 profile 下真实出图验收",
+            "done": false
+          }
+        ],
+        "notes": [
+          "17:50 新增媒体提交和查询 IPC，以及文生图、图生视频入口、上传、轮询、结果和积分显示。",
+          "17:51 PowerShell 7 verify GREEN；审查修复相对结果 URL 在配置未加载时可能引发渲染异常，并限制结果链接为 HTTP(S)。",
+          "17:53 完整 smoke 已通过；审查修复切换页面导致生成中任务丢失，任务在应用运行期间继续轮询。",
+          "BLOCKED: 隔离环境启动桌面验收客户端的命令被自动审批策略拦截；GUI 截图与真实文生图尚未验收。完整 smoke 曾绿色，但其口型测试向真实上游提交占位素材并扣减测试账号积分。",
+          "18:09 接手 codex 的 T-31：代码已在（MediaCreation.tsx + 10 条 media IPC + Shell 两个 tab）。补了 FCM_SMOKE_MEDIA 冒烟钩子（点文生图 tab→填提示词→点开始生成→收尾读 main 文本与积分）"
+        ],
+        "files": [],
+        "next": "用干净 userData + 生产 API 跑真实文生图 GUI 验收，成功后截图归档并 done"
+      },
+      "finishedAt": "2026-11-05T18:27:56.153Z",
+      "result": "GUI 验收通过：干净 profile + 生产 API，点『文生图』tab→填提示词→开始生成→轮询到『已完成』→展示结果链接，扣 20 积分（流水 媒体任务：image_gen -20，2360→2340），产物 https://zhongke001.oss-cn-beijing.aliyuncs.com/media/auto/2118407399031529474.jpg；图生视频 tab 渲染验收通过（首帧上传/提示词/时长/比例）。截图 docs/handoff/T31-文生图验收.png。新增 FCM_SMOKE_MEDIA 冒烟钩子"
+    },
+    {
+      "id": "T-32",
+      "title": "员工执行链路接入能力层与媒体生成（能力层 /api/capabilities + 媒体出图出片，支持多步任务）",
+      "status": "done",
+      "owner": "codex",
+      "scope": [
+        "packages/desktop/src/main",
+        "packages/server/src/employee",
+        "packages/worker"
+      ],
+      "accept": "员工任务能多步执行（查数据→出稿→出图/出片），产物落 artifacts，verify GREEN",
+      "blockedBy": [],
+      "createdAt": "2026-11-05T17:22:47.671Z",
+      "history": [
+        {
+          "at": "2026-11-05T17:23:35.669Z",
+          "by": "dsh-lead",
+          "what": "派工给 codex（用户 2026-11-06 指令）"
+        },
+        {
+          "at": "2026-11-05T18:30:56.157Z",
+          "by": "codex",
+          "what": "claim"
+        },
+        {
+          "at": "2026-11-05T18:31:39.225Z",
+          "by": "codex",
+          "what": "save: 核对到桌面与云执行器均为单轮文本；服务端超时重排与并发领取存在重复执行风险，多步媒体任务上线前必须处理。"
+        },
+        {
+          "at": "2026-11-05T18:33:27.753Z",
+          "by": "codex",
+          "what": "save: 用户选择失联自动重跑并接受重复扣费风险；修复桌面和云端并发拉取时返回未成功认领任务，以及失联恢复覆盖新状态的竞态。"
+        },
+        {
+          "at": "2026-11-05T18:37:26.731Z",
+          "by": "codex",
+          "what": "save: 已实现共享工具循环、白名单、媒体轮询与不确定提交停止重试；云端初步接入，服务端新增领取凭据与任务心跳，保留用户选择的超时重排。"
+        },
+        {
+          "at": "2026-11-05T18:39:39.073Z",
+          "by": "codex",
+          "what": "save: T-31 桌面作用域已释放；共享工具循环接入桌面与云端，领取凭据、心跳、产物及异常保留已接入，并增加模拟上游端到端验收。"
+        },
+        {
+          "at": "2026-11-05T18:42:12.570Z",
+          "by": "codex",
+          "what": "save: 完整 verify -Smoke GREEN（服务端、桌面构建及模拟多步任务）；已启动本地服务真实播报稿+配图验收，RunningHub 文生图已提交并正在轮询。"
+        },
+        {
+          "at": "2026-11-05T18:46:21.019Z",
+          "by": "codex",
+          "what": "save: 真实验收首个文生图成功（RunningHub 151 RH 币），轮询网络错误曾触发错误重试；已改为只重查原任务并加回归测试。第二次提交结果不明，预扣20积分保留 REVIEW，账单未见第二条，未擅自退款。"
+        },
+        {
+          "at": "2026-11-05T18:47:26.574Z",
+          "by": "codex",
+          "what": "save: 首次真实生成成功，151 RH 币；OSS socket hang up，结果暂回退本机地址，跨机器不可直接访问。第一次员工任务因查询异常失败，已修复重复提交逻辑。是否再花约150–160 RH币重跑正等用户决定。"
+        },
+        {
+          "at": "2026-11-05T18:51:32.541Z",
+          "by": "codex",
+          "what": "save: 用户同意追加一次真实验收；审查发现网页提取 SSRF，已添加公网地址校验、DNS 连接固定与逐跳重定向校验，正在修复编译并验证。"
+        },
+        {
+          "at": "2026-11-05T18:53:42.732Z",
+          "by": "codex",
+          "what": "save: 公网抓取安全实现已编译，私网/元数据/编码回环拒绝测试通过；本机 VPN 将公网 DNS 映射至 198.18/15，公网正向测试被安全策略阻止，已询问用户是否先保持拒绝。"
+        },
+        {
+          "at": "2026-11-05T18:58:44.697Z",
+          "by": "codex",
+          "what": "save: 用户授权追加一次真实验收，已提交一张图；为确保本次测试不超出一次，给仅本地临时测试账号增加零积分次数占位，验收结束后清理该占位。"
+        },
+        {
+          "at": "2026-11-05T19:05:32.289Z",
+          "by": "codex",
+          "what": "save: 用户确认不采用分类日上限，已撤回；真实任务完成，图片耗时约252秒、20积分、131 RH币，文本和图片产物已落库；本地回退改为相对URL并在员工页面展示图片/视频。"
+        },
+        {
+          "at": "2026-11-05T19:09:23.837Z",
+          "by": "codex",
+          "what": "save: 最终 verify GREEN，随后补充真实云 worker 本地进程测试：模拟模型与媒体，两步文本/图片产物回写通过；真实媒体验收由共享循环直接执行。"
+        },
+        {
+          "at": "2026-11-05T19:10:33.305Z",
+          "by": "codex",
+          "what": "save: 模块代码审查完成：修复状态查询异常重复出图、并发领取、失联心跳、SSRF 和本地回退链接；真实图片文字存在变形，OSS 及公网代理仍待环境验收。最终完整 verify -Smoke GREEN，包含真实云 worker 的模拟上游测试。"
+        },
+        {
+          "at": "2026-11-05T19:10:42.638Z",
+          "by": "codex",
+          "what": "done: 桌面与云工具循环、领取凭据/心跳、产物展示及安全审查完成；真实共享循环产出播报稿与图片，云 worker 模拟上游联调通过，verify -Smoke GREEN；部署态与待核对预扣见 T32-验收与审查.md。"
+        }
+      ],
+      "assignedBy": "dsh-lead",
+      "assignedAt": "2026-11-05T17:23:35.669Z",
+      "priority": "P0 先能用②：员工多步干活",
+      "taskBook": "docs/handoff/T31-T33-任务书.md",
+      "lease": {
+        "at": "2026-11-05T18:30:56.156Z",
+        "heartbeat": "2026-11-05T19:10:33.305Z",
+        "reason": null
+      },
+      "checkpoint": {
+        "progress": [],
+        "notes": [
+          "18:31 核对到桌面与云执行器均为单轮文本；服务端超时重排与并发领取存在重复执行风险，多步媒体任务上线前必须处理。",
+          "18:33 用户选择失联自动重跑并接受重复扣费风险；修复桌面和云端并发拉取时返回未成功认领任务，以及失联恢复覆盖新状态的竞态。",
+          "18:37 已实现共享工具循环、白名单、媒体轮询与不确定提交停止重试；云端初步接入，服务端新增领取凭据与任务心跳，保留用户选择的超时重排。",
+          "18:39 T-31 桌面作用域已释放；共享工具循环接入桌面与云端，领取凭据、心跳、产物及异常保留已接入，并增加模拟上游端到端验收。",
+          "18:42 完整 verify -Smoke GREEN（服务端、桌面构建及模拟多步任务）；已启动本地服务真实播报稿+配图验收，RunningHub 文生图已提交并正在轮询。",
+          "18:46 真实验收首个文生图成功（RunningHub 151 RH 币），轮询网络错误曾触发错误重试；已改为只重查原任务并加回归测试。第二次提交结果不明，预扣20积分保留 REVIEW，账单未见第二条，未擅自退款。",
+          "18:47 首次真实生成成功，151 RH 币；OSS socket hang up，结果暂回退本机地址，跨机器不可直接访问。第一次员工任务因查询异常失败，已修复重复提交逻辑。是否再花约150–160 RH币重跑正等用户决定。",
+          "18:51 用户同意追加一次真实验收；审查发现网页提取 SSRF，已添加公网地址校验、DNS 连接固定与逐跳重定向校验，正在修复编译并验证。",
+          "18:53 公网抓取安全实现已编译，私网/元数据/编码回环拒绝测试通过；本机 VPN 将公网 DNS 映射至 198.18/15，公网正向测试被安全策略阻止，已询问用户是否先保持拒绝。",
+          "18:58 用户授权追加一次真实验收，已提交一张图；为确保本次测试不超出一次，给仅本地临时测试账号增加零积分次数占位，验收结束后清理该占位。",
+          "19:05 用户确认不采用分类日上限，已撤回；真实任务完成，图片耗时约252秒、20积分、131 RH币，文本和图片产物已落库；本地回退改为相对URL并在员工页面展示图片/视频。",
+          "19:09 最终 verify GREEN，随后补充真实云 worker 本地进程测试：模拟模型与媒体，两步文本/图片产物回写通过；真实媒体验收由共享循环直接执行。",
+          "19:10 模块代码审查完成：修复状态查询异常重复出图、并发领取、失联心跳、SSRF 和本地回退链接；真实图片文字存在变形，OSS 及公网代理仍待环境验收。最终完整 verify -Smoke GREEN，包含真实云 worker 的模拟上游测试。"
+        ],
+        "files": [],
+        "next": "交付并处理首次验收留下的待核对预扣、OSS 访问和可信代理。"
+      },
+      "finishedAt": "2026-11-05T19:10:42.637Z",
+      "result": "桌面与云工具循环、领取凭据/心跳、产物展示及安全审查完成；真实共享循环产出播报稿与图片，云 worker 模拟上游联调通过，verify -Smoke GREEN；部署态与待核对预扣见 T32-验收与审查.md。"
+    },
+    {
+      "id": "T-33",
+      "title": "成本护栏：账号级媒体与模型限额、单日上限、余额封顶与超额提示、成本核算口径",
+      "status": "done",
+      "owner": "codex",
+      "scope": [
+        "packages/server/src/media",
+        "packages/server/src/billing",
+        "packages/server/prisma"
+      ],
+      "accept": "超限在扣费前拒绝并给出中文原因；管理端可查当日消耗；verify GREEN",
+      "blockedBy": [],
+      "createdAt": "2026-11-05T17:22:48.584Z",
+      "history": [
+        {
+          "at": "2026-11-05T17:23:35.669Z",
+          "by": "dsh-lead",
+          "what": "派工给 codex（用户 2026-11-06 指令）"
+        },
+        {
+          "at": "2026-11-05T18:13:41.512Z",
+          "by": "codex",
+          "what": "claim"
+        },
+        {
+          "at": "2026-11-05T18:14:18.462Z",
+          "by": "codex",
+          "what": "save: 核对实现发现媒体余额不足会部分扣费，生成失败也未见自动退款；任务书现状描述不准确。正在设计并发安全限额和扣费。"
+        },
+        {
+          "at": "2026-11-05T18:15:32.404Z",
+          "by": "codex",
+          "what": "save: 实现用户级事务锁、媒体限额预占、余额不足整单拒绝，以及失败幂等退款初稿；服务端 TypeScript 编译通过。"
+        },
+        {
+          "at": "2026-11-05T18:17:02.398Z",
+          "by": "codex",
+          "what": "save: 按用户确认拒绝自定义节点与未知的整段媒体时长；新增本人及管理员媒体用量汇总，成本换算标记待核算。TTS 单独等待用户决定。"
+        },
+        {
+          "at": "2026-11-05T18:19:28.683Z",
+          "by": "codex",
+          "what": "save: 已按确认采用北京时间重置并暂停 TTS；本地模拟上游 smoke 通过余额不足、并发限额、重复退款和汇总。审查中修复退款后迟到成功回调覆盖状态风险；上游提交结果不确定时保留待核对状态。"
+        },
+        {
+          "at": "2026-11-05T18:22:32.796Z",
+          "by": "codex",
+          "what": "save: 隔离测试通过余额、并发数/次数/秒数、未知时长、自定义节点、TTS 暂停、失败重复退款及提交不确定等场景；已加入 verify，T30 避免调用真实上游。"
+        },
+        {
+          "at": "2026-11-05T18:26:04.490Z",
+          "by": "codex",
+          "what": "save: 用户确认后新增管理员待核对列表、核对退款与关联上游任务操作及核对依据审计；独立测试验证并发操作仅执行一次。增加超时遗留预占可核对处理。"
+        },
+        {
+          "at": "2026-11-05T18:28:47.278Z",
+          "by": "codex",
+          "what": "save: 模块审查发现模型计费/充值与媒体扣费并发时可能覆盖余额，已为余额变更统一锁定用户行；增加跨计费并发测试。"
+        },
+        {
+          "at": "2026-11-05T18:30:38.809Z",
+          "by": "codex",
+          "what": "save: 用户确认模型暂不设每日次数上限，保留余额封顶；最终代码审查与完整 verify -Smoke 通过，覆盖媒体限额、并发余额、退款幂等、人工核对、权限及用户隔离。"
+        },
+        {
+          "at": "2026-11-05T18:30:49.662Z",
+          "by": "codex",
+          "what": "done: 媒体限额与原子预扣、幂等失败退款、异常人工核对、用量汇总与后台已完成；用户决定北京时间重置、暂停 TTS、模型暂不设每日次数、成本待核算；代码审查及 verify -Smoke GREEN。"
+        }
+      ],
+      "assignedBy": "dsh-lead",
+      "assignedAt": "2026-11-05T17:23:35.669Z",
+      "priority": "P0 先能用③：成本护栏",
+      "taskBook": "docs/handoff/T31-T33-任务书.md",
+      "lease": {
+        "at": "2026-11-05T18:13:41.510Z",
+        "heartbeat": "2026-11-05T18:30:38.809Z",
+        "reason": null
+      },
+      "checkpoint": {
+        "progress": [],
+        "notes": [
+          "18:14 核对实现发现媒体余额不足会部分扣费，生成失败也未见自动退款；任务书现状描述不准确。正在设计并发安全限额和扣费。",
+          "18:15 实现用户级事务锁、媒体限额预占、余额不足整单拒绝，以及失败幂等退款初稿；服务端 TypeScript 编译通过。",
+          "18:17 按用户确认拒绝自定义节点与未知的整段媒体时长；新增本人及管理员媒体用量汇总，成本换算标记待核算。TTS 单独等待用户决定。",
+          "18:19 已按确认采用北京时间重置并暂停 TTS；本地模拟上游 smoke 通过余额不足、并发限额、重复退款和汇总。审查中修复退款后迟到成功回调覆盖状态风险；上游提交结果不确定时保留待核对状态。",
+          "18:22 隔离测试通过余额、并发数/次数/秒数、未知时长、自定义节点、TTS 暂停、失败重复退款及提交不确定等场景；已加入 verify，T30 避免调用真实上游。",
+          "18:26 用户确认后新增管理员待核对列表、核对退款与关联上游任务操作及核对依据审计；独立测试验证并发操作仅执行一次。增加超时遗留预占可核对处理。",
+          "18:28 模块审查发现模型计费/充值与媒体扣费并发时可能覆盖余额，已为余额变更统一锁定用户行；增加跨计费并发测试。",
+          "18:30 用户确认模型暂不设每日次数上限，保留余额封顶；最终代码审查与完整 verify -Smoke 通过，覆盖媒体限额、并发余额、退款幂等、人工核对、权限及用户隔离。"
+        ],
+        "files": [],
+        "next": "交付 T-33，按顺序推进 T-32。"
+      },
+      "finishedAt": "2026-11-05T18:30:49.660Z",
+      "result": "媒体限额与原子预扣、幂等失败退款、异常人工核对、用量汇总与后台已完成；用户决定北京时间重置、暂停 TTS、模型暂不设每日次数、成本待核算；代码审查及 verify -Smoke GREEN。"
+    },
+    {
+      "id": "T-34",
+      "title": "T-34 web_extract 抓取守卫修复（生产全量误拦）",
+      "status": "done",
+      "owner": "dsh-lead",
+      "scope": [
+        "packages/server/src/capabilities"
+      ],
+      "accept": "",
+      "blockedBy": [],
+      "createdAt": "2026-11-05T19:52:48.164Z",
+      "history": [
+        {
+          "at": "2026-11-05T19:54:25.776Z",
+          "by": "dsh-lead",
+          "what": "claim"
+        },
+        {
+          "at": "2026-11-05T19:54:25.937Z",
+          "by": "dsh-lead",
+          "what": "done: 根因 ::ffff:0:0/96 与 IPv4 同表导致 BlockList.check(x,ipv4) 命中所有 IPv4；已拆表+归一化+pickPublicAddress，新增 5 组单元测试并入 verify，verify GREEN；生产已部署并实测 example/mp.weixin/36kr/runninghub 成功"
+        }
+      ],
+      "lease": {
+        "at": "2026-11-05T19:54:25.774Z",
+        "heartbeat": "2026-11-05T19:54:25.776Z",
+        "reason": null
+      },
+      "finishedAt": "2026-11-05T19:54:25.935Z",
+      "result": "根因 ::ffff:0:0/96 与 IPv4 同表导致 BlockList.check(x,ipv4) 命中所有 IPv4；已拆表+归一化+pickPublicAddress，新增 5 组单元测试并入 verify，verify GREEN；生产已部署并实测 example/mp.weixin/36kr/runninghub 成功"
+    },
+    {
+      "id": "T-35",
+      "title": "T-35 员工工具循环 JSON 容错（减少 invalid 步浪费）",
+      "status": "done",
+      "owner": "dsh-lead",
+      "scope": [
+        "packages/worker"
+      ],
+      "accept": "",
+      "blockedBy": [],
+      "createdAt": "2026-11-05T20:05:32.614Z",
+      "history": [
+        {
+          "at": "2026-11-05T20:05:33.383Z",
+          "by": "dsh-lead",
+          "what": "claim"
+        },
+        {
+          "at": "2026-11-05T20:05:34.258Z",
+          "by": "dsh-lead",
+          "what": "done: extractJsonObject 三级回退 + action/name 别名 + params 回退 {}；6 项单测并入 verify；生产 worker 已部署，同任务 steps 从 [web_extract,invalid,finish] 变为 [web_extract,finish]；verify GREEN"
+        }
+      ],
+      "lease": {
+        "at": "2026-11-05T20:05:33.359Z",
+        "heartbeat": "2026-11-05T20:05:33.382Z",
+        "reason": null
+      },
+      "finishedAt": "2026-11-05T20:05:34.255Z",
+      "result": "extractJsonObject 三级回退 + action/name 别名 + params 回退 {}；6 项单测并入 verify；生产 worker 已部署，同任务 steps 从 [web_extract,invalid,finish] 变为 [web_extract,finish]；verify GREEN"
+    },
+    {
+      "id": "T-36",
+      "title": "T-36 员工技能注入（服务端）：AiEmployee.skillMd + 生成脚本 + seed + DTO",
+      "status": "done",
+      "owner": "dsh-lead",
+      "scope": [
+        "packages/server/prisma"
+      ],
+      "accept": "",
+      "blockedBy": [],
+      "createdAt": "2026-11-05T20:21:08.790Z",
+      "history": [
+        {
+          "at": "2026-11-05T20:23:42.992Z",
+          "by": "dsh-lead",
+          "what": "takeover from codex"
+        },
+        {
+          "at": "2026-11-05T20:36:24.470Z",
+          "by": "dsh-lead",
+          "what": "save: schema skillMd + 迁移 20261105202941 + seed 17/17 + service detail/pullTasks + smoke-t36 8/8, verify GREEN"
+        },
+        {
+          "at": "2026-11-05T20:36:24.575Z",
+          "by": "dsh-lead",
+          "what": "done: T-36 完成：AiEmployee.skillMd(Text) + 迁移 + seed 写入（17/17）+ detail()/pullTasks() 返回 skillMd + smoke-t36 8/8，verify GREEN"
+        }
+      ],
+      "assignedBy": "dsh-lead",
+      "lease": {
+        "at": "2026-11-05T20:23:42.990Z",
+        "heartbeat": "2026-11-05T20:36:24.470Z",
+        "reason": null
+      },
+      "checkpoint": {
+        "progress": [],
+        "notes": [
+          "20:36 schema skillMd + 迁移 20261105202941 + seed 17/17 + service detail/pullTasks + smoke-t36 8/8, verify GREEN"
+        ],
+        "files": []
+      },
+      "finishedAt": "2026-11-05T20:36:24.574Z",
+      "result": "T-36 完成：AiEmployee.skillMd(Text) + 迁移 + seed 写入（17/17）+ detail()/pullTasks() 返回 skillMd + smoke-t36 8/8，verify GREEN"
+    },
+    {
+      "id": "T-37",
+      "title": "T-37 员工执行器读取 skillMd + 步数上限 4->10",
+      "status": "done",
+      "owner": "dsh-lead",
+      "scope": [
+        "packages/worker"
+      ],
+      "accept": "",
+      "blockedBy": [],
+      "createdAt": "2026-11-05T20:21:09.062Z",
+      "history": [
+        {
+          "at": "2026-11-05T20:36:24.844Z",
+          "by": "dsh-lead",
+          "what": "save: tool-loop skill 注入 + maxSteps 8；desktop/cloud executor 传 skill；单测 9/9；verify GREEN"
+        },
+        {
+          "at": "2026-11-05T20:36:24.939Z",
+          "by": "dsh-lead",
+          "what": "done: T-37 完成：runToolLoop 支持 skill 注入（8000 字符预算）+ maxSteps 默认 8；桌面与云端执行器传入 employeeSkillMd；单测 9/9，verify GREEN"
+        }
+      ],
+      "checkpoint": {
+        "progress": [],
+        "notes": [
+          "20:36 tool-loop skill 注入 + maxSteps 8；desktop/cloud executor 传 skill；单测 9/9；verify GREEN"
+        ],
+        "files": []
+      },
+      "lease": {
+        "heartbeat": "2026-11-05T20:36:24.844Z",
+        "at": "2026-11-05T20:36:24.844Z",
+        "reason": null
+      },
+      "finishedAt": "2026-11-05T20:36:24.939Z",
+      "result": "T-37 完成：runToolLoop 支持 skill 注入（8000 字符预算）+ maxSteps 默认 8；桌面与云端执行器传入 employeeSkillMd；单测 9/9，verify GREEN"
+    },
+    {
+      "id": "T-38",
+      "title": "T-38 技能内容生成器（SKILL.md -> skills-content.ts）",
+      "status": "done",
+      "owner": "dsh-lead",
+      "scope": [
+        "scripts"
+      ],
+      "accept": "",
+      "blockedBy": [],
+      "createdAt": "2026-11-05T20:21:09.234Z",
+      "history": [
+        {
+          "at": "2026-11-05T20:23:42.135Z",
+          "by": "dsh-lead",
+          "what": "claim"
+        },
+        {
+          "at": "2026-11-05T20:23:42.458Z",
+          "by": "dsh-lead",
+          "what": "done: skills-content.ts 生成（17 条/42462B/含原文与 frontmatter，byte-exact 校验通过，幂等）+ gen/check 脚本已入库；codex 的 T-36 依赖已解"
+        }
+      ],
+      "lease": {
+        "at": "2026-11-05T20:23:42.133Z",
+        "heartbeat": "2026-11-05T20:23:42.135Z",
+        "reason": null
+      },
+      "finishedAt": "2026-11-05T20:23:42.456Z",
+      "result": "skills-content.ts 生成（17 条/42462B/含原文与 frontmatter，byte-exact 校验通过，幂等）+ gen/check 脚本已入库；codex 的 T-36 依赖已解"
+    },
+    {
+      "id": "T-39",
+      "title": "T-39 云端技能注入复核及修复",
+      "status": "done",
+      "owner": "codex",
+      "scope": [
+        "packages/worker",
+        "packages/server/src/employee",
+        "scripts"
+      ],
+      "accept": "云端任务携带并实际注入技能，云 worker 端到端可执行，verify -Smoke GREEN",
+      "blockedBy": [],
+      "createdAt": "2026-11-05T20:44:14.431Z",
+      "history": [
+        {
+          "at": "2026-11-05T20:44:31.969Z",
+          "by": "codex",
+          "what": "claim"
+        },
+        {
+          "at": "2026-11-05T20:46:01.354Z",
+          "by": "codex",
+          "what": "save: 已修复云 worker 技能变量声明顺序；云端 pull 附带所属员工技能，并扩充云领取与真实 worker 模拟上游测试。"
+        },
+        {
+          "at": "2026-11-05T20:50:15.574Z",
+          "by": "codex",
+          "what": "save: 复现并修复 web_extract 对 IPv4-mapped IPv6 十六进制与完整写法的内网绕过；补元数据地址、回环地址及公网映射回归。云技能链修复后的首次完整 verify GREEN。"
+        },
+        {
+          "at": "2026-11-05T20:53:05.566Z",
+          "by": "codex",
+          "what": "save: 完成独立代码审查：修复云执行器 ReferenceError、云领取缺少技能和 IPv4-mapped IPv6 内网绕过；17技能校验与完整 verify -Smoke GREEN，公网抓取正向因 VPN fake-IP 跳过。"
+        },
+        {
+          "at": "2026-11-05T20:53:21.996Z",
+          "by": "codex",
+          "what": "done: 云端技能链路修复与独立代码审查完成，补充云 worker 注入及 IPv4-mapped IPv6 安全回归；verify -Smoke GREEN；未部署生产，详见 docs/handoff/T39-云端技能复核.md。"
+        }
+      ],
+      "lease": {
+        "at": "2026-11-05T20:44:31.968Z",
+        "heartbeat": "2026-11-05T20:53:05.566Z",
+        "reason": null
+      },
+      "checkpoint": {
+        "progress": [],
+        "notes": [
+          "20:46 已修复云 worker 技能变量声明顺序；云端 pull 附带所属员工技能，并扩充云领取与真实 worker 模拟上游测试。",
+          "20:50 复现并修复 web_extract 对 IPv4-mapped IPv6 十六进制与完整写法的内网绕过；补元数据地址、回环地址及公网映射回归。云技能链修复后的首次完整 verify GREEN。",
+          "20:53 完成独立代码审查：修复云执行器 ReferenceError、云领取缺少技能和 IPv4-mapped IPv6 内网绕过；17技能校验与完整 verify -Smoke GREEN，公网抓取正向因 VPN fake-IP 跳过。"
+        ],
+        "files": [],
+        "next": "登记完成并向负责人交接本地修复与部署边界。"
+      },
+      "finishedAt": "2026-11-05T20:53:21.995Z",
+      "result": "云端技能链路修复与独立代码审查完成，补充云 worker 注入及 IPv4-mapped IPv6 安全回归；verify -Smoke GREEN；未部署生产，详见 docs/handoff/T39-云端技能复核.md。"
+    },
+    {
+      "id": "T-40",
+      "title": "P11-A F2 缺口分级与取舍（Codex）",
+      "status": "done",
+      "owner": "codex",
+      "scope": [
+        "docs/handoff/F2-缺口分级与取舍.md"
+      ],
+      "accept": "只新建该文件；94 路由/135 IPC/13 表按是否影响能用分级并给取舍建议",
+      "blockedBy": [],
+      "createdAt": "2026-11-07T04:58:01.126Z",
+      "history": [
+        {
+          "at": "2026-11-07T05:25:32.326Z",
+          "by": "codex",
+          "what": "claim"
+        },
+        {
+          "at": "2026-11-07T05:27:08.900Z",
+          "by": "codex",
+          "what": "save: 已核对静态 diff 与历史裁剪依据；旧版 F2 全覆盖目标和体验版范围需分开表述，待逐项分级。"
+        },
+        {
+          "at": "2026-11-07T05:28:25.812Z",
+          "by": "codex",
+          "what": "save: 已生成 94 路由、135 IPC、13 表逐项初筛清单，区分静态差异与行为验收、暂缓与永久裁剪。"
+        },
+        {
+          "at": "2026-11-07T05:29:45.235Z",
+          "by": "codex",
+          "what": "save: 复核清单 242 项全部覆盖，确认分级是按域初筛而非逐项行为验收；UTF-8 加载 verify GREEN（server tsc、desktop build）。"
+        },
+        {
+          "at": "2026-11-07T05:29:45.534Z",
+          "by": "codex",
+          "what": "done: 交付 F2 缺口逐项初筛：94 路由、135 IPC、13 表；含历史依据与粗估，静态差异非行为验收；verify GREEN。"
+        }
+      ],
+      "lease": {
+        "at": "2026-11-07T05:25:32.314Z",
+        "heartbeat": "2026-11-07T05:29:45.235Z",
+        "reason": null
+      },
+      "checkpoint": {
+        "progress": [],
+        "notes": [
+          "05:27 已核对静态 diff 与历史裁剪依据；旧版 F2 全覆盖目标和体验版范围需分开表述，待逐项分级。",
+          "05:28 已生成 94 路由、135 IPC、13 表逐项初筛清单，区分静态差异与行为验收、暂缓与永久裁剪。",
+          "05:29 复核清单 242 项全部覆盖，确认分级是按域初筛而非逐项行为验收；UTF-8 加载 verify GREEN（server tsc、desktop build）。"
+        ],
+        "files": [],
+        "next": "完成任务并通知 dsh-lead：估算仅为排查基线，待逐项行为核验。"
+      },
+      "finishedAt": "2026-11-07T05:29:45.531Z",
+      "result": "交付 F2 缺口逐项初筛：94 路由、135 IPC、13 表；含历史依据与粗估，静态差异非行为验收；verify GREEN。"
+    },
+    {
+      "id": "T-41",
+      "title": "P11-B 17 员工 SKILL.md 工具需求映射",
+      "status": "done",
+      "owner": "skill-tool-mapper",
+      "scope": [
+        "docs/handoff/P11-技能需求映射.md"
+      ],
+      "accept": "只新建该文件；逐员工列工具需求与本批 3 工具覆盖度",
+      "blockedBy": [],
+      "createdAt": "2026-11-07T04:58:01.332Z",
+      "history": [
+        {
+          "at": "2026-11-07T05:05:34.637Z",
+          "by": "skill-tool-mapper",
+          "what": "claim"
+        },
+        {
+          "at": "2026-11-07T05:05:39.258Z",
+          "by": "skill-tool-mapper",
+          "what": "done: P11-B 完成，产出 docs/handoff/P11-技能需求映射.md"
+        }
+      ],
+      "lease": {
+        "at": "2026-11-07T05:05:34.632Z",
+        "heartbeat": "2026-11-07T05:05:34.637Z",
+        "reason": null
+      },
+      "finishedAt": "2026-11-07T05:05:39.256Z",
+      "result": "P11-B 完成，产出 docs/handoff/P11-技能需求映射.md"
+    }
+  ],
+  "primary": "dsh-lead",
+  "roles": {
+    "dsh-lead": "主执行（2026-11-05 16:30 起）",
+    "codex": "协作/复核",
+    "workbuddy": "协作"
+  }
+}

@@ -1,0 +1,66 @@
+# ---- 依赖与构建产物 ----
+node_modules/
+dist/
+build/
+out/
+release/
+*.tsbuildinfo
+
+# ---- 日志与本地临时产物 ----
+*.log
+_verify_*.log
+_build_*.log
+_smoke_*.log
+_tmp/
+_cutmp/
+_demo/
+_gwhome/
+_deploy/
+_deploy_*.tgz
+.codebuddy/
+
+# ---- 凭据与密钥（永不入库）----
+.env
+.env.*
+!.env.example
+packages/server/secrets/
+*.pem
+*.p12
+*.pfx
+*.key
+*.snap
+
+# ---- 运行时数据 ----
+uploads/
+packages/server/uploads/
+prisma/*.db
+downloads/
+packages/desktop/release/
+
+# ---- Python（个人微信网桥）----
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# ---- 系统/编辑器 ----
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+# ---- 一次性打包/截图产物 ----
+*.tar.gz
+_smoke_*.png
+packages/desktop/_smoke_*.png
+_extract/
+_dist_manifest_*.txt
+_publish_*.log
+_smoke_*.json
+_accept_*.mjs
+_probe_*.mjs
+_admin_*.png
+_cu_*.png
+@AutomationLog.txt
+*.executor.json

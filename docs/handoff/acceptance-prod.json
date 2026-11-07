@@ -1,0 +1,69 @@
+{
+  "at": "2026-11-05T17:24:07.266Z",
+  "base": "https://ai.fcmediaagent.com/api",
+  "steps": [
+    {
+      "step": "sms-send",
+      "at": "2026-11-05T17:24:10.390Z",
+      "status": 201,
+      "devCode": "yes"
+    },
+    {
+      "step": "login",
+      "at": "2026-11-05T17:24:11.421Z",
+      "status": 201,
+      "user": "13900139000",
+      "credits": 0
+    },
+    {
+      "step": "admin-grant",
+      "at": "2026-11-05T17:24:12.573Z",
+      "status": 201,
+      "amount": 400
+    },
+    {
+      "step": "admin",
+      "at": "2026-11-05T17:24:12.573Z",
+      "found": "13900139000",
+      "before": 0
+    },
+    {
+      "step": "chat",
+      "at": "2026-11-05T17:24:20.131Z",
+      "status": 200,
+      "ms": 7558,
+      "text": "我是能陪你闲聊唠嗑解闷、帮你查资料产出内容出谋划策、解答从生活常识到各细分领域专业疑问，全方位协助你高效处理各类大小事务的人工智能助手。",
+      "usage": 353
+    },
+    {
+      "step": "capability",
+      "at": "2026-11-05T17:24:20.935Z",
+      "status": 201,
+      "ok": true,
+      "len": 171
+    },
+    {
+      "step": "image-submit",
+      "at": "2026-11-05T17:24:21.642Z",
+      "status": 201,
+      "taskId": "2118393994476351489",
+      "estimatedAmount": 20
+    },
+    {
+      "step": "image-done",
+      "at": "2026-11-05T17:28:56.042Z",
+      "status": "SUCCESS",
+      "seconds": 274,
+      "resultUrl": "https://zhongke001.oss-cn-beijing.aliyuncs.com/media/auto/2118393994476351489.jpg",
+      "coins": "160"
+    }
+  ],
+  "image": {
+    "taskId": "2118393994476351489",
+    "url": "https://zhongke001.oss-cn-beijing.aliyuncs.com/media/auto/2118393994476351489.jpg",
+    "seconds": 274,
+    "status": "SUCCESS"
+  },
+  "ok": false,
+  "error": "terminated"
+}

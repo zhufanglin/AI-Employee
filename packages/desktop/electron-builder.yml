@@ -1,0 +1,45 @@
+appId: com.zhongkeyuansheng.fcmediaagent
+productName: 中科元晟 AI员工
+electronVersion: 38.0.0
+# 用 ASCII 产物名：中文名在更新服务器的 URL 里要转义，易踩 404（见 docs/handoff/更新服务器.md）
+artifactName: fcmediaagent-ai-employee-${version}-${os}-${arch}.${ext}
+directories:
+  output: release
+  buildResources: build
+files:
+  - out/**/*
+  - package.json
+asar: true
+extraResources:
+  - from: resources/openclaw
+    to: openclaw
+    filter:
+      - '**/*'
+  - from: resources/skills
+    to: skills
+    filter:
+      - '**/*'
+  - from: resources/context
+    to: context
+    filter:
+      - '**/*'
+publish:
+  provider: generic
+  url: https://updates.fcmediaagent.com/desktop/latest
+  channel: latest
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+  requestedExecutionLevel: asInvoker
+  signExecutable: false
+  icon: build/icon.ico
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: always
+  createStartMenuShortcut: true
+  shortcutName: 中科元晟 AI员工
+  runAfterFinish: true
+  deleteAppDataOnUninstall: false

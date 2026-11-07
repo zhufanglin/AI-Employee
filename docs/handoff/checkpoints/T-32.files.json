@@ -1,0 +1,77 @@
+[
+  {
+    "p": "packages/desktop/src/main/executor.ts",
+    "size": 7569,
+    "mtime": 1793867805119
+  },
+  {
+    "p": "packages/desktop/src/main/gateway.ts",
+    "size": 7089,
+    "mtime": 1793800107393
+  },
+  {
+    "p": "packages/desktop/src/main/index.ts",
+    "size": 20077,
+    "mtime": 1793901749830
+  },
+  {
+    "p": "packages/desktop/src/main/update.ts",
+    "size": 3871,
+    "mtime": 1793864059011
+  },
+  {
+    "p": "packages/desktop/src/main/workspace-assets.ts",
+    "size": 3461,
+    "mtime": 1793800169364
+  },
+  {
+    "p": "packages/server/src/employee/employee-cron.service.ts",
+    "size": 8005,
+    "mtime": 1793788904218
+  },
+  {
+    "p": "packages/server/src/employee/employee-execution.controller.ts",
+    "size": 1037,
+    "mtime": 1793867834400
+  },
+  {
+    "p": "packages/server/src/employee/employee-execution.service.ts",
+    "size": 2916,
+    "mtime": 1793867834436
+  },
+  {
+    "p": "packages/server/src/employee/employee-order.service.ts",
+    "size": 7433,
+    "mtime": 1793799096346
+  },
+  {
+    "p": "packages/server/src/employee/employee.controller.ts",
+    "size": 3399,
+    "mtime": 1793825257553
+  },
+  {
+    "p": "packages/server/src/employee/employee.module.ts",
+    "size": 1335,
+    "mtime": 1793828606141
+  },
+  {
+    "p": "packages/server/src/employee/employee.service.ts",
+    "size": 14917,
+    "mtime": 1793867824237
+  },
+  {
+    "p": "packages/server/src/employee/package.controller.ts",
+    "size": 3311,
+    "mtime": 1793825208266
+  },
+  {
+    "p": "packages/server/src/employee/package.service.ts",
+    "size": 8355,
+    "mtime": 1793799096348
+  },
+  {
+    "p": "packages/worker/cloud-executor.mjs",
+    "size": 7104,
+    "mtime": 1793868837919
+  }
+]

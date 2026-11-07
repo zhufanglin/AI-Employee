@@ -1,0 +1,43 @@
+// End-to-end task persistence with a mocked model and mocked media provider.
+import assert from 'node:assert/strict';
+import { runToolLoop } from '../packages/worker/tool-loop.mjs';
+const base = process.env.FCM_API || 'http://127.0.0.1:3000/api';
+const json = async (path, init = {}) => {
+  const res = await fetch(base + path, { ...init, headers: { 'content-type': 'application/json', ...(init.headers || {}) } });
+  const body = await res.json();
+  return { status: res.status, body };
+};
+const phone = '139' + String(Date.now()).slice(-8);
+const sent = await json('/auth/sms/send', { method: 'POST', body: JSON.stringify({ phone }) });
+const logged = await json('/auth/sms/login', { method: 'POST', body: JSON.stringify({ phone, code: sent.body.devCode }) });
+assert.ok(logged.body.accessToken);
+const headers = { authorization: 'Bearer ' + logged.body.accessToken };
+const install = await json('/employees/boss-lead-radar/install', { method: 'POST', headers, body: '{}' });
+assert.ok([200, 201].includes(install.status));
+const run = await json('/employees/boss-lead-radar/run', { method: 'POST', headers, body: JSON.stringify({ executor: 'desktop', title: 'T-32 隔离冒烟', input: { text: '播报稿和配图' } }) });
+assert.ok(run.body.id);
+const pulls = await Promise.all(Array.from({ length: 5 }, () => json('/employee-tasks/pull?limit=1', { headers })));
+const claims = pulls.flatMap(x => x.body.items || []).filter(x => x.id === run.body.id);
+assert.equal(claims.length, 1, 'only one concurrent pull may claim');
+const task = claims[0];
+const claimToken = task.outputMeta.claimToken;
+assert.ok(claimToken);
+const hb = (token) => json('/employee-execution/tasks/' + task.id + '/heartbeat', { method: 'POST', headers, body: JSON.stringify({ claimToken: token }) });
+assert.equal((await hb('wrong-token')).status, 400);
+assert.ok([200, 201].includes((await hb(claimToken)).status));
+const wrong = await json('/employee-tasks/' + task.id, { method: 'PATCH', headers, body: JSON.stringify({ claimToken: 'wrong-token', status: 'awaiting_approval', artifacts: [{ kind: 'text', text: 'wrong' }] }) });
+assert.equal(wrong.status, 400, 'stale executor cannot finish');
+const commands = [{ tool: 'image_gen', params: { prompt: '测试配图' } }, { tool: 'finish', params: { text: '测试播报稿' } }];
+const api = async (path) => {
+  if (path === '/capabilities') return { items: [] };
+  if (path === '/compute/chat/completions') return { choices: [{ message: { content: JSON.stringify(commands.shift()) } }] };
+  if (path === '/media/images/generations') return { taskId: 'fake-image', status: 'QUEUED', estimatedAmount: 20 };
+  if (path === '/media/tasks/fake-image') return { status: 'SUCCESS', resultUrl: 'https://example.invalid/test.png' };
+  throw new Error('unexpected API ' + path);
+};
+const out = await runToolLoop({ api, model: 'mock', messages: [], pollMs: 10, timeoutMs: 5000 });
+const patch = await json('/employee-tasks/' + task.id, { method: 'PATCH', headers, body: JSON.stringify({ claimToken, status: 'awaiting_approval', outputText: out.content, outputMeta: { ...task.outputMeta, steps: out.steps, media: out.media }, artifacts: [{ kind: 'text', text: out.content }, ...out.media.map(x => ({ kind: x.kind, path: x.url }))] }) });
+assert.equal(patch.body.status, 'awaiting_approval');
+assert.equal(patch.body.artifacts.length, 2);
+assert.equal(patch.body.outputMeta.steps.length, 2);
+console.log('T-32 PASS: concurrent claim, token fencing, heartbeat, multi-step output and two persisted artifacts');

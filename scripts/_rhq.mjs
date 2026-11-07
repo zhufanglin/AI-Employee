@@ -1,0 +1,3 @@
+const key = process.env.RUNNINGHUB_API_KEY || (await import("node:fs")).readFileSync("packages/server/.env","utf8").match(/RUNNINGHUB_API_KEY=(.+)/)[1].trim();
+const r = await fetch("https://www.runninghub.ai/openapi/v2/query", { method:"POST", headers:{ "content-type":"application/json", authorization:"Bearer "+key }, body: JSON.stringify({ taskId: process.argv[2] }) });
+console.log(r.status, (await r.text()).slice(0,900));

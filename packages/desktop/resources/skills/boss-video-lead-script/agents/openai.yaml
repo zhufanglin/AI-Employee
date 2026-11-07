@@ -1,0 +1,4 @@
+interface:
+  display_name: "老板短视频获客脚本官"
+  short_description: "根据老板定位、产品和客户痛点，生成可直接拍摄并能承接线索的短视频脚本"
+  default_prompt: "使用 $boss-video-lead-script 根据我的行业和产品生成一条获客短视频脚本。"

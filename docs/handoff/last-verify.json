@@ -1,0 +1,19 @@
+{
+  "at": "2026-11-07T13:29:24.9860258+08:00",
+  "ok": true,
+  "failed": 0,
+  "steps": [
+    {
+      "name": "server tsc",
+      "ok": true,
+      "exit": 0,
+      "seconds": 28
+    },
+    {
+      "name": "desktop electron-vite build",
+      "ok": true,
+      "exit": 0,
+      "seconds": 16
+    }
+  ]
+}

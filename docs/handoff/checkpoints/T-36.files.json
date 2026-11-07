@@ -1,0 +1,67 @@
+[
+  {
+    "p": "packages/server/prisma/employees.ts",
+    "size": 24715,
+    "mtime": 1793785773192
+  },
+  {
+    "p": "packages/server/prisma/migrations/20261029145143_init/migration.sql",
+    "size": 28161,
+    "mtime": 1793285503222
+  },
+  {
+    "p": "packages/server/prisma/migrations/20261030021514_w2_provider_and_quota/migration.sql",
+    "size": 1037,
+    "mtime": 1793326514155
+  },
+  {
+    "p": "packages/server/prisma/migrations/20261104094917_m65_employee/migration.sql",
+    "size": 4138,
+    "mtime": 1793785757669
+  },
+  {
+    "p": "packages/server/prisma/migrations/20261104131526_t08_package_grant/migration.sql",
+    "size": 1001,
+    "mtime": 1793798126630
+  },
+  {
+    "p": "packages/server/prisma/migrations/20261104214000_t23_usage_needs_review/migration.sql",
+    "size": 138,
+    "mtime": 1793799168401
+  },
+  {
+    "p": "packages/server/prisma/migrations/20261104214446_employee_execution_nodes/migration.sql",
+    "size": 979,
+    "mtime": 1793828686431
+  },
+  {
+    "p": "packages/server/prisma/migrations/20261105063459_t12_payments/migration.sql",
+    "size": 357,
+    "mtime": 1793860499661
+  },
+  {
+    "p": "packages/server/prisma/migrations/20261105105808_t30_media_result/migration.sql",
+    "size": 168,
+    "mtime": 1793876288222
+  },
+  {
+    "p": "packages/server/prisma/migrations/migration_lock.toml",
+    "size": 123,
+    "mtime": 1793876288222
+  },
+  {
+    "p": "packages/server/prisma/schema.prisma",
+    "size": 26804,
+    "mtime": 1793876240008
+  },
+  {
+    "p": "packages/server/prisma/seed.ts",
+    "size": 7687,
+    "mtime": 1793862118085
+  },
+  {
+    "p": "packages/server/prisma/skills-content.ts",
+    "size": 42462,
+    "mtime": 1793910190351
+  }
+]

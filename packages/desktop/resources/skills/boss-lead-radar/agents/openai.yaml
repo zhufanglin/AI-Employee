@@ -1,0 +1,4 @@
+interface:
+  display_name: "AI获客线索雷达"
+  short_description: "搜索、验证并评分高匹配潜在客户，输出公开证据与触达理由"
+  default_prompt: "使用 $boss-lead-radar 根据我的行业、产品和目标客户生成潜在客户线索清单。"

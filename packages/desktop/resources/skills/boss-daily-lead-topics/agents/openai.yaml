@@ -1,0 +1,4 @@
+interface:
+  display_name: "每日精准获客选题官"
+  short_description: "结合产品、客户问题和同行内容，生成当天可直接拍摄的精准获客选题"
+  default_prompt: "使用 $boss-daily-lead-topics 为我的业务生成今天的精准获客选题。"

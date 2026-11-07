@@ -1,0 +1,72 @@
+[
+  {
+    "p": "packages/desktop/src/main/gateway.ts",
+    "size": 6711,
+    "mtime": 1793332023232
+  },
+  {
+    "p": "packages/desktop/src/main/index.ts",
+    "size": 10091,
+    "mtime": 1793331039451
+  },
+  {
+    "p": "packages/desktop/src/preload/index.ts",
+    "size": 2359,
+    "mtime": 1793330369831
+  },
+  {
+    "p": "packages/desktop/src/renderer/index.html",
+    "size": 391,
+    "mtime": 1793329302019
+  },
+  {
+    "p": "packages/desktop/src/renderer/src/App.tsx",
+    "size": 916,
+    "mtime": 1793329315390
+  },
+  {
+    "p": "packages/desktop/src/renderer/src/main.tsx",
+    "size": 229,
+    "mtime": 1793329315334
+  },
+  {
+    "p": "packages/desktop/src/renderer/src/pages/Chat.tsx",
+    "size": 4174,
+    "mtime": 1793329333329
+  },
+  {
+    "p": "packages/desktop/src/renderer/src/pages/Credits.tsx",
+    "size": 1614,
+    "mtime": 1793329333394
+  },
+  {
+    "p": "packages/desktop/src/renderer/src/pages/Gateway.tsx",
+    "size": 2626,
+    "mtime": 1793330370686
+  },
+  {
+    "p": "packages/desktop/src/renderer/src/pages/Login.tsx",
+    "size": 3189,
+    "mtime": 1793329315489
+  },
+  {
+    "p": "packages/desktop/src/renderer/src/pages/Settings.tsx",
+    "size": 1123,
+    "mtime": 1793329333459
+  },
+  {
+    "p": "packages/desktop/src/renderer/src/pages/Shell.tsx",
+    "size": 2267,
+    "mtime": 1793330370992
+  },
+  {
+    "p": "packages/desktop/src/renderer/src/styles.css",
+    "size": 6718,
+    "mtime": 1793330371471
+  },
+  {
+    "p": "packages/desktop/src/renderer/src/types.ts",
+    "size": 1775,
+    "mtime": 1793330370478
+  }
+]

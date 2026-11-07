@@ -1,0 +1,9 @@
+# FCMediaAgent 个人微信本地网桥 —— 仅 Mock 模式依赖
+# 用于没有安装微信 / 非 Windows 的机器做端到端联调与 CI 自检。
+# 安装：
+#   python -m pip install -r requirements-mock.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
+fastapi==0.143.0
+# 纯 Python uvicorn：不要写 uvicorn[standard]，它会拉 httptools/uvloop（需要 C 扩展，
+# 新版 Python 上常无预编译包，安装会失败；网桥不需要这两个加速件。
+uvicorn==0.54.0
+pydantic==2.14.0

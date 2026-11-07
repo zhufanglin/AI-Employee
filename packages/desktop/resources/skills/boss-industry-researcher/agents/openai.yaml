@@ -1,0 +1,4 @@
+interface:
+  display_name: "行业深度分析师"
+  short_description: "从市场、客户、产业链、竞争、利润、政策和机会等维度生成行业研究报告"
+  default_prompt: "使用 $boss-industry-researcher 对这个行业做一份老板看得懂的进入前尽调。"

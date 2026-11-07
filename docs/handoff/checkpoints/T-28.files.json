@@ -1,0 +1,417 @@
+[
+  {
+    "p": "packages/server/src/admin/admin-extra.controller.ts",
+    "size": 7597,
+    "mtime": 1793867549580
+  },
+  {
+    "p": "packages/server/src/admin/admin-extra.service.ts",
+    "size": 38373,
+    "mtime": 1793867541872
+  },
+  {
+    "p": "packages/server/src/admin/admin.controller.ts",
+    "size": 1493,
+    "mtime": 1793860378999
+  },
+  {
+    "p": "packages/server/src/admin/admin.module.ts",
+    "size": 574,
+    "mtime": 1793867549582
+  },
+  {
+    "p": "packages/server/src/admin/admin.service.ts",
+    "size": 7911,
+    "mtime": 1793860412769
+  },
+  {
+    "p": "packages/server/src/app.module.ts",
+    "size": 1985,
+    "mtime": 1793889392238
+  },
+  {
+    "p": "packages/server/src/audio-materials/audio-materials.controller.ts",
+    "size": 608,
+    "mtime": 1793885601158
+  },
+  {
+    "p": "packages/server/src/audio-materials/audio-materials.module.ts",
+    "size": 385,
+    "mtime": 1793885601201
+  },
+  {
+    "p": "packages/server/src/audio-materials/audio-materials.service.ts",
+    "size": 1924,
+    "mtime": 1793885601117
+  },
+  {
+    "p": "packages/server/src/auth/auth-code.test.cjs",
+    "size": 1924,
+    "mtime": 1793798700524
+  },
+  {
+    "p": "packages/server/src/auth/auth.controller.ts",
+    "size": 2367,
+    "mtime": 1793867549582
+  },
+  {
+    "p": "packages/server/src/auth/auth.dto.ts",
+    "size": 1190,
+    "mtime": 1793810174466
+  },
+  {
+    "p": "packages/server/src/auth/auth.module.ts",
+    "size": 578,
+    "mtime": 1793867553403
+  },
+  {
+    "p": "packages/server/src/auth/auth.service.ts",
+    "size": 7162,
+    "mtime": 1793810174470
+  },
+  {
+    "p": "packages/server/src/auth/sms.sender.ts",
+    "size": 3594,
+    "mtime": 1793885886286
+  },
+  {
+    "p": "packages/server/src/billing/billing.module.ts",
+    "size": 375,
+    "mtime": 1793325873643
+  },
+  {
+    "p": "packages/server/src/billing/credits.service.ts",
+    "size": 7596,
+    "mtime": 1793325872865
+  },
+  {
+    "p": "packages/server/src/billing/pricing.service.ts",
+    "size": 1167,
+    "mtime": 1793325872676
+  },
+  {
+    "p": "packages/server/src/billing/quota.service.ts",
+    "size": 2172,
+    "mtime": 1793325872790
+  },
+  {
+    "p": "packages/server/src/capabilities/capabilities/content.ts",
+    "size": 2614,
+    "mtime": 1793889330879
+  },
+  {
+    "p": "packages/server/src/capabilities/capabilities/customer.ts",
+    "size": 1670,
+    "mtime": 1793889288201
+  },
+  {
+    "p": "packages/server/src/capabilities/capabilities/llm.ts",
+    "size": 1303,
+    "mtime": 1793889344373
+  },
+  {
+    "p": "packages/server/src/capabilities/capabilities/web-extract.ts",
+    "size": 2444,
+    "mtime": 1793889268879
+  },
+  {
+    "p": "packages/server/src/capabilities/capability.controller.ts",
+    "size": 1157,
+    "mtime": 1793889346635
+  },
+  {
+    "p": "packages/server/src/capabilities/capability.module.ts",
+    "size": 402,
+    "mtime": 1793889349367
+  },
+  {
+    "p": "packages/server/src/capabilities/capability.service.ts",
+    "size": 2902,
+    "mtime": 1793889345315
+  },
+  {
+    "p": "packages/server/src/capabilities/capability.types.ts",
+    "size": 578,
+    "mtime": 1793889268637
+  },
+  {
+    "p": "packages/server/src/channels/channels.controller.ts",
+    "size": 920,
+    "mtime": 1793826857048
+  },
+  {
+    "p": "packages/server/src/channels/channels.module.ts",
+    "size": 283,
+    "mtime": 1793826857044
+  },
+  {
+    "p": "packages/server/src/channels/personal-wechat.service.ts",
+    "size": 2782,
+    "mtime": 1793826857046
+  },
+  {
+    "p": "packages/server/src/clone-records/clone-records.controller.ts",
+    "size": 777,
+    "mtime": 1793885601047
+  },
+  {
+    "p": "packages/server/src/clone-records/clone-records.module.ts",
+    "size": 371,
+    "mtime": 1793885601083
+  },
+  {
+    "p": "packages/server/src/clone-records/clone-records.service.ts",
+    "size": 3498,
+    "mtime": 1793885601010
+  },
+  {
+    "p": "packages/server/src/common/auth-user.ts",
+    "size": 111,
+    "mtime": 1793284574061
+  },
+  {
+    "p": "packages/server/src/common/decorators.ts",
+    "size": 439,
+    "mtime": 1793284574062
+  },
+  {
+    "p": "packages/server/src/common/env.ts",
+    "size": 1504,
+    "mtime": 1793284565640
+  },
+  {
+    "p": "packages/server/src/common/jwt-auth.guard.ts",
+    "size": 1120,
+    "mtime": 1793284574079
+  },
+  {
+    "p": "packages/server/src/common/owner.ts",
+    "size": 972,
+    "mtime": 1793885583417
+  },
+  {
+    "p": "packages/server/src/common/roles.guard.ts",
+    "size": 650,
+    "mtime": 1793284574080
+  },
+  {
+    "p": "packages/server/src/compose-videos/compose-videos.controller.ts",
+    "size": 1216,
+    "mtime": 1793885982421
+  },
+  {
+    "p": "packages/server/src/compose-videos/compose-videos.module.ts",
+    "size": 378,
+    "mtime": 1793885600974
+  },
+  {
+    "p": "packages/server/src/compose-videos/compose-videos.service.ts",
+    "size": 7738,
+    "mtime": 1793885583478
+  },
+  {
+    "p": "packages/server/src/compute/compute-auth.guard.test.cjs",
+    "size": 1389,
+    "mtime": 1793796231034
+  },
+  {
+    "p": "packages/server/src/compute/compute-auth.guard.ts",
+    "size": 2039,
+    "mtime": 1793796181109
+  },
+  {
+    "p": "packages/server/src/compute/compute-billing.test.cjs",
+    "size": 4959,
+    "mtime": 1793859900227
+  },
+  {
+    "p": "packages/server/src/compute/compute.controller.ts",
+    "size": 2314,
+    "mtime": 1793325934314
+  },
+  {
+    "p": "packages/server/src/compute/compute.module.ts",
+    "size": 652,
+    "mtime": 1793802356338
+  },
+  {
+    "p": "packages/server/src/compute/compute.service.ts",
+    "size": 10844,
+    "mtime": 1793859900203
+  },
+  {
+    "p": "packages/server/src/compute/proxy-token.controller.ts",
+    "size": 829,
+    "mtime": 1793325919893
+  },
+  {
+    "p": "packages/server/src/compute/proxy-token.service.ts",
+    "size": 1674,
+    "mtime": 1793325919639
+  },
+  {
+    "p": "packages/server/src/compute/volcengine-proxy.controller.ts",
+    "size": 2329,
+    "mtime": 1793331531173
+  },
+  {
+    "p": "packages/server/src/credits/credits.controller.ts",
+    "size": 799,
+    "mtime": 1793325925691
+  },
+  {
+    "p": "packages/server/src/credits/credits.module.ts",
+    "size": 176,
+    "mtime": 1793325925714
+  },
+  {
+    "p": "packages/server/src/employee/employee-cron.service.ts",
+    "size": 8005,
+    "mtime": 1793788904218
+  },
+  {
+    "p": "packages/server/src/employee/employee-execution.controller.ts",
+    "size": 1037,
+    "mtime": 1793867834400
+  },
+  {
+    "p": "packages/server/src/employee/employee-execution.service.ts",
+    "size": 2916,
+    "mtime": 1793867834436
+  },
+  {
+    "p": "packages/server/src/employee/employee-order.service.ts",
+    "size": 7433,
+    "mtime": 1793799096346
+  },
+  {
+    "p": "packages/server/src/employee/employee.controller.ts",
+    "size": 3399,
+    "mtime": 1793825257553
+  },
+  {
+    "p": "packages/server/src/employee/employee.module.ts",
+    "size": 1335,
+    "mtime": 1793828606141
+  },
+  {
+    "p": "packages/server/src/employee/employee.service.ts",
+    "size": 14917,
+    "mtime": 1793867824237
+  },
+  {
+    "p": "packages/server/src/employee/package.controller.ts",
+    "size": 3311,
+    "mtime": 1793825208266
+  },
+  {
+    "p": "packages/server/src/employee/package.service.ts",
+    "size": 8355,
+    "mtime": 1793799096348
+  },
+  {
+    "p": "packages/server/src/health/health.controller.ts",
+    "size": 537,
+    "mtime": 1793285367902
+  },
+  {
+    "p": "packages/server/src/main.ts",
+    "size": 1914,
+    "mtime": 1793869837747
+  },
+  {
+    "p": "packages/server/src/media/media.controller.ts",
+    "size": 2328,
+    "mtime": 1793876240316
+  },
+  {
+    "p": "packages/server/src/media/media.module.ts",
+    "size": 268,
+    "mtime": 1793885583442
+  },
+  {
+    "p": "packages/server/src/media/media.service.ts",
+    "size": 16835,
+    "mtime": 1793888166006
+  },
+  {
+    "p": "packages/server/src/orders/orders.module.ts",
+    "size": 192,
+    "mtime": 1793860366241
+  },
+  {
+    "p": "packages/server/src/orders/orders.service.ts",
+    "size": 6361,
+    "mtime": 1793860607159
+  },
+  {
+    "p": "packages/server/src/payments/payments.controller.ts",
+    "size": 1855,
+    "mtime": 1793860532129
+  },
+  {
+    "p": "packages/server/src/payments/payments.module.ts",
+    "size": 475,
+    "mtime": 1793860366244
+  },
+  {
+    "p": "packages/server/src/payments/payments.service.ts",
+    "size": 4287,
+    "mtime": 1793860532128
+  },
+  {
+    "p": "packages/server/src/payments/wechat-pay.service.ts",
+    "size": 9965,
+    "mtime": 1793860470948
+  },
+  {
+    "p": "packages/server/src/prisma/prisma.module.ts",
+    "size": 205,
+    "mtime": 1793284574057
+  },
+  {
+    "p": "packages/server/src/prisma/prisma.service.ts",
+    "size": 349,
+    "mtime": 1793284574056
+  },
+  {
+    "p": "packages/server/src/providers/providers.module.ts",
+    "size": 225,
+    "mtime": 1793325888840
+  },
+  {
+    "p": "packages/server/src/providers/providers.service.ts",
+    "size": 6726,
+    "mtime": 1793862245408
+  },
+  {
+    "p": "packages/server/src/site/site.controller.ts",
+    "size": 393,
+    "mtime": 1793284594610
+  },
+  {
+    "p": "packages/server/src/site/site.module.ts",
+    "size": 236,
+    "mtime": 1793284594613
+  },
+  {
+    "p": "packages/server/src/site/site.service.ts",
+    "size": 1776,
+    "mtime": 1793284594609
+  },
+  {
+    "p": "packages/server/src/toolapi/toolapi.controller.ts",
+    "size": 6727,
+    "mtime": 1793802429272
+  },
+  {
+    "p": "packages/server/src/toolapi/toolapi.module.ts",
+    "size": 378,
+    "mtime": 1793889400661
+  },
+  {
+    "p": "packages/server/src/toolapi/toolapi.service.ts",
+    "size": 12056,
+    "mtime": 1793889671144
+  }
+]
