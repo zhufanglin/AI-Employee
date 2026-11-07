@@ -18,6 +18,11 @@ export type FcmApi = {
     uninstall: (slug: string) => Promise<any>
     run: (p: { slug: string; input: any; title?: string }) => Promise<any>
   }
+  workspace: {
+    pick: () => Promise<{ items: any[] }>
+    list: (limit?: number) => Promise<any>
+    remove: (p: { key?: string; name?: string }) => Promise<any>
+  }
   employeeTasks: {
     list: (q?: string) => Promise<any>
     approve: (p: { id: string; reason?: string }) => Promise<any>

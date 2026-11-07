@@ -43,6 +43,11 @@ const api = {
     approve: (p: { id: string; reason?: string }) => ipcRenderer.invoke('employee-tasks:approve', p),
     reject: (p: { id: string; reason?: string }) => ipcRenderer.invoke('employee-tasks:reject', p)
   },
+  workspace: {
+    pick: () => ipcRenderer.invoke('workspace:pick'),
+    list: (limit?: number) => ipcRenderer.invoke('workspace:list', limit),
+    remove: (p: { key?: string; name?: string }) => ipcRenderer.invoke('workspace:remove', p)
+  },
   employeeExecution: {
     heartbeat: () => ipcRenderer.invoke('employee-execution:heartbeat'),
     nodes: () => ipcRenderer.invoke('employee-execution:nodes'),

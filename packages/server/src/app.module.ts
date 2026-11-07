@@ -22,6 +22,7 @@ import { AudioMaterialsModule } from "./audio-materials/audio-materials.module";
 import { PaymentsModule } from "./payments/payments.module";
 import { AdminModule } from "./admin/admin.module";
 import { CapabilityModule } from "./capabilities/capability.module";
+import { WorkspaceModule } from "./workspace/workspace.module";
 
 @Module({
   imports: [
@@ -41,6 +42,7 @@ import { CapabilityModule } from "./capabilities/capability.module";
     PaymentsModule,
     AdminModule,
     CapabilityModule,
+    WorkspaceModule,
   ],
   controllers: [HealthController],
   providers: [

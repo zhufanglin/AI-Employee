@@ -19,6 +19,8 @@ export default function EmployeeOffice() {
   const [notice, setNotice] = useState('')
   const [executor, setExecutor] = useState<any>(null)
   const [apiOrigin, setApiOrigin] = useState('')
+  const [attachments, setAttachments] = useState<any[]>([])
+  const [library, setLibrary] = useState<any[]>([])
 
   useEffect(() => {
     let active = true
@@ -36,12 +38,17 @@ export default function EmployeeOffice() {
     } catch { return '' }
   }
 
+  const refreshLibrary = useCallback(async () => {
+    try { const r = await (window as any).fcm.workspace.list(50); setLibrary(r?.items || []) } catch { /* 忽略 */ }
+  }, [])
+
   const refresh = useCallback(async () => {
     setError('')
     try {
       const [c, m, t] = await Promise.all([
         window.fcm.employees.catalog(), window.fcm.employees.mine(), window.fcm.employeeTasks.list('?limit=50')
       ])
+      void refreshLibrary()
       const employees = c.items || []
       const mine = m.items || []
       setCatalog(employees)
@@ -51,7 +58,7 @@ export default function EmployeeOffice() {
         ? current
         : mine.find((item: any) => item.install?.effectiveEnabled)?.slug || '')
     } catch (e: any) { setError(e?.message || '加载员工数据失败') }
-  }, [])
+  }, [refreshLibrary])
 
   useEffect(() => { void refresh() }, [refresh])
 
@@ -102,6 +109,38 @@ export default function EmployeeOffice() {
     setBusy(false)
   }
 
+  async function pickFiles() {
+    setBusy(true); setError('')
+    try {
+      const picked = await (window as any).fcm.workspace.pick()
+      const items = picked?.items || []
+      if (items.length) {
+        setAttachments((current) => {
+          const seen = new Set(current.map((f) => f.key))
+          return [...current, ...items.filter((f: any) => !seen.has(f.key))]
+        })
+        setNotice(`已上传 ${items.length} 份资料，提交任务时员工会读取它们`)
+        void refreshLibrary()
+      }
+    } catch (e: any) { setError(e?.message || '上传资料失败') }
+    finally { setBusy(false) }
+  }
+
+  async function removeLibraryFile(file: any) {
+    await act(async () => {
+      await (window as any).fcm.workspace.remove({ key: file.key })
+      setAttachments((current) => current.filter((f) => f.key !== file.key))
+      await refreshLibrary()
+    }, `已删除 ${file.name}`)
+  }
+
+  function composedText() {
+    const base = input.trim()
+    if (!attachments.length) return base
+    const list = attachments.map((f) => `- ${f.name}（${f.ext}，${Math.max(1, Math.round((f.bytes || 0) / 1024))}KB）`)
+    return [base, '', '本次任务可用的上传资料：', ...list, '', '读取方式：先用 file_list 确认文件名；文本文件用 file_read（参数 name），Excel/Word/PDF 用 doc_read（参数 name）。不要凭空猜测文件内容。'].join('\n')
+  }
+
   async function runTask(event: FormEvent) {
     event.preventDefault()
     if (!selected || !input.trim()) return
@@ -109,9 +148,9 @@ export default function EmployeeOffice() {
       await window.fcm.employees.run({
         slug: selected,
         title: title.trim() || undefined,
-        input: { text: input.trim() }
+        input: { text: composedText(), files: attachments.map((f) => ({ name: f.name, key: f.key })) }
       })
-      setTitle(''); setInput('')
+      setTitle(''); setInput(''); setAttachments([])
     }, '任务已提交；完成情况会显示在任务列表中。')
   }
 
@@ -177,8 +216,32 @@ export default function EmployeeOffice() {
         </select></label>
         <label>任务名称<input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="例如：分析本周新增线索" /></label>
         <label>任务说明<textarea value={input} onChange={(e) => setInput(e.target.value)} placeholder="描述目标、背景资料和期望输出" rows={3} required /></label>
+        <div className="attach-row">
+          <button type="button" className="ghost" disabled={busy} onClick={() => void pickFiles()}>添加资料（Excel / Word / PDF / 文本 / 图片）</button>
+          <span className="muted small">单份 ≤ 20MB；员工会用 doc_read / file_read 读取内容</span>
+        </div>
+        {!!attachments.length && <div className="attach-list">
+          {attachments.map((f) => <span className="attach-chip" key={f.key}>
+            📎 {f.name}
+            <button type="button" className="link" onClick={() => setAttachments((current) => current.filter((x) => x.key !== f.key))}>移除</button>
+          </span>)}
+        </div>}
         <button className="primary office-button" disabled={busy || !selected || !input.trim()}>提交任务</button>
       </form>
+    </section>
+
+    <section className="office-block">
+      <div className="office-section-head"><div><h3>我的资料库 <small>{library.length} 份</small></h3><p>上传后会保存在服务端工作区，员工在任务里按文件名读取</p></div>
+        <button className="ghost" disabled={busy} onClick={() => void refreshLibrary()}>刷新</button>
+      </div>
+      {!library.length && <div className="empty-state">还没有资料。点「添加资料」上传客户名单、产品价格表、竞品文档或 PDF。</div>}
+      {!!library.length && <div className="attach-list">
+        {library.slice(0, 20).map((f: any) => <span className="attach-chip" key={f.key}>
+          {f.url ? <a href={f.url} target="_blank" rel="noreferrer">{f.name}</a> : f.name}
+          <span className="muted small">{Math.max(1, Math.round((f.bytes || 0) / 1024))}KB</span>
+          <button className="link" disabled={busy} onClick={() => void removeLibraryFile(f)}>删除</button>
+        </span>)}
+      </div>}
     </section>
 
     <section className="office-block">

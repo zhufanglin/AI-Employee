@@ -9,6 +9,7 @@ import { customerDescriptors, buildCustomerHandlers } from "./capabilities/custo
 import { llmDescriptors, buildLlmHandlers } from "./capabilities/llm";
 import { descriptor as searchDescriptor, handler as searchHandler } from "./capabilities/search";
 import { descriptors as fileDescriptors, handlers as fileHandlers } from "./capabilities/files";
+import { descriptors as docDescriptors, handlers as docHandlers } from "./capabilities/docs";
 
 /**
  * 能力层：原版 agent-tool-box 的 36 个 .pyc 原子能力的明文本地重写。
@@ -17,7 +18,7 @@ import { descriptors as fileDescriptors, handlers as fileHandlers } from "./capa
 @Injectable()
 export class CapabilityService {
   private readonly logger = new Logger(CapabilityService.name);
-  private readonly descriptors: CapabilityDescriptor[] = [webExtractDescriptor, ...contentDescriptors, ...customerDescriptors, ...llmDescriptors, searchDescriptor, ...fileDescriptors];
+  private readonly descriptors: CapabilityDescriptor[] = [webExtractDescriptor, ...contentDescriptors, ...customerDescriptors, ...llmDescriptors, searchDescriptor, ...fileDescriptors, ...docDescriptors];
   private readonly handlers: Record<string, CapabilityHandler>;
 
   constructor(private readonly prisma: PrismaService, private readonly toolapi: ToolapiService) {
@@ -28,6 +29,7 @@ export class CapabilityService {
       ...buildLlmHandlers(toolapi),
       web_search: searchHandler,
       ...fileHandlers,
+      ...docHandlers,
     } as Record<string, CapabilityHandler>;
   }
 

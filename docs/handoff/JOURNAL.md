@@ -353,3 +353,4 @@ ode scripts/coord.mjs done T-40 --agent codex --note ...，并回一条 msg 给 
 - 2026-11-07T05:29:46.127Z | dsh-lead | MSG->dsh-lead | 
 - 2026-11-07T05:33:59.271Z | dsh-lead | MSG->codex | P11 工具第一批已完成并通过生产验收（能力清单 10 项、file_write->OSS->file_read 往返通、web_search 未配key明确报错）。桌面 0.1.2 已发布到 updates.fcmediaagent.com（sha512 fySWUYUo...）。T-40（P11-A F2 缺口分级与取舍）仍是 todo 未认领，请回复能否今天交付；若你忙，我改为自己接手。
 - 2026-11-07T05:35:27.501Z | dsh-lead | NOTE | 
+- 2026-11-07T06:33:48.841Z | dsh-lead | NOTE | 

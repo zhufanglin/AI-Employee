@@ -161,6 +161,12 @@ form label { display: block; margin: 14px 0 6px; color: var(--muted); font-size:
 .task-error { color: #ff9d9d; margin-top: 8px; }
 .artifact-list { display: grid; gap: 6px; margin-top: 8px; overflow-wrap: anywhere; }
 .task-actions { margin-top: 12px; }
+/* 员工任务附件（工作区资料） */
+.attach-row { grid-column: 1 / -1; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.attach-row button { justify-self: start; }
+.attach-list { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+.attach-chip { display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--line); background: var(--bg); border-radius: 99px; padding: 4px 10px; font-size: 12px; max-width: 100%; overflow-wrap: anywhere; }
+.attach-chip a { color: inherit; }
 /* 媒体生产（数字人 / 音色克隆） */
 .page-card { background: var(--bg-2); border: 1px solid var(--line); border-radius: 12px; padding: 16px; margin-bottom: 18px; }
 .page-card h3 { margin: 0 0 4px; font-size: 14px; }

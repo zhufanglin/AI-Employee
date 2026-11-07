@@ -17,8 +17,11 @@ export default function Shell({ user, config, onLogout }: { user: any; config: a
   const [showAdvanced, setShowAdvanced] = useState(false)
   const [models, setModels] = useState<Model[]>([])
   const [balance, setBalance] = useState<number>(user.credits ?? 0)
+  // 版本号直接取主进程的真实版本，避免界面上写死旧版本造成误解。
+  const [version, setVersion] = useState<string>('')
 
   useEffect(() => {
+    window.fcm.info().then((i) => setVersion(i.version)).catch(() => {})
     window.fcm.models().then(setModels).catch((e) => console.error('models failed', e))
     window.fcm.credits.balance().then((b) => setBalance(b.balance)).catch(() => {})
   }, [])
@@ -30,7 +33,7 @@ export default function Shell({ user, config, onLogout }: { user: any; config: a
           <div className="logo">元</div>
           <div>
             <h1>{config?.siteName || 'AI 员工'}</h1>
-            <p>v{config?.version || '0.1.0'}</p>
+            <p>v{version || config?.version || ''}</p>
           </div>
         </div>
 

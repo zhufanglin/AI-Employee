@@ -55,7 +55,8 @@ function stubFetch(payload) {
   check('能力清单：web_search 与两个文件能力已定义', () => {
     assert.equal(search.descriptor.name, 'web_search');
     const names = files.descriptors.map((d) => d.name);
-    assert.deepEqual(names, ['file_write', 'file_read']);
+    // P12 起 files.ts 额外提供 file_list；具体顺序由实现决定，这里只断言必备能力都在。
+    for (const name of ['file_write', 'file_list', 'file_read']) assert.ok(names.includes(name), `缺少能力 ${name}`);
   });
 
   await rejects('未配置任何搜索 key 时明确报错（不静默空返回）', async () => {

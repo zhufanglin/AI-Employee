@@ -1,5 +1,5 @@
-import { app, BrowserWindow, ipcMain, shell } from 'electron'
-import { join } from 'node:path'
+import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron'
+import { basename, join } from 'node:path'
 import { createHash } from 'node:crypto'
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { GatewayManager } from './gateway'
@@ -300,6 +300,30 @@ function registerIpc() {
   ipcMain.handle('employee-execution:start', () => executor!.start())
   ipcMain.handle('employee-execution:stop', () => executor!.stop())
   ipcMain.handle('employee-execution:nodes', () => api('/employee-execution/nodes'))
+
+  // 工作区资料：用户上传表格/PDF/Word/文本，员工在任务里用 file_list / doc_read 读取。
+  ipcMain.handle('workspace:pick', async () => {
+    if (!win) return { items: [] }
+    const picked = await dialog.showOpenDialog(win, {
+      title: '选择要交给员工的资料',
+      properties: ['openFile', 'multiSelections'],
+      filters: [
+        { name: '文档资料', extensions: ['md', 'txt', 'csv', 'json', 'html', 'xml', 'log', 'xlsx', 'xls', 'docx', 'pdf'] },
+        { name: '图片与音视频', extensions: ['png', 'jpg', 'jpeg', 'webp', 'mp3', 'wav', 'm4a', 'mp4', 'mov'] },
+        { name: '全部文件', extensions: ['*'] }
+      ]
+    })
+    if (picked.canceled || !picked.filePaths.length) return { items: [] }
+    const items: any[] = []
+    for (const file of picked.filePaths) {
+      const bytes = readFileSync(file)
+      if (bytes.byteLength > 20 * 1024 * 1024) throw new Error(basename(file) + ' 超过 20MB，请拆分后再上传')
+      items.push(await api('/workspace/upload', { method: 'POST', body: JSON.stringify({ name: basename(file), base64: bytes.toString('base64') }) }))
+    }
+    return { items }
+  })
+  ipcMain.handle('workspace:list', (_e, limit?: number) => api('/workspace/files?limit=' + encodeURIComponent(String(limit || 50))))
+  ipcMain.handle('workspace:remove', (_e, p: { key?: string; name?: string }) => api('/workspace/delete', { method: 'POST', body: JSON.stringify(p) }))
 
   // 媒体生产（数字人 / 音色克隆 / 音频素材）：编排在服务端，这里只做转发。
   ipcMain.handle('media:upload', (_e, p: { fileName: string; mime: string; base64: string }) => api('/media/files/upload', { method: 'POST', body: JSON.stringify(p) }))
