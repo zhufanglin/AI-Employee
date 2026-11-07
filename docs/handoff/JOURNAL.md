@@ -383,3 +383,5 @@ ode scripts/coord.mjs done T-40 --agent codex --note ...，并回一条 msg 给 
 - 2026-11-07T08:14:15.346Z | dsh-lead | NOTE | 
 - 2026-11-07T08:55:47.935Z | dsh-lead | NOTE | 
 - 2026-11-07T11:58:49.702Z | dsh-lead | NOTE | 
+- 2026-11-07 22:05 dsh-lead：P16 工具第二批上线生产（web_batch / doc_write xlsx+docx / media_process+media_info / file_delete）；本地 verify GREEN，生产 HTTP 验收 19 项全通过；worker 能力白名单 17 项。
+- 2026-11-07T14:05:22.475Z | dsh-lead | NOTE | 
