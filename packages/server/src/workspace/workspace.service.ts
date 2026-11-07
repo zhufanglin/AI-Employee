@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable } from "@nestjs/common";
-import { deleteWorkspaceFile, displayName, listWorkspaceFiles, publicBase, readWorkspaceBytes, resolveWorkspaceFile, saveWorkspaceFile } from "../capabilities/capabilities/files";
+import { deleteWorkspaceFile, displayName, listWorkspaceFiles, ossPublicUrl, publicBase, readWorkspaceBytes, resolveWorkspaceFile, saveWorkspaceFile } from "../capabilities/capabilities/files";
 
 /**
  * 用户资料工作区：用户把表格/PDF/Word/文本上传进来，员工在任务里用 file_list / doc_read 读取。
@@ -48,7 +48,7 @@ export class WorkspaceService {
         ext: row.ext,
         bytes: row.bytes,
         updatedAt: row.updatedAt,
-        url: base ? base + "/uploads/" + row.key : null,
+        url: ossPublicUrl(row.key) || (base ? base + "/uploads/" + row.key : null),
       })),
     };
   }

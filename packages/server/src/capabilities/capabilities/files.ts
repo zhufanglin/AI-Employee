@@ -120,6 +120,14 @@ export function ossClient() {
 
 export function publicBase(): string { return env("PUBLIC_BASE_URL", "").replace(/\/$/, ""); }
 
+/** OSS 对象的公网直链（桶为公共读时可直接分享）；OSS 未配置返回 null。 */
+export function ossPublicUrl(key: string): string | null {
+  const bucket = env("OSS_BUCKET", "");
+  const endpoint = env("OSS_ENDPOINT", "").replace(/^https?:\/\//, "").replace(/\/$/, "");
+  if (!bucket || !endpoint) return null;
+  return "https://" + bucket + "." + endpoint + "/" + key.split("/").map(encodeURIComponent).join("/");
+}
+
 /** key → 本地绝对路径；不是 workspace/<userId>/ 前缀的一律拒绝。 */
 export function localPathFor(userId: string, key: string): string {
   const prefix = userPrefix(userId);
@@ -205,7 +213,8 @@ export async function saveWorkspaceFile(userId: string, rawName: string, buffer:
   const client = ossClient();
   if (client) {
     try {
-      await client.put(key, buffer, { headers: { "Content-Type": mime, "Content-Disposition": "attachment", "x-oss-object-acl": "private" } });
+      await client.put(key, buffer, { headers: { "Content-Type": mime, "Content-Disposition": "attachment" } });
+      url = ossPublicUrl(key);
     } catch (error) {
       console.error("[file] OSS upload failed, fallback to local:", error instanceof Error ? error.message : error);
     }
@@ -242,7 +251,8 @@ export const handlers = {
     const client = ossClient();
     if (client) {
       try {
-        await client.put(key, Buffer.from(content, "utf8"), { headers: { "Content-Type": mime, "Content-Disposition": "attachment", "x-oss-object-acl": "private" } });
+        await client.put(key, Buffer.from(content, "utf8"), { headers: { "Content-Type": mime, "Content-Disposition": "attachment" } });
+        url = ossPublicUrl(key);
       } catch (error) {
         console.error("[file] OSS upload failed, fallback to local:", error instanceof Error ? error.message : error);
       }
@@ -258,7 +268,7 @@ export const handlers = {
       ext: row.ext,
       bytes: row.bytes,
       updatedAt: row.updatedAt,
-      url: null,
+      url: ossPublicUrl(row.key),
     }));
     return { total: rows.length, items };
   },

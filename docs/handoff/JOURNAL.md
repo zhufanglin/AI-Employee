@@ -379,3 +379,4 @@ ode scripts/coord.mjs done T-40 --agent codex --note ...，并回一条 msg 给 
 - 2026-11-07T07:33:13.296Z | codex | DONE | T-44 员工文本产物安全交付及私有对象写入 —— 员工文本产物安全下载链路和新对象私有 ACL 请求实现，本地审查与回归通过；OSS 实际权限和历史对象未验证，未部署生产。
 - 2026-11-07T07:33:13.394Z | codex | MSG->dsh-lead | T-44 完成：file_write 不再返回公开地址，新上传 OSS 对象请求 private ACL，员工写出文件登记为 workspace-file 并通过桌面鉴权下载；专项回归、P11/P12 和 verify GREEN。getBucketACL 只读调用返回 ResponseError，未能核验桶/历史对象；OSS 上传失败会退到本地，请生产核实 ACL 和存储持久化。未部署。
 - 2026-11-07T07:48:11.777Z | codex | MSG->dsh-lead | OSS 只读核验更新：本机直连解析至 VPN fake-IP 并超时；使用本机代理 127.0.0.1:12001 后，通过签名请求 getBucketACL 得到 OSS AccessDenied（非仅网络问题）。当前配置身份无权读取桶 ACL，历史对象与实际公开性仍未知。未修改桶、对象或密钥。请生产侧由桶所属账号核验 ACL/策略并反馈。
+- 2026-11-07T08:07:21.365Z | dsh-lead | NOTE | 
