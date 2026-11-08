@@ -63,6 +63,20 @@ const UPLOAD_TIMEOUT_MS = 120000
 const UPLOAD_POLL_MS = 2000
 const POST_PUBLISH_WAIT_MS = 5000
 
+/**
+ * 平台站点会屏蔽 Electron 默认 UA（默认 UA 里带 "Electron/38.8.6"）：
+ * 小红书创作者中心直接 ERR_FAILED / ERR_TIMED_OUT 打不开，视频号会跳到 login.html。
+ * 这里把平台窗口的 UA 换成同版本 Chrome，其它浏览器特征保持 Electron 默认。
+ */
+const PLATFORM_UA =
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/' +
+  process.versions.chrome.split('.')[0] +
+  '.0.0.0 Safari/537.36'
+
+/** 判断页面是否已经可以操作：DOM 解析完成且已离开 about:blank */
+const READY_SCRIPT =
+  '(() => ({ ready: document.readyState !== "loading", href: location.href, bodyLen: document.body ? document.body.innerText.length : -1 }))()'
+
 function sleep(ms: number) {
   return new Promise<void>((resolve) => setTimeout(resolve, ms))
 }
@@ -346,6 +360,9 @@ export class PlatformManager {
 
   private createWindow(platform: string, show: boolean): BrowserWindow {
     const driver = this.driver(platform)
+    const partition = this.partitionOf(platform)
+    // 每个平台独立分区，UA 必须挂在分区上（窗口级设置对导航不生效）
+    session.fromPartition(partition).setUserAgent(PLATFORM_UA)
     const win = new BrowserWindow({
       width: 1280,
       height: 900,
@@ -354,7 +371,7 @@ export class PlatformManager {
       autoHideMenuBar: true,
       paintWhenInitiallyHidden: true,
       webPreferences: {
-        partition: this.partitionOf(platform),
+        partition,
         contextIsolation: true,
         nodeIntegration: false,
         sandbox: true
@@ -372,28 +389,36 @@ export class PlatformManager {
     }
   }
 
+  /**
+   * 打开页面并等到「DOM 就绪」。
+   *
+   * 不能只等 loadURL 的 load 事件：抖音创作者中心有长连接子资源，实测 40 秒 load 事件都不触发，
+   * 但 document.readyState 早已是 complete、页面元素都在；小红书/视频号的部分跳转会以
+   * ERR_ABORTED / ERR_TIMED_OUT 结算 loadURL，也属于「页面其实开了」。
+   * 所以改成轮询页面就绪状态，只有最终没就绪时才把错误抛出去。
+   */
   private async navigate(win: BrowserWindow, url: string, timeoutMs = NAV_TIMEOUT_MS) {
     if (win.isDestroyed()) throw new Error('窗口已关闭，无法打开页面：' + url)
-    let timer: ReturnType<typeof setTimeout> | null = null
-    const timeout = new Promise<never>((_resolve, reject) => {
-      timer = setTimeout(() => reject(new Error('打开页面超时（' + Math.round(timeoutMs / 1000) + ' 秒）：' + url)), timeoutMs)
+    const failures: string[] = []
+    win.loadURL(url).catch((e: unknown) => {
+      failures.push(errText(e))
     })
-    try {
-      const loaded = win.loadURL(url).catch((e: unknown) => {
-        const msg = errText(e)
-        // 平台常见的服务端重定向会以 ERR_ABORTED 结束，交给后面的 DOM 探针判断
-        if (msg.indexOf('ERR_ABORTED') >= 0) return
-        throw new Error('打开页面失败：' + msg + '（' + url + '）')
-      })
-      await Promise.race([loaded, timeout])
-    } finally {
-      if (timer) clearTimeout(timer)
-    }
-    const deadline = Date.now() + 10000
+    const deadline = Date.now() + timeoutMs
+    let last: { ready: boolean; href: string; bodyLen: number } | null = null
     while (Date.now() < deadline) {
-      if (win.isDestroyed() || !win.webContents.isLoading()) break
-      await sleep(200)
+      if (win.isDestroyed()) throw new Error('窗口已关闭，无法打开页面：' + url)
+      last = (await win.webContents.executeJavaScript(READY_SCRIPT).catch(() => null)) as
+        | { ready: boolean; href: string; bodyLen: number }
+        | null
+      if (last && last.ready && last.href && last.href !== 'about:blank') return
+      await sleep(400)
     }
+    const detail = failures.length
+      ? failures[failures.length - 1]
+      : last && last.href
+        ? '页面一直停在加载中（' + last.href + '）'
+        : '页面没有响应'
+    throw new Error('打开页面失败：' + detail + '（' + url + '）')
   }
 
   private async attach(win: BrowserWindow) {

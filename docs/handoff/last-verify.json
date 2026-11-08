@@ -1,5 +1,5 @@
 ﻿{
-    "at":  "2026-11-08T18:57:51.3221874+08:00",
+    "at":  "2026-11-09T00:05:24.4234139+08:00",
     "ok":  true,
     "failed":  0,
     "steps":  [
@@ -7,19 +7,19 @@
                       "name":  "server tsc",
                       "ok":  true,
                       "exit":  0,
-                      "seconds":  5
+                      "seconds":  20
                   },
                   {
                       "name":  "desktop electron-vite build",
                       "ok":  true,
                       "exit":  0,
-                      "seconds":  4
+                      "seconds":  15
                   },
                   {
                       "name":  "server restart (fresh dist, kill stale :3000)",
                       "ok":  true,
                       "exit":  0,
-                      "seconds":  49
+                      "seconds":  90
                   },
                   {
                       "name":  "unit: 员工工具循环 JSON 容错",
@@ -49,7 +49,7 @@
                       "name":  "smoke: T-11 渠道结果回推",
                       "ok":  true,
                       "exit":  0,
-                      "seconds":  2
+                      "seconds":  3
                   },
                   {
                       "name":  "smoke: T-11 长结果页（全文链接）",
@@ -61,13 +61,13 @@
                       "name":  "smoke: W2",
                       "ok":  true,
                       "exit":  0,
-                      "seconds":  26
+                      "seconds":  38
                   },
                   {
                       "name":  "smoke: W2 计费隔离",
                       "ok":  true,
                       "exit":  0,
-                      "seconds":  2
+                      "seconds":  3
                   },
                   {
                       "name":  "smoke: M6.5",
@@ -97,7 +97,7 @@
                       "name":  "smoke: T-14 管理端扩展",
                       "ok":  true,
                       "exit":  0,
-                      "seconds":  5
+                      "seconds":  2
                   },
                   {
                       "name":  "smoke: T-29 运营后台",
@@ -115,13 +115,13 @@
                       "name":  "smoke: T-30 媒体编排",
                       "ok":  true,
                       "exit":  0,
-                      "seconds":  2
+                      "seconds":  1
                   },
                   {
                       "name":  "smoke: T-33 媒体成本护栏（模拟上游）",
                       "ok":  true,
                       "exit":  0,
-                      "seconds":  3
+                      "seconds":  2
                   },
                   {
                       "name":  "smoke: 媒体任务取消与退款",
@@ -139,7 +139,7 @@
                       "name":  "smoke: T-28 本地能力层",
                       "ok":  true,
                       "exit":  0,
-                      "seconds":  41
+                      "seconds":  38
                   }
               ]
 }

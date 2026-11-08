@@ -86,6 +86,12 @@ check('Shell 渲染 PlatformPublish', !!shell && shell.includes('<PlatformPublis
 check('types.ts 有 platform 域与 PlatformStatus', !!types && types.includes('platform: {') && types.includes('PlatformStatus'))
 check('styles.css 含平台页样式', !!styles && styles.includes('.platform-card') && styles.includes('.platform-steps'))
 
+// 3.1 平台窗口的 UA 与导航就绪判定（0.1.7 修：小红书/视频号屏蔽 Electron UA）
+check('platform.ts 定义 Chrome UA', !!platformSrc && platformSrc.includes('const PLATFORM_UA'))
+check('platform.ts 给分区设 UA', !!platformSrc && platformSrc.includes('.setUserAgent(PLATFORM_UA)'))
+check('platform.ts 轮询 READY_SCRIPT 判就绪', !!platformSrc && platformSrc.includes('const READY_SCRIPT') && platformSrc.includes('executeJavaScript(READY_SCRIPT)'))
+check('navigate 不再依赖 load 事件', !!platformSrc && !platformSrc.includes('打开页面超时（'))
+
 // 4. 执行器与能力目录
 for (const name of ['platform_publish', 'platform_status', 'platform_stats']) {
   check('worker 白名单含 ' + name, !!worker && worker.includes("'" + name + "'"))

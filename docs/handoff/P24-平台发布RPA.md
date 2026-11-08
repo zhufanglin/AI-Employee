@@ -152,4 +152,28 @@
 - 定时发布：契约里 `PublishInput.scheduledAt` 已预留，但三平台对定时发布支持不一致，当前未接线。
 - 发布失败的重试与断点续跑：目前失败即停，靠截图人工修选择器。
 - 多账号：一个平台只支持一份登录态（单 partition），多账号切换需要再做账号槽位。
-- 发布结果回写员工任务产物（作品链接进任务 artifacts）：待 lead 接线后补。
+- 发布结果回写员工任务产物（作品链接进 task artifacts）：待 lead 接线后补。
+
+## 10. 0.1.7 修复：真机首测暴露「Electron UA 被平台屏蔽」
+
+真机首测（0.1.6）现象与根因：
+
+| 平台 | 0.1.6 表现 | Chrome UA 下表现 | 根因 |
+| --- | --- | --- | --- |
+| 小红书 | 「打开页面失败：ERR_FAILED (-2) loading .../login」 | readyState=complete、标题「小红书创作服务平台」 | 平台按 UA 屏蔽 Electron |
+| 视频号 | 「打开页面失败：ERR_FAILED (-2) loading .../platform」 | 302 到 login.html 后正常渲染「视频号助手」 | 同上（+ 302 触发 ERR_ABORTED） |
+| 抖音 | 未报错但长时间停在加载 | readyState=complete、标题「抖音创作者中心」，但 load 事件 40s 不触发 | 长连接子资源让 load 永不触发 |
+
+排查依据：PowerShell `Invoke-WebRequest` 与 Electron `net.fetch` 对三个 URL 都返回 200，说明网络正常；
+同一 Electron 38.8.6 只改 UA 就从小红书 ERR_TIMED_OUT 变为 LOAD_OK —— 因此不是网络、不是证书，是 UA。
+
+0.1.7 的两处改动（`packages/desktop/src/main/platform.ts`）：
+
+1. **分区级 Chrome UA**：`const PLATFORM_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/<主版本>.0.0.0 Safari/537.36'`，
+   在 `createWindow` 里 `session.fromPartition(partition).setUserAgent(PLATFORM_UA)`。窗口级 UA 对导航不生效，必须挂分区。
+2. **导航就绪判定改为轮询**：不再等 `load` 事件（抖音永远不触发）也不再因 302 的 ERR_ABORTED 判失败，
+   改为 `loadURL().catch(...)` 后每 400ms 执行 `READY_SCRIPT`（`document.readyState !== 'loading'` + `location.href` + `bodyLen`），
+   就绪即成功；30s 未就绪才报「打开页面失败」，并带上最后一次的真实错误或「页面一直停在加载中」。
+
+`scripts/check-desktop-p24.mjs` 增加 4 条断言把这层固定住（PLATFORM_UA / setUserAgent / READY_SCRIPT 轮询 / 不再出现旧的「打开页面超时」文案），
+现为 59 项。
