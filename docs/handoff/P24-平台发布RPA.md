@@ -141,7 +141,7 @@
 1. 打开 0.1.6，进「📤 平台发布」，点某平台的「扫码登录」→ 手机扫码 → 卡片徽标变「已登录」。
 2. 先点「打开后台」，确认可见窗口里是**发布页**（不是首页/登录页）。若落错页，改 `packages/desktop/src/main/platform-drivers.ts` 的 `entryUrl`。
 3. 用一条真实短内容（视频 1 个 ≤50MB 或用图文 1 张）点「开始发布」。无论成功失败，步骤列表与截图都会写在
-   `%APPDATA%\fcmediaagent-desktop\platform-logs\`（`<platform>-<ts>-<step>.png`）。
+   `%APPDATA%\中科元晟 AI员工\platform-logs\`（`<platform>-<ts>-<step>.png`）。
 4. 失败就把该步骤的截图发我：`选择器未命中` 说明对应 selector 要改；`仍在上传` 说明等上传时长不够；
    `未判定成功` 说明发布后页面没出现 successHint 也没跳转，需要把该平台的真实成功特征补进 drivers。
 5. 三平台各跑通一次后，本文件 §6「真机层」表格才能从「待真机」改成「通过」。
