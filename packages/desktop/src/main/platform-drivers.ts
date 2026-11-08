@@ -20,6 +20,10 @@ export interface PlatformDriver {
   submitButton: string[]
   successHint: string[]
   loggedInCookies?: string[]
+  /** 已登录才会出现的页面文案（0.1.11：用来做登录态的正向证据，避免空白页被误判成已登录） */
+  loggedInCues: string[]
+  /** 作品数据页（0.1.11：P25 取数用，打不开就回落到 homeUrl） */
+  dataUrl: string
 }
 
 export const DRIVERS: Record<PlatformId, PlatformDriver> = {
@@ -32,7 +36,9 @@ export const DRIVERS: Record<PlatformId, PlatformDriver> = {
     contentInput: ['.zone-container', '[contenteditable="true"]', '.editor-kit-container [contenteditable]'],
     submitButton: ['text=发布', '.content-confirm-container button', 'button[type="submit"]'],
     successHint: ['发布成功', '作品发布成功', '发布完成', '已发布'],
-    loggedInCookies: ['sessionid', 'sessionid_ss', 'sid_tt', 'passport_csrf_token']
+    loggedInCookies: ['sessionid', 'sessionid_ss', 'sid_tt', 'passport_csrf_token'],
+    loggedInCues: ['发布作品', '上传视频', '作品管理', '创作灵感', '数据概览'],
+    dataUrl: 'https://creator.douyin.com/creator-micro/data/content'
   },
   xiaohongshu: {
     name: '小红书',
@@ -42,7 +48,9 @@ export const DRIVERS: Record<PlatformId, PlatformDriver> = {
     titleInput: ['input[placeholder*="标题"]', '.d-text', 'input[placeholder*="填写标题"]', '.title-input input'],
     contentInput: ['.ql-editor', '[contenteditable="true"]', '.editor-content', '.publish-editor [contenteditable]'],
     submitButton: ['text=发布', '.publishBtn', 'button[class*="publish"]'],
-    successHint: ['发布成功', '笔记发布成功', '发布完成', '已发布']
+    successHint: ['发布成功', '笔记发布成功', '发布完成', '已发布'],
+    loggedInCues: ['发布笔记', '上传图文', '笔记管理', '数据看板'],
+    dataUrl: 'https://creator.xiaohongshu.com/new/statistics/data'
   },
   shipinhao: {
     name: '视频号',
@@ -52,7 +60,9 @@ export const DRIVERS: Record<PlatformId, PlatformDriver> = {
     titleInput: ['input[placeholder*="标题"]', 'input[placeholder*="填写标题"]', '.weui-desktop-form__input'],
     contentInput: ['.input-editor', '[contenteditable="true"]', '.weui-desktop-editor', '.post-desc [contenteditable]'],
     submitButton: ['text=发表', '.weui-desktop-btn_primary', 'button[class*="primary"]'],
-    successHint: ['发表成功', '发布成功', '发表完成', '已发表']
+    successHint: ['发表成功', '发布成功', '发表完成', '已发表'],
+    loggedInCues: ['发表动态', '上传视频', '内容管理', '数据中心'],
+    dataUrl: 'https://channels.weixin.qq.com/platform/statistics'
   }
 }
 

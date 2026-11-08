@@ -259,3 +259,5 @@ form label { display: block; margin: 14px 0 6px; color: var(--muted); font-size:
 .platform-steps li.fail { color: #ff9d9d; border-color: #62383a; }
 .platform-steps li span { color: inherit; font-size: 12px; display: inline; }
 .ok-text { color: #8be0a6; font-size: 13px; }
+/* P25 作品数据快照：原样显示平台页面文案，保留换行 */
+.platform-stats-text { max-height: 320px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 12px; line-height: 1.6; color: #c3cad8; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 10px; margin: 8px 0; }

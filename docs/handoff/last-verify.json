@@ -1,5 +1,5 @@
 ﻿{
-    "at":  "2026-11-09T01:33:55.3172603+08:00",
+    "at":  "2026-11-09T03:34:34.0542186+08:00",
     "ok":  true,
     "failed":  0,
     "steps":  [
@@ -7,25 +7,25 @@
                       "name":  "server tsc",
                       "ok":  true,
                       "exit":  0,
-                      "seconds":  22
+                      "seconds":  19
                   },
                   {
                       "name":  "desktop electron-vite build",
                       "ok":  true,
                       "exit":  0,
-                      "seconds":  3
+                      "seconds":  4
                   },
                   {
                       "name":  "server restart (fresh dist, kill stale :3000)",
                       "ok":  true,
                       "exit":  0,
-                      "seconds":  60
+                      "seconds":  85
                   },
                   {
                       "name":  "unit: 员工工具循环 JSON 容错",
                       "ok":  true,
                       "exit":  0,
-                      "seconds":  1
+                      "seconds":  0
                   },
                   {
                       "name":  "unit: web_extract SSRF 守卫",
@@ -49,7 +49,7 @@
                       "name":  "smoke: T-11 渠道结果回推",
                       "ok":  true,
                       "exit":  0,
-                      "seconds":  2
+                      "seconds":  3
                   },
                   {
                       "name":  "smoke: T-11 长结果页（全文链接）",
@@ -61,13 +61,13 @@
                       "name":  "smoke: W2",
                       "ok":  true,
                       "exit":  0,
-                      "seconds":  20
+                      "seconds":  33
                   },
                   {
                       "name":  "smoke: W2 计费隔离",
                       "ok":  true,
                       "exit":  0,
-                      "seconds":  4
+                      "seconds":  5
                   },
                   {
                       "name":  "smoke: M6.5",
@@ -91,7 +91,7 @@
                       "name":  "smoke: T-08 套餐与订单",
                       "ok":  true,
                       "exit":  0,
-                      "seconds":  3
+                      "seconds":  2
                   },
                   {
                       "name":  "smoke: T-14 管理端扩展",
@@ -103,13 +103,13 @@
                       "name":  "smoke: T-29 运营后台",
                       "ok":  true,
                       "exit":  0,
-                      "seconds":  1
+                      "seconds":  0
                   },
                   {
                       "name":  "smoke: T-19 员工执行器",
                       "ok":  true,
                       "exit":  0,
-                      "seconds":  2
+                      "seconds":  1
                   },
                   {
                       "name":  "smoke: T-30 媒体编排",
@@ -121,7 +121,7 @@
                       "name":  "smoke: T-33 媒体成本护栏（模拟上游）",
                       "ok":  true,
                       "exit":  0,
-                      "seconds":  5
+                      "seconds":  4
                   },
                   {
                       "name":  "smoke: 媒体任务取消与退款",
@@ -133,13 +133,13 @@
                       "name":  "smoke: T-32 员工多步执行（模拟模型和媒体）",
                       "ok":  true,
                       "exit":  0,
-                      "seconds":  4
+                      "seconds":  3
                   },
                   {
                       "name":  "smoke: T-28 本地能力层",
                       "ok":  true,
                       "exit":  0,
-                      "seconds":  51
+                      "seconds":  55
                   }
               ]
 }

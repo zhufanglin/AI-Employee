@@ -188,6 +188,12 @@ Step "smoke: T-19 员工执行器" {
     & $node "scripts\smoke-p24-platform-tools.mjs"
     if ($LASTEXITCODE -ne 0) { $script:code = $LASTEXITCODE; return }
     & $node "scripts\check-desktop-p24.mjs"
+    if ($LASTEXITCODE -ne 0) { $script:code = $LASTEXITCODE; return }
+    & $node "scripts\smoke-p27-file-ops.mjs"
+    if ($LASTEXITCODE -ne 0) { $script:code = $LASTEXITCODE; return }
+    & $node "scripts\smoke-p27-cron.mjs"
+    if ($LASTEXITCODE -ne 0) { $script:code = $LASTEXITCODE; return }
+    & $node "scripts\check-desktop-p25.mjs"
     $script:code = $LASTEXITCODE
   }
 }

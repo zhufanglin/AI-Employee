@@ -296,3 +296,18 @@ Error invoking remote method 'auth:sms-send': TypeError: fetch failed
 ### 发布记录
 - 安装包：`fcmediaagent-ai-employee-0.1.10-win-x64.exe`，**127,749,017 B**，sha512 `ElDylSIwnrX41Zh8DCLXozIErJuaMQJDaqnbEjM9b2jJqP81MlF7KEAMKWYVLvOEqgQE+fdcHU/Mr4p1KgMjcA==`（releaseDate 2026-11-08T18:40:39.169Z）。
 - 已发布到 `https://updates.fcmediaagent.com/desktop/latest/`（`yml=200 exe=206`）；桌面副本 `C:\Users\30290\Desktop\fcmediaagent-ai-employee-0.1.10-win-x64.exe`；本机已静默安装。
+
+
+## 14. 0.1.11 修复：抖音「已登录」是假阳性 + 新增作品数据快照
+
+真机自测（Electron 探针直连平台）发现：`status()` 报抖音已登录，但打开上传页实际是**扫码登录页**。
+根因是 `judgeLogin()` 末尾无条件 `return { loggedIn: true }`，冷启动页面还没渲染（body 为空）时会落到这条分支；
+`checkStatus()` 又只固定 `sleep(3000)`。修法见 `docs/handoff/P25-作品数据快照.md` 第二节。
+
+同时新增 P25「作品数据快照」（`platform.stats` / `platform:stats` / 发布页「数据快照」按钮），
+并把 P27 的文件管理、定时任务两个页面接到客户端（页签「📁 文件」「⏰ 定时任务」）。
+
+真机证据：探针跑 `stats('douyin')` → 14.8s、`ok:false / loggedIn:false`、中文提示 + 登录页截图
+`%TEMP%\platform-logs\douyin-<ts>-stats-login.png`（截图确认为抖音创作者中心扫码登录页）。
+
+> 发布记录见下方的 0.1.11 一节。

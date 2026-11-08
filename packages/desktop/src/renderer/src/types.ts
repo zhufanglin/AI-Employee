@@ -51,9 +51,38 @@ export type FcmApi = {
     publish: (p: PlatformPublishInput) => Promise<PlatformPublishResult>
     openDebug: (p: { platform: string }) => Promise<{ ok: boolean }>
     pickMedia: (p: { type?: 'video' | 'image' }) => Promise<{ paths: string[] }>
+    stats: (p: { platform: string; maxChars?: number }) => Promise<PlatformStatsSnapshot>
+  }
+  // 工作区文件管理（P27，见 docs/handoff/P27-文件管理.md）
+  files: {
+    list: (p?: { dir?: string }) => Promise<FileListData | FileOpError>
+    read: (p: { path: string; maxBytes?: number }) => Promise<FileReadData | FileOpError>
+    write: (p: { path: string; text: string }) => Promise<FileWriteData | FileOpError>
+    mkdir: (p: { path: string }) => Promise<FilePathData | FileOpError>
+    rename: (p: { path: string; name: string }) => Promise<FilePathData | FileOpError>
+    remove: (p: { path: string }) => Promise<FileOkData | FileOpError>
+    reveal: (p: { path: string }) => Promise<FileOkData | FileOpError>
+    open: (p: { path: string }) => Promise<FileOkData | FileOpError>
+  }
+  // 员工定时任务（P27，见 docs/handoff/P27-定时任务.md）
+  cron: {
+    list: () => Promise<CronOpResult<{ items: any[]; total: number }>>
+    create: (input: { employeeSlug: string; cronExpr: string; timezone?: string }) => Promise<CronOpResult<{ cronId: string; nextRunAt: string | null }>>
+    remove: (p: { cronId: string }) => Promise<CronOpResult<{ deleted: boolean }>>
   }
   window: { minimize: () => void; maximize: () => void; close: () => void }
 }
+
+// 与 packages/desktop/src/main/file-ops.ts 的返回结构逐字对齐（渲染层直接读 r.ok / r.error）
+export type FileItem = { name: string; path: string; isDir: boolean; size: number; mtime: number }
+export type FileOpError = { ok: false; error: string }
+export type FileListData = { ok: true; dir: string; items: FileItem[] }
+export type FileReadData = { ok: true; path: string; text: string; truncated: boolean }
+export type FileWriteData = { ok: true; path: string; size: number }
+export type FilePathData = { ok: true; path: string }
+export type FileOkData = { ok: true; error?: string }
+// cron-ops.ts 的统一包裹：{ ok, data?, error? }
+export type CronOpResult<T> = { ok: boolean; data?: T; error?: string }
 
 export type PlatformId = 'douyin' | 'xiaohongshu' | 'shipinhao'
 
@@ -74,6 +103,18 @@ export type PlatformPublishInput = {
   tags?: string[]
   mediaPaths: string[]
   scheduledAt?: string
+}
+
+export type PlatformStatsSnapshot = {
+  platform: string
+  name: string
+  ok: boolean
+  loggedIn: boolean
+  pageTitle: string
+  href: string
+  text: string
+  screenshots: string[]
+  message: string
 }
 
 export type PlatformPublishResult = {

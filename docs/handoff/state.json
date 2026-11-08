@@ -1,7 +1,7 @@
 {
   "project": "中科元晟 AI员工 0.4.29 完全复刻",
   "version": 1,
-  "updatedAt": "2026-11-08T11:09:59.184Z",
+  "updatedAt": "2026-11-08T19:37:10.462Z",
   "phase": "P10（先能用三件事）派工完成，看板 29/33",
   "phaseGoal": "用户要求先能用、定价后置：T-31 桌面端出图出片 / T-32 员工多步干活 / T-33 成本护栏 已派 Codex；dsh-lead 推主线（生产可用性收口 + 复核），T-11 渠道仍 blocked(env)。",
   "owners": {
@@ -3034,6 +3034,37 @@
       },
       "finishedAt": "2026-11-08T11:09:59.183Z",
       "result": "完成"
+    },
+    {
+      "id": "T-53",
+      "title": "P25 平台作品数据快照 + P27 桌面文件/定时任务接线（0.1.11）",
+      "status": "done",
+      "owner": "dsh-lead",
+      "scope": [
+        "packages/desktop"
+      ],
+      "accept": "check-desktop-p25 58项 + smoke-p27 73/24项 + 全量VERIFY GREEN + 真机 stats 探针登录页判定正确",
+      "blockedBy": [],
+      "createdAt": "2026-11-08T19:36:47.461Z",
+      "history": [
+        {
+          "at": "2026-11-08T19:37:09.900Z",
+          "by": "dsh-lead",
+          "what": "claim"
+        },
+        {
+          "at": "2026-11-08T19:37:10.462Z",
+          "by": "dsh-lead",
+          "what": "done: check-desktop-p25 58项、smoke-p27 73+24项、全量VERIFY GREEN、真机探针确认登录页判定正确"
+        }
+      ],
+      "lease": {
+        "at": "2026-11-08T19:37:09.863Z",
+        "heartbeat": "2026-11-08T19:37:09.900Z",
+        "reason": null
+      },
+      "finishedAt": "2026-11-08T19:37:10.460Z",
+      "result": "check-desktop-p25 58项、smoke-p27 73+24项、全量VERIFY GREEN、真机探针确认登录页判定正确"
     }
   ],
   "primary": "dsh-lead",

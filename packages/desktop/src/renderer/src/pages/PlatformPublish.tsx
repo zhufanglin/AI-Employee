@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import type { PlatformPublishResult, PlatformStatus } from '../types'
+import type { PlatformPublishResult, PlatformStatsSnapshot, PlatformStatus } from '../types'
 
 const PLATFORMS: { id: string; name: string; tip: string; types: string }[] = [
   { id: 'douyin', name: '抖音', tip: '创作者中心 · 视频 / 图文', types: '视频、图文' },
@@ -30,6 +30,8 @@ export default function PlatformPublish() {
   const [busy, setBusy] = useState('')
   const [error, setError] = useState('')
   const [result, setResult] = useState<PlatformPublishResult | null>(null)
+  // P25 作品数据快照：把平台「数据」页的可见文案读回来，给用户看、也能贴给员工分析
+  const [stats, setStats] = useState<PlatformStatsSnapshot | null>(null)
 
   const [platform, setPlatform] = useState('douyin')
   const [type, setType] = useState<'video' | 'image'>('video')
@@ -82,6 +84,24 @@ export default function PlatformPublish() {
     try {
       await window.fcm.platform.logout({ platform: id })
       await refresh()
+    } catch (e: any) {
+      setError(String(e?.message || e))
+    } finally {
+      setBusy('')
+    }
+  }
+
+  async function loadStats(id: string) {
+    setBusy('stats:' + id)
+    setError('')
+    setStats(null)
+    try {
+      const snap = await withTimeout(
+        window.fcm.platform.stats({ platform: id, maxChars: 4000 }),
+        180000,
+        '读取数据超时（窗口可能已关闭），请重试'
+      )
+      setStats(snap)
     } catch (e: any) {
       setError(String(e?.message || e))
     } finally {
@@ -163,6 +183,9 @@ export default function PlatformPublish() {
                 <button className="ghost" disabled={busy === 'login:' + p.id} onClick={() => void login(p.id)}>
                   {busy === 'login:' + p.id ? '请在弹窗中扫码…' : '扫码登录'}
                 </button>
+                <button className="ghost" disabled={busy === 'stats:' + p.id} onClick={() => void loadStats(p.id)}>
+                  {busy === 'stats:' + p.id ? '读取数据中…' : '数据快照'}
+                </button>
                 <button className="ghost" disabled={busy === 'debug:' + p.id} onClick={() => void openDebug(p.id)}>打开后台</button>
                 <button className="ghost" disabled={!st?.loggedIn || busy === 'logout:' + p.id} onClick={() => void logout(p.id)}>退出</button>
               </div>
@@ -170,6 +193,18 @@ export default function PlatformPublish() {
           )
         })}
       </div>
+
+      {stats && (
+        <section className="card">
+          <h3>作品数据 · {stats.name || stats.platform}</h3>
+          <p className={stats.ok ? 'ok-text' : 'error'}>{stats.message}</p>
+          {stats.pageTitle && <p className="hint">页面标题：{stats.pageTitle}</p>}
+          {stats.text && (
+            <pre className="platform-stats-text">{stats.text}</pre>
+          )}
+          {!!stats.screenshots?.length && <p className="hint">截图：{stats.screenshots.join('　')}</p>}
+        </section>
+      )}
 
       <section className="card platform-form">
         <h3>新建发布</h3>

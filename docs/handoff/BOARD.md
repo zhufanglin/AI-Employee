@@ -1,6 +1,6 @@
 # 任务看板（自动生成，勿手改）
 
-> 生成时间 2026-11-08T17:14:35.160Z · 单一事实源 `docs/handoff/state.json`
+> 生成时间 2026-11-08T19:37:10.467Z · 单一事实源 `docs/handoff/state.json`
 
 **当前阶段**：P10（先能用三件事）派工完成，看板 29/33 —— 用户要求先能用、定价后置：T-31 桌面端出图出片 / T-32 员工多步干活 / T-33 成本护栏 已派 Codex；dsh-lead 推主线（生产可用性收口 + 复核），T-11 渠道仍 blocked(env)。
 
@@ -58,6 +58,7 @@
 | T-50 | P22 记忆清理定时任务（每周日 03:00 自动 apply + 管理端状态/手动触发） | done | dsh-lead | 11-08 09:57 | packages/server/src/capabilities |
 | T-51 | P23 记忆管理页（服务端 REST + 桌面页面） | done | dsh-lead | 11-08 10:24 | packages/server/src/memory |
 | T-52 | P24 平台发布 RPA（抖音/小红书/视频号，本机 Electron 自动化） | done | dsh-lead | 11-08 11:09 | packages/desktop/src/main |
+| T-53 | P25 平台作品数据快照 + P27 桌面文件/定时任务接线（0.1.11） | done | dsh-lead | 11-08 19:37 | packages/desktop |
 
 **未完成任务详情**
 

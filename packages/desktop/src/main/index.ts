@@ -6,6 +6,8 @@ import { GatewayManager } from './gateway'
 import { TaskExecutor } from './executor'
 import { initUpdater, updateStatus, checkForUpdates, downloadUpdate, quitAndInstall } from './update'
 import { PlatformManager } from './platform'
+import { registerFileOps } from './file-ops'
+import { registerCronOps } from './cron-ops'
 
 const DEFAULT_API_BASE = process.env.FCM_API_BASE || 'https://ai.fcmediaagent.com/api'
 
@@ -94,7 +96,12 @@ async function runLocalCapability(name: string, params: any) {
     if (name === 'platform_status') {
       return { success: true, data: { items: await platform.status(args.platform ? String(args.platform) : undefined) } }
     }
-    return { success: true, data: { note: '作品数据统计暂未实现，请直接在创作后台查看' } }
+    if (name === 'platform_stats') {
+      const result = await platform.stats(String(args.platform || ''), { maxChars: Number(args.maxChars) || undefined })
+      if (!result.loggedIn) throw new Error(result.message)
+      return { success: true, data: result }
+    }
+    throw new Error('未知的本机能力：' + name)
   } catch (error: any) {
     return { success: false, error: String(error?.message || error) }
   }
@@ -366,6 +373,7 @@ function registerIpc() {
   ipcMain.handle('platform:login', (_e, p: { platform: string }) => platform!.login(p.platform))
   ipcMain.handle('platform:logout', async (_e, p: { platform: string }) => { await platform!.logout(p.platform); return { ok: true } })
   ipcMain.handle('platform:publish', (_e, input: any) => platform!.publish(input))
+  ipcMain.handle('platform:stats', (_e, p: { platform: string; maxChars?: number }) => platform!.stats(p?.platform, { maxChars: p?.maxChars }))
   ipcMain.handle('platform:open-debug', async (_e, p: { platform: string }) => { await platform!.openDebug(p.platform); return { ok: true } })
   ipcMain.handle('platform:pick-media', async (_e, p: { type?: 'video' | 'image' }) => {
     if (!win) return { paths: [] }
@@ -378,6 +386,13 @@ function registerIpc() {
     if (picked.canceled) return { paths: [] }
     return { paths: picked.filePaths }
   })
+
+  // 工作区文件管理（P27）：只允许在 <userData>/workspace 里读写，路径越界一律拒绝。
+  const workspaceRoot = () => join(app.getPath('userData'), 'workspace')
+  mkdirSync(workspaceRoot(), { recursive: true })
+  registerFileOps(ipcMain, { root: workspaceRoot })
+  // 员工定时任务（P27）：客户端直接调服务端 cron 接口，列表/新建/删除。
+  registerCronOps(ipcMain, { api })
 
   executor = new TaskExecutor({ api, getToken: () => settings.token })
   ipcMain.handle('employee-execution:heartbeat', () => sendExecutionHeartbeat().then(() => true))

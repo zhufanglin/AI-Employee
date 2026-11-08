@@ -63,7 +63,25 @@ const api = {
     logout: (p: { platform: string }) => ipcRenderer.invoke('platform:logout', p),
     publish: (p: any) => ipcRenderer.invoke('platform:publish', p),
     openDebug: (p: { platform: string }) => ipcRenderer.invoke('platform:open-debug', p),
-    pickMedia: (p: { type?: 'video' | 'image' }) => ipcRenderer.invoke('platform:pick-media', p || {})
+    pickMedia: (p: { type?: 'video' | 'image' }) => ipcRenderer.invoke('platform:pick-media', p || {}),
+    stats: (p: { platform: string; maxChars?: number }) => ipcRenderer.invoke('platform:stats', p)
+  },
+  // 工作区文件管理（P27）：只在客户端工作区目录内读写，供 Workspace 页面使用。
+  files: {
+    list: (p?: { dir?: string }) => ipcRenderer.invoke('files:list', p || {}),
+    read: (p: { path: string; maxBytes?: number }) => ipcRenderer.invoke('files:read', p),
+    write: (p: { path: string; text: string }) => ipcRenderer.invoke('files:write', p),
+    mkdir: (p: { path: string }) => ipcRenderer.invoke('files:mkdir', p),
+    rename: (p: { path: string; name: string }) => ipcRenderer.invoke('files:rename', p),
+    remove: (p: { path: string }) => ipcRenderer.invoke('files:delete', p),
+    reveal: (p: { path: string }) => ipcRenderer.invoke('files:reveal', p),
+    open: (p: { path: string }) => ipcRenderer.invoke('files:open', p)
+  },
+  // 员工定时任务（P27）：列表 / 新建 / 删除，返回 { ok, data?, error? }。
+  cron: {
+    list: () => ipcRenderer.invoke('cron:list'),
+    create: (input: { employeeSlug: string; cronExpr: string; timezone?: string }) => ipcRenderer.invoke('cron:create', input),
+    remove: (p: { cronId: string }) => ipcRenderer.invoke('cron:delete', p)
   },
   employeeExecution: {
     heartbeat: () => ipcRenderer.invoke('employee-execution:heartbeat'),

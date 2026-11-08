@@ -31,6 +31,19 @@ export interface PlatformStatus {
   error?: string
 }
 
+/** P25：作品数据页快照（原文交给模型读，不做字段映射） */
+export interface PlatformStatsSnapshot {
+  platform: string
+  name: string
+  ok: boolean
+  loggedIn: boolean
+  pageTitle: string
+  href: string
+  text: string
+  screenshots: string[]
+  message: string
+}
+
 export interface PublishInput {
   platform: PlatformId
   type: 'video' | 'image'
@@ -153,6 +166,15 @@ const PROBE_SCRIPT =
   ' let nickname = "";' +
   ' for (const n of nickNodes) { const t = (n.textContent || "").trim(); if (t && t.length <= 30) { nickname = t; break; } }' +
   ' return { href: href, cookies: cookies, loginWord: loginWord, qr: qr, nickname: nickname, text: text.slice(0, 1500) };' +
+  '})()'
+
+// 作品数据页快照：正文文案 + 标题 + 页面上出现的数字片段（给模型读，不做字段映射）
+const STATS_SCRIPT =
+  '(() => {' +
+  ' const text = document.body ? document.body.innerText : "";' +
+  ' const compact = text.replace(/\\n{2,}/g, "\\n").trim();' +
+  ' const numbers = (compact.match(/[0-9][0-9.,]*\\s*(万|亿|w|播放|点赞|评论|分享|收藏|粉丝|作品|条)/g) || []).slice(0, 40);' +
+  ' return { title: document.title, href: location.href, text: compact, numbers: numbers };' +
   '})()'
 
 // 上传进度 / 素材预览探针
@@ -330,6 +352,79 @@ export class PlatformManager {
       return result
     }
     return this.runExclusive(platform, () => this.doPublish(platform, input, driver, result))
+  }
+
+  /**
+   * P25 作品数据快照：打开平台的「作品数据」页，把可见文案整段读回来。
+   * 刻意不做选择器解析——三个平台的数据面板都是动态组件、字段名常改，
+   * 把页面文案交给模型读，比硬编码一大堆 `.xxx-number` 选择器更耐用。
+   */
+  async stats(platform: string, opts?: { maxChars?: number }): Promise<PlatformStatsSnapshot> {
+    const id = String(platform || '')
+    const maxChars = Math.min(Math.max(Number(opts?.maxChars) || 4000, 500), 12000)
+    const snapshot: PlatformStatsSnapshot = {
+      platform: id,
+      name: id,
+      ok: false,
+      loggedIn: false,
+      pageTitle: '',
+      href: '',
+      text: '',
+      screenshots: [],
+      message: ''
+    }
+    let driver: PlatformDriver
+    try {
+      driver = this.driver(id)
+    } catch (e) {
+      snapshot.message = errText(e)
+      return snapshot
+    }
+    return this.runExclusive(id, async () => {
+      snapshot.name = driver.name
+      let win: BrowserWindow | null = null
+      try {
+        win = this.createWindow(id, false)
+        try {
+          await this.navigate(win, driver.dataUrl)
+        } catch (e) {
+          this.log('[' + id + '] 数据页打不开，回落到首页：' + errText(e))
+          await this.navigate(win, driver.homeUrl)
+        }
+        await sleep(4000)
+        const probe = await this.attachAndEval<any>(win, PROBE_SCRIPT).catch(() => null)
+        const judged = probe ? this.judgeLogin(driver, probe) : { loggedIn: false }
+        snapshot.loggedIn = judged.loggedIn
+        if (!judged.loggedIn) {
+          snapshot.message = '还没有登录 ' + driver.name + '，请先点「扫码登录」'
+          snapshot.screenshots.push(...(await this.shotList(win, id, 'stats-login')))
+          return snapshot
+        }
+        const info = await this.attachAndEval<any>(win, STATS_SCRIPT).catch(() => null)
+        if (info) {
+          snapshot.pageTitle = String(info.title || '')
+          snapshot.href = String(info.href || '')
+          snapshot.text = String(info.text || '').slice(0, maxChars)
+        }
+        snapshot.screenshots.push(...(await this.shotList(win, id, 'stats')))
+        snapshot.ok = !!snapshot.text
+        snapshot.message = snapshot.ok
+          ? '已读取 ' + driver.name + ' 数据页（' + snapshot.text.length + ' 字）'
+          : '数据页没有读到内容，可能还在加载，请稍后重试或手动打开后台查看'
+        this.emit(id, 'stats', snapshot.message)
+        return snapshot
+      } catch (e) {
+        snapshot.message = '读取 ' + driver.name + ' 数据失败：' + errText(e)
+        return snapshot
+      } finally {
+        this.closeWindow(win)
+      }
+    })
+  }
+
+  private async shotList(win: BrowserWindow, platform: string, step: string): Promise<string[]> {
+    const one = await this.shot(win, platform, step)
+    return one ? [one] : []
   }
 
   // ---------- 串行锁 ----------
@@ -544,19 +639,27 @@ export class PlatformManager {
 
   // ---------- 登录态 ----------
 
+  /**
+   * 登录态判定顺序（0.1.11 修正）：先找「否定证据」，再找「肯定证据」，都没有就**判未登录**。
+   * 0.1.10 及以前最后一句是「默认已登录」，页面还没渲染完（body 为空）时会把未登录误报成已登录，
+   * 用户界面显示「已登录」、真去发布才发现是登录页。
+   */
   private judgeLogin(driver: PlatformDriver, probe: any): { loggedIn: boolean; nickname?: string } {
     const href = String(probe?.href || '')
     if (/login|passport|signin/i.test(href)) return { loggedIn: false }
-    const cookies = String(probe?.cookies || '')
-    const cookieNames = (driver.loggedInCookies || []).filter((name) => {
-      return cookies.split(';').some((kv) => kv.trim().indexOf(name + '=') === 0)
-    })
-    if (cookieNames.length && !probe?.qr && !probe?.loginWord) {
-      return { loggedIn: true, nickname: probe?.nickname || '' }
-    }
-    // 抖音 sessionid 是 HttpOnly，document.cookie 读不到，只能回落到页面特征
     if (probe?.qr || probe?.loginWord) return { loggedIn: false }
-    return { loggedIn: true, nickname: probe?.nickname || '' }
+    const text = String(probe?.text || '')
+    const nickname = String(probe?.nickname || '')
+    const cues = driver.loggedInCues || []
+    if (cues.some((cue) => text.indexOf(cue) >= 0)) return { loggedIn: true, nickname }
+    const cookies = String(probe?.cookies || '')
+    const cookieHit = (driver.loggedInCookies || []).some((name) =>
+      cookies.split(';').some((kv) => kv.trim().indexOf(name + '=') === 0)
+    )
+    if (cookieHit) return { loggedIn: true, nickname }
+    if (nickname) return { loggedIn: true, nickname }
+    // 页面几乎是空的 = 还没渲染出来，这不算已登录
+    return { loggedIn: false }
   }
 
   private async checkStatus(platform: string): Promise<PlatformStatus> {
@@ -566,8 +669,16 @@ export class PlatformManager {
     try {
       win = this.createWindow(platform, false)
       await this.navigate(win, driver.homeUrl)
-      await sleep(3000)
-      const probe = await this.attachAndEval<any>(win, PROBE_SCRIPT).catch(() => null)
+      // 页面文案要等渲染出来：空白页既没有登录标志也没有登录线索，早读会误判（0.1.11）
+      let probe: any = null
+      for (let i = 0; i < 10; i++) {
+        await sleep(1000)
+        probe = await this.attachAndEval<any>(win, PROBE_SCRIPT).catch(() => null)
+        if (!probe) continue
+        const text = String(probe.text || '')
+        if (probe.loginWord || probe.qr) break
+        if (text.length > 200) break
+      }
       if (!probe) {
         this.emit(platform, 'status', '页面无响应')
         return {
