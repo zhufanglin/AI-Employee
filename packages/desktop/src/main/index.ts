@@ -334,6 +334,21 @@ function registerIpc() {
   })
   ipcMain.handle('workspace:remove', (_e, p: { key?: string; name?: string }) => api('/workspace/delete', { method: 'POST', body: JSON.stringify(p) }))
 
+  // 长期记忆：查询 / 统计 / 删除 / 手动合并 / 查重（服务端见 packages/server/src/memory）。
+  ipcMain.handle('memory:list', (_e, q: { query?: string; kind?: string; limit?: number; cursor?: string } = {}) => {
+    const params = new URLSearchParams()
+    if (q.query) params.set('query', q.query)
+    if (q.kind) params.set('kind', q.kind)
+    if (q.limit) params.set('limit', String(q.limit))
+    if (q.cursor) params.set('cursor', q.cursor)
+    const qs = params.toString()
+    return api('/memory/list' + (qs ? '?' + qs : ''))
+  })
+  ipcMain.handle('memory:stats', () => api('/memory/stats'))
+  ipcMain.handle('memory:remove', (_e, id: string) => api('/memory/' + encodeURIComponent(id), { method: 'DELETE' }))
+  ipcMain.handle('memory:merge', (_e, p: { keepId: string; dropId: string }) => api('/memory/merge', { method: 'POST', body: JSON.stringify({ keepId: p.keepId, dropId: p.dropId }) }))
+  ipcMain.handle('memory:dedupe', (_e, p: { mode?: 'report' | 'apply'; limit?: number } = {}) => api('/memory/dedupe', { method: 'POST', body: JSON.stringify({ mode: p.mode, limit: p.limit }) }))
+
   // 媒体生产（数字人 / 音色克隆 / 音频素材）：编排在服务端，这里只做转发。
   ipcMain.handle('media:upload', (_e, p: { fileName: string; mime: string; base64: string }) => api('/media/files/upload', { method: 'POST', body: JSON.stringify(p) }))
   ipcMain.handle('media:image', (_e, body: unknown) => api('/media/images/generations', { method: 'POST', body: JSON.stringify(body) }))

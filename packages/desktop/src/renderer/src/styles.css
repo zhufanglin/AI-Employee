@@ -196,3 +196,42 @@ form label { display: block; margin: 14px 0 6px; color: var(--muted); font-size:
 .muted.small { font-size: 12px; margin-top: 10px; }
 .ok { color: #4caf7d; font-size: 12px; }
 .err { color: #e4685d; font-size: 12px; }
+/* 记忆管理 */
+.memory-stats { display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: center; background: var(--bg-2); border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; margin-bottom: 14px; font-size: 12px; color: var(--muted); }
+.memory-stats b { color: var(--text); font-size: 14px; margin-left: 4px; }
+.memory-toolbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+.memory-search { display: flex; gap: 8px; flex: 1; min-width: 240px; margin: 0; }
+.memory-search input { min-width: 0; }
+.memory-search .ghost { padding: 10px 14px; white-space: nowrap; }
+.memory-kind { width: auto; min-width: 110px; }
+.memory-toolbar .primary.office-button { margin-left: auto; }
+.memory-mergebar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; background: #182238; border: 1px solid #2c3d63; border-radius: 10px; padding: 10px 14px; margin-bottom: 14px; font-size: 12px; color: #b9c8ea; }
+.memory-mergebar .primary.office-button { margin: 0; }
+.memory-list { display: grid; gap: 10px; margin-top: 12px; }
+.memory-card { background: var(--bg-2); border: 1px solid var(--line); border-radius: 12px; padding: 14px; }
+.memory-card.selected { border-color: var(--brand); box-shadow: 0 0 0 1px rgba(79, 124, 255, .35) inset; }
+.memory-card-head { display: flex; align-items: center; gap: 10px; }
+.memory-check-wrap { display: inline-flex; align-items: center; margin: 0; flex: none; }
+.memory-check { width: auto; margin: 0; accent-color: var(--brand); }
+.memory-title { font-size: 14px; overflow-wrap: anywhere; }
+.memory-card-head .pill { margin-left: auto; flex: none; }
+.memory-content { margin-top: 8px; color: #c3cad8; font-size: 13px; line-height: 1.65; white-space: pre-wrap; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.memory-content.expanded { display: block; overflow: visible; }
+.memory-card .link { margin-top: 4px; }
+.memory-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.memory-tag { color: var(--brand-2); background: #1b2438; border: 1px solid #2b3a58; border-radius: 99px; padding: 1px 8px; font-size: 11px; }
+.memory-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 16px; color: var(--muted); font-size: 12px; margin-top: 10px; }
+.memory-remove { margin-top: 0; margin-left: auto; color: #ff9d9d; }
+.memory-remove:disabled { opacity: .5; }
+.memory-more { display: flex; justify-content: center; margin-top: 14px; }
+.memory-dedupe { margin-bottom: 16px; }
+.memory-dedupe-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.memory-proposals { display: grid; gap: 10px; margin-top: 12px; }
+.memory-proposal { background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 12px; }
+.memory-proposal-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
+.memory-proposal-head .muted.small { margin-top: 0; }
+.memory-proposal-row { display: flex; gap: 10px; font-size: 12px; margin-top: 4px; overflow-wrap: anywhere; }
+.memory-proposal-row span { color: var(--muted); flex: none; width: 32px; }
+.memory-proposal-preview { white-space: pre-wrap; overflow-wrap: anywhere; background: var(--bg-2); border-radius: 8px; padding: 10px; margin: 10px 0 0; font-size: 12px; line-height: 1.6; color: #b8c0cf; max-height: 180px; overflow: auto; }
+@media (max-width: 900px) { .memory-toolbar .primary.office-button { margin-left: 0; } }
+

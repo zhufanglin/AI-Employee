@@ -23,6 +23,7 @@ import { PaymentsModule } from "./payments/payments.module";
 import { AdminModule } from "./admin/admin.module";
 import { CapabilityModule } from "./capabilities/capability.module";
 import { WorkspaceModule } from "./workspace/workspace.module";
+import { MemoryModule } from "./memory/memory.module";
 
 @Module({
   imports: [
@@ -43,6 +44,7 @@ import { WorkspaceModule } from "./workspace/workspace.module";
     AdminModule,
     CapabilityModule,
     WorkspaceModule,
+    MemoryModule,
   ],
   controllers: [HealthController],
   providers: [

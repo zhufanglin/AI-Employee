@@ -49,6 +49,13 @@ const api = {
     download: (p: { key: string; name: string }) => ipcRenderer.invoke('workspace:download', p),
     remove: (p: { key?: string; name?: string }) => ipcRenderer.invoke('workspace:remove', p)
   },
+  memory: {
+    list: (q?: { query?: string; kind?: string; limit?: number; cursor?: string }) => ipcRenderer.invoke('memory:list', q || {}),
+    stats: () => ipcRenderer.invoke('memory:stats'),
+    remove: (id: string) => ipcRenderer.invoke('memory:remove', id),
+    merge: (p: { keepId: string; dropId: string }) => ipcRenderer.invoke('memory:merge', p),
+    dedupe: (p: { mode: 'report' | 'apply'; limit?: number }) => ipcRenderer.invoke('memory:dedupe', p)
+  },
   employeeExecution: {
     heartbeat: () => ipcRenderer.invoke('employee-execution:heartbeat'),
     nodes: () => ipcRenderer.invoke('employee-execution:nodes'),

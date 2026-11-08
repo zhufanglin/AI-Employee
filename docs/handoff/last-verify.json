@@ -1,5 +1,5 @@
 ﻿{
-    "at":  "2026-11-08T17:40:38.2337559+08:00",
+    "at":  "2026-11-08T18:17:27.4131855+08:00",
     "ok":  true,
     "failed":  0,
     "steps":  [
@@ -13,13 +13,13 @@
                       "name":  "desktop electron-vite build",
                       "ok":  true,
                       "exit":  0,
-                      "seconds":  5
+                      "seconds":  3
                   },
                   {
                       "name":  "server restart (fresh dist, kill stale :3000)",
                       "ok":  true,
                       "exit":  0,
-                      "seconds":  7
+                      "seconds":  8
                   },
                   {
                       "name":  "unit: 员工工具循环 JSON 容错",
@@ -43,7 +43,7 @@
                       "name":  "smoke: T-11 个人微信入站链路",
                       "ok":  true,
                       "exit":  0,
-                      "seconds":  6
+                      "seconds":  5
                   },
                   {
                       "name":  "smoke: T-11 渠道结果回推",
@@ -61,7 +61,7 @@
                       "name":  "smoke: W2",
                       "ok":  true,
                       "exit":  0,
-                      "seconds":  32
+                      "seconds":  35
                   },
                   {
                       "name":  "smoke: W2 计费隔离",
@@ -73,7 +73,7 @@
                       "name":  "smoke: M6.5",
                       "ok":  true,
                       "exit":  0,
-                      "seconds":  0
+                      "seconds":  1
                   },
                   {
                       "name":  "smoke: T-36 员工技能原文",
@@ -97,7 +97,7 @@
                       "name":  "smoke: T-14 管理端扩展",
                       "ok":  true,
                       "exit":  0,
-                      "seconds":  5
+                      "seconds":  4
                   },
                   {
                       "name":  "smoke: T-29 运营后台",
@@ -133,13 +133,13 @@
                       "name":  "smoke: T-32 员工多步执行（模拟模型和媒体）",
                       "ok":  true,
                       "exit":  0,
-                      "seconds":  1
+                      "seconds":  2
                   },
                   {
                       "name":  "smoke: T-28 本地能力层",
                       "ok":  true,
                       "exit":  0,
-                      "seconds":  27
+                      "seconds":  37
                   }
               ]
 }
