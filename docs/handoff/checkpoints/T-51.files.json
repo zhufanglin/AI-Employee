@@ -1,0 +1,17 @@
+[
+  {
+    "p": "packages/server/src/memory/memory.controller.ts",
+    "size": 927,
+    "mtime": 1794132252603
+  },
+  {
+    "p": "packages/server/src/memory/memory.module.ts",
+    "size": 451,
+    "mtime": 1794132252615
+  },
+  {
+    "p": "packages/server/src/memory/memory.service.ts",
+    "size": 10412,
+    "mtime": 1794132252582
+  }
+]
