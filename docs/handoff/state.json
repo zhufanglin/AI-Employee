@@ -1,7 +1,7 @@
 {
   "project": "中科元晟 AI员工 0.4.29 完全复刻",
   "version": 1,
-  "updatedAt": "2026-11-08T19:37:10.462Z",
+  "updatedAt": "2026-11-08T20:16:35.330Z",
   "phase": "P10（先能用三件事）派工完成，看板 29/33",
   "phaseGoal": "用户要求先能用、定价后置：T-31 桌面端出图出片 / T-32 员工多步干活 / T-33 成本护栏 已派 Codex；dsh-lead 推主线（生产可用性收口 + 复核），T-11 渠道仍 blocked(env)。",
   "owners": {
@@ -3065,6 +3065,41 @@
       },
       "finishedAt": "2026-11-08T19:37:10.460Z",
       "result": "check-desktop-p25 58项、smoke-p27 73+24项、全量VERIFY GREEN、真机探针确认登录页判定正确"
+    },
+    {
+      "id": "T-54",
+      "title": "T-54 P26 定时发布（客户端本地队列 + 到点自动发 + 桌面页）",
+      "status": "doing",
+      "owner": "dsh-lead",
+      "scope": [],
+      "accept": "",
+      "blockedBy": [],
+      "createdAt": "2026-11-08T20:16:34.552Z",
+      "history": [
+        {
+          "at": "2026-11-08T20:16:34.850Z",
+          "by": "dsh-lead",
+          "what": "claim"
+        },
+        {
+          "at": "2026-11-08T20:16:35.329Z",
+          "by": "dsh-lead",
+          "what": "save: publish-queue.ts 完成（队列/校验/串行/补跑/崩溃恢复）；main+preload+types+Scheduled 页接线；smoke 47 项 + desktop check 32 项 GREEN；verify.ps1 已加两步；0.1.12 打包中"
+        }
+      ],
+      "lease": {
+        "at": "2026-11-08T20:16:34.844Z",
+        "heartbeat": "2026-11-08T20:16:35.329Z",
+        "reason": null
+      },
+      "checkpoint": {
+        "progress": [],
+        "notes": [
+          "20:16 publish-queue.ts 完成（队列/校验/串行/补跑/崩溃恢复）；main+preload+types+Scheduled 页接线；smoke 47 项 + desktop check 32 项 GREEN；verify.ps1 已加两步；0.1.12 打包中"
+        ],
+        "files": [],
+        "next": "0.1.12 打包完成 -> publish-update -> 安装校验 -> 全量 verify -> git push -> coord done"
+      }
     }
   ],
   "primary": "dsh-lead",

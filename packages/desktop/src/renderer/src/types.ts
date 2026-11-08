@@ -70,6 +70,14 @@ export type FcmApi = {
     create: (input: { employeeSlug: string; cronExpr: string; timezone?: string }) => Promise<CronOpResult<{ cronId: string; nextRunAt: string | null }>>
     remove: (p: { cronId: string }) => Promise<CronOpResult<{ deleted: boolean }>>
   }
+  // 定时发布（P26，见 docs/handoff/P26-定时发布.md）
+  queue: {
+    list: () => Promise<CronOpResult<{ items: ScheduledPublishJob[] }>>
+    add: (input: ScheduledPublishInput) => Promise<CronOpResult<ScheduledPublishJob>>
+    remove: (id: string) => Promise<CronOpResult<{ removed: boolean }>>
+    retry: (id: string) => Promise<CronOpResult<ScheduledPublishJob>>
+    onEvent: (cb: (p: { event: string; payload: any }) => void) => () => void
+  }
   window: { minimize: () => void; maximize: () => void; close: () => void }
 }
 
@@ -124,6 +132,37 @@ export type PlatformPublishResult = {
   url?: string
   screenshots: string[]
   steps: { step: string; ok: boolean; detail?: string }[]
+}
+
+// 与 packages/desktop/src/main/publish-queue.ts 的 ScheduledJob 逐字对齐
+export type ScheduledPublishJob = {
+  id: string
+  platform: string
+  type: 'video' | 'image'
+  title: string
+  content: string
+  tags: string[]
+  mediaPaths: string[]
+  scheduledAt: string
+  status: 'pending' | 'running' | 'done' | 'failed'
+  attempts: number
+  createdAt: string
+  startedAt?: string
+  finishedAt?: string
+  url?: string
+  message?: string
+  late?: boolean
+}
+
+export type ScheduledPublishInput = {
+  platform: PlatformId | string
+  type?: 'video' | 'image'
+  title: string
+  content?: string
+  tags?: string | string[]
+  mediaPaths: string | string[]
+  // datetime-local 输入（2026-11-09T09:30）或 ISO 字符串
+  scheduledAt: string
 }
 
 export type Model = {

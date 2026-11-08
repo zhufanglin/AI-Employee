@@ -8,6 +8,7 @@ import { initUpdater, updateStatus, checkForUpdates, downloadUpdate, quitAndInst
 import { PlatformManager } from './platform'
 import { registerFileOps } from './file-ops'
 import { registerCronOps } from './cron-ops'
+import { PublishQueue, defaultQueuePath, registerPublishQueue } from './publish-queue'
 
 const DEFAULT_API_BASE = process.env.FCM_API_BASE || 'https://ai.fcmediaagent.com/api'
 
@@ -19,6 +20,8 @@ let gateway: GatewayManager | null = null
 let heartbeatTimer: NodeJS.Timeout | null = null
 let executor: TaskExecutor | null = null
 let platform: PlatformManager | null = null
+let queue: PublishQueue | null = null
+let queueTimer: NodeJS.Timeout | null = null
 
 function settingsPath() {
   return join(app.getPath('userData'), 'settings.json')
@@ -187,7 +190,7 @@ app.whenReady().then(async () => {
 })
 
 app.on('before-quit', async () => { try { await gateway?.stop() } catch {} })
-app.on('before-quit', () => { if (heartbeatTimer) clearInterval(heartbeatTimer); executor?.stop() })
+app.on('before-quit', () => { if (heartbeatTimer) clearInterval(heartbeatTimer); if (queueTimer) clearInterval(queueTimer); executor?.stop() })
 app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit() })
 
 function runSmoke() {
@@ -295,6 +298,26 @@ function runSmoke() {
   }, Number(process.env.FCM_SMOKE_MS || 8000))
 }
 
+/**
+ * 定时发布的心跳：每 30 秒看一次本地队列，把到点（含客户端关着时错过的）任务串行发出去。
+ * 启动时先等 20 秒，让平台模块/登录态就绪，避免刚开机就抢窗口。
+ */
+function startQueueTimer() {
+  if (queueTimer) return
+  setTimeout(() => { void tickQueue('startup') }, 20000)
+  queueTimer = setInterval(() => { void tickQueue('timer') }, 30000)
+}
+
+async function tickQueue(reason: string) {
+  if (!queue) return
+  try {
+    const ran = await queue.tick()
+    if (ran.length > 0) console.log('[queue] ' + reason + ' 执行了 ' + ran.length + ' 条定时发布')
+  } catch (e: any) {
+    console.warn('[queue] tick failed', e?.message || e)
+  }
+}
+
 function registerIpc() {
   gateway = new GatewayManager({
     getApiBase: () => settings.apiBase,
@@ -393,6 +416,19 @@ function registerIpc() {
   registerFileOps(ipcMain, { root: workspaceRoot })
   // 员工定时任务（P27）：客户端直接调服务端 cron 接口，列表/新建/删除。
   registerCronOps(ipcMain, { api })
+
+  // 定时发布（P26）：发布内容必须存在本机（平台按 IP/设备风控，且服务端定时表不存内容），
+  // 队列落在 <userData>/publish-queue.json，到点由主进程触发 platform.publish。
+  queue = new PublishQueue({
+    file: () => defaultQueuePath(app.getPath('userData')),
+    publish: (input: any) => platform!.publish(input),
+    log: (message: string) => console.log('[queue] ' + message),
+    notify: (event: string, payload: any) => {
+      if (win && !win.isDestroyed()) win.webContents.send('queue:event', { event, payload })
+    }
+  })
+  registerPublishQueue(ipcMain, queue)
+  startQueueTimer()
 
   executor = new TaskExecutor({ api, getToken: () => settings.token })
   ipcMain.handle('employee-execution:heartbeat', () => sendExecutionHeartbeat().then(() => true))

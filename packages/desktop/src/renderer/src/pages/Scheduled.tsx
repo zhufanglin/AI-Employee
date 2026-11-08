@@ -23,6 +23,69 @@ interface CronApi {
   remove: (input: { cronId: string }) => Promise<CronResult<{ deleted: boolean }>>
 }
 
+// ---- 定时发布（P26）：本地队列，到点由主进程 client 触发平台发布 ----
+interface QueueJob {
+  id: string
+  platform: string
+  type: 'video' | 'image'
+  title: string
+  content: string
+  tags: string[]
+  mediaPaths: string[]
+  scheduledAt: string
+  status: 'pending' | 'running' | 'done' | 'failed'
+  attempts: number
+  url?: string
+  message?: string
+  late?: boolean
+}
+
+interface QueueApi {
+  list: () => Promise<CronResult<{ items: QueueJob[] }>>
+  add: (input: any) => Promise<CronResult<QueueJob>>
+  remove: (id: string) => Promise<CronResult<{ removed: boolean }>>
+  retry: (id: string) => Promise<CronResult<QueueJob>>
+}
+
+const PLATFORMS = [
+  { id: 'douyin', label: '抖音' },
+  { id: 'xiaohongshu', label: '小红书' },
+  { id: 'shipinhao', label: '视频号' }
+]
+
+const JOB_STATUS: Record<string, { label: string; cls: string }> = {
+  pending: { label: '等待发布', cls: 'pill' },
+  running: { label: '发布中', cls: 'pill status-awaiting_approval' },
+  done: { label: '已发布', cls: 'pill ok' },
+  failed: { label: '失败', cls: 'pill status-failed' }
+}
+
+function queueApi(): QueueApi {
+  const api = (window as any).fcm?.queue as QueueApi | undefined
+  if (!api) throw new Error('定时发布功能未就绪，请重启客户端')
+  return api
+}
+
+function platformName(id: string): string {
+  return PLATFORMS.find((item) => item.id === id)?.label || id
+}
+
+/** Date -> datetime-local 需要的本地时间字符串（不能用 toISOString，那是 UTC） */
+function toLocalInput(date: Date): string {
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return (
+    date.getFullYear() +
+    '-' + pad(date.getMonth() + 1) +
+    '-' + pad(date.getDate()) +
+    'T' + pad(date.getHours()) +
+    ':' + pad(date.getMinutes())
+  )
+}
+
+function defaultScheduleInput(): string {
+  return toLocalInput(new Date(Date.now() + 60 * 60 * 1000))
+}
+
 const EXAMPLES = [
   { label: '每天 9 点', expr: '0 9 * * *' },
   { label: '每周一 10 点', expr: '0 10 * * 1' },
@@ -66,6 +129,17 @@ export default function Scheduled() {
   const [cronExpr, setCronExpr] = useState('0 9 * * *')
   const [timezone, setTimezone] = useState('Asia/Shanghai')
 
+  // 定时发布表单
+  const [jobs, setJobs] = useState<QueueJob[]>([])
+  const [jobsLoading, setJobsLoading] = useState(true)
+  const [platform, setPlatform] = useState('douyin')
+  const [mediaType, setMediaType] = useState<'video' | 'image'>('video')
+  const [pubTitle, setPubTitle] = useState('')
+  const [pubContent, setPubContent] = useState('')
+  const [pubTags, setPubTags] = useState('')
+  const [mediaPaths, setMediaPaths] = useState<string[]>([])
+  const [scheduledAt, setScheduledAt] = useState(defaultScheduleInput())
+
   async function refresh(): Promise<void> {
     setLoading(true)
     setError('')
@@ -88,6 +162,122 @@ export default function Scheduled() {
     // 只在首次进入页面时读取一次列表。
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  async function refreshQueue(): Promise<void> {
+    setJobsLoading(true)
+    try {
+      const result = await queueApi().list()
+      if (!result.ok) {
+        setError(result.error || '读取定时发布队列失败')
+        return
+      }
+      setJobs(result.data?.items || [])
+    } catch (e: any) {
+      setError(String(e?.message || e))
+    } finally {
+      setJobsLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    void refreshQueue()
+    // 主进程发布成功/失败后会推 queue:event，这里跟着刷新列表。
+    let off: (() => void) | undefined
+    try {
+      off = (window as any).fcm?.queue?.onEvent(() => {
+        void refreshQueue()
+      })
+    } catch {
+      /* 老版本 preload 没有 onEvent，忽略 */
+    }
+    return () => {
+      if (off) off()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  async function pickMedia(): Promise<void> {
+    setError('')
+    try {
+      const picked = await (window as any).fcm.platform.pickMedia({ type: mediaType })
+      const paths: string[] = picked?.paths || []
+      if (paths.length === 0) return
+      setMediaPaths(paths)
+    } catch (e: any) {
+      setError(String(e?.message || e))
+    }
+  }
+
+  async function addJob(): Promise<void> {
+    setError('')
+    setNotice('')
+    setBusy('add-job')
+    try {
+      const result = await queueApi().add({
+        platform,
+        type: mediaType,
+        title: pubTitle.trim(),
+        content: pubContent,
+        tags: pubTags,
+        mediaPaths,
+        scheduledAt
+      })
+      if (!result.ok) {
+        setError(result.error || '加入定时队列失败')
+        return
+      }
+      setNotice('已排程：' + platformName(result.data!.platform) + '「' + result.data!.title + '」将于 ' + fmtTime(result.data!.scheduledAt) + ' 自动发布')
+      setPubTitle('')
+      setPubContent('')
+      setPubTags('')
+      setMediaPaths([])
+      setScheduledAt(defaultScheduleInput())
+      await refreshQueue()
+    } catch (e: any) {
+      setError(String(e?.message || e))
+    } finally {
+      setBusy('')
+    }
+  }
+
+  async function removeJob(job: QueueJob): Promise<void> {
+    setError('')
+    setNotice('')
+    if (!window.confirm('确定从队列里删掉「' + job.title + '」吗？')) return
+    setBusy('job-del:' + job.id)
+    try {
+      const result = await queueApi().remove(job.id)
+      if (!result.ok) {
+        setError(result.error || '删除定时发布失败')
+        return
+      }
+      setNotice('已删除定时发布：' + job.title)
+      await refreshQueue()
+    } catch (e: any) {
+      setError(String(e?.message || e))
+    } finally {
+      setBusy('')
+    }
+  }
+
+  async function retryJob(job: QueueJob): Promise<void> {
+    setError('')
+    setNotice('')
+    setBusy('job-retry:' + job.id)
+    try {
+      const result = await queueApi().retry(job.id)
+      if (!result.ok) {
+        setError(result.error || '重试失败')
+        return
+      }
+      setNotice('已重新排入队列，稍后自动重试：' + job.title)
+      await refreshQueue()
+    } catch (e: any) {
+      setError(String(e?.message || e))
+    } finally {
+      setBusy('')
+    }
+  }
 
   async function create(): Promise<void> {
     setError('')
@@ -245,6 +435,164 @@ export default function Scheduled() {
           onClick={() => void create()}
         >
           {busy === 'create' ? '创建中…' : '创建定时任务'}
+        </button>
+      </section>
+
+      <div className="page-head" style={{ marginTop: 28 }}>
+        <h2>定时发布</h2>
+        <p>
+          到点由本机自动把作品发到抖音 / 小红书 / 视频号（复用客户端里已扫码登录的会话）。
+          客户端关着的时候到点的任务，下次打开会立刻补发。
+        </p>
+        <button className="ghost small" disabled={jobsLoading} onClick={() => void refreshQueue()}>
+          {jobsLoading ? '刷新中…' : '刷新队列'}
+        </button>
+      </div>
+
+      <section className="card">
+        <h3>发布队列</h3>
+        {jobsLoading ? (
+          <p className="muted small">读取中…</p>
+        ) : jobs.length === 0 ? (
+          <div className="empty-state">
+            <p>队列里还没有定时发布</p>
+            <p className="muted small">在下方选平台、填标题、选素材和时间，到点自动发布。</p>
+          </div>
+        ) : (
+          <table className="table">
+            <thead>
+              <tr>
+                <th>计划时间</th>
+                <th>平台</th>
+                <th>标题</th>
+                <th>状态</th>
+                <th>结果</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              {jobs.map((job) => {
+                const meta = JOB_STATUS[job.status] || JOB_STATUS.pending
+                return (
+                  <tr key={job.id}>
+                    <td>
+                      {fmtTime(job.scheduledAt)}
+                      {job.late ? <span className="muted small"> 迟到补发</span> : null}
+                    </td>
+                    <td>{platformName(job.platform)}</td>
+                    <td title={job.title}>{job.title.length > 18 ? job.title.slice(0, 18) + '…' : job.title}</td>
+                    <td>
+                      <span className={meta.cls}>{meta.label}</span>
+                      {job.attempts > 1 ? <span className="muted small"> 第 {job.attempts} 次</span> : null}
+                    </td>
+                    <td>
+                      {job.url ? (
+                        <a href={job.url} target="_blank" rel="noreferrer">
+                          打开作品
+                        </a>
+                      ) : (
+                        <span className={job.status === 'failed' ? 'error small' : 'muted small'}>
+                          {job.message || '—'}
+                        </span>
+                      )}
+                    </td>
+                    <td>
+                      {job.status === 'failed' ? (
+                        <button className="ghost small" disabled={busy !== ''} onClick={() => void retryJob(job)}>
+                          {busy === 'job-retry:' + job.id ? '重试中…' : '重试'}
+                        </button>
+                      ) : null}
+                      <button
+                        className="ghost small"
+                        disabled={busy !== '' || job.status === 'running'}
+                        onClick={() => void removeJob(job)}
+                      >
+                        {busy === 'job-del:' + job.id ? '删除中…' : '删除'}
+                      </button>
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        )}
+      </section>
+
+      <section className="card platform-form">
+        <h3>新建定时发布</h3>
+        <div className="platform-form-row">
+          <label>
+            平台
+            <select value={platform} onChange={(e) => setPlatform(e.target.value)}>
+              {PLATFORMS.map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            素材类型
+            <select value={mediaType} onChange={(e) => setMediaType(e.target.value as 'video' | 'image')}>
+              <option value="video">视频</option>
+              <option value="image">图文</option>
+            </select>
+          </label>
+        </div>
+        <label>
+          标题
+          <input
+            value={pubTitle}
+            onChange={(e) => setPubTitle(e.target.value)}
+            placeholder={platform === 'xiaohongshu' ? '小红书标题建议 20 字以内' : '作品标题'}
+            autoComplete="off"
+          />
+        </label>
+        <label>
+          正文 / 文案
+          <textarea
+            value={pubContent}
+            onChange={(e) => setPubContent(e.target.value)}
+            rows={4}
+            placeholder="作品描述、话题、@ 都可以写在这里"
+          />
+        </label>
+        <div className="platform-form-row">
+          <label>
+            话题标签
+            <input
+              value={pubTags}
+              onChange={(e) => setPubTags(e.target.value)}
+              placeholder="AI, 效率工具"
+              autoComplete="off"
+            />
+          </label>
+          <label>
+            发布时间
+            <input type="datetime-local" value={scheduledAt} onChange={(e) => setScheduledAt(e.target.value)} />
+          </label>
+        </div>
+        <label>
+          素材文件
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+            <button type="button" className="ghost small" onClick={() => void pickMedia()}>
+              选择{mediaType === 'image' ? '图片' : '视频'}
+            </button>
+            <span className="muted small">
+              {mediaPaths.length === 0 ? '还没有选择素材' : mediaPaths.map((item) => item.split(/[\\/]/).pop()).join('、')}
+            </span>
+          </div>
+        </label>
+        <p className="hint">
+          到点后客户端会用已登录的账号自动上传并发布，每步截图存在 platform-logs 目录便于排查。
+          {mediaType === 'image' ? ' 图文支持一次选多张图片。' : ''}
+        </p>
+        <button
+          className="primary"
+          disabled={busy !== '' || !pubTitle.trim() || mediaPaths.length === 0 || !scheduledAt}
+          onClick={() => void addJob()}
+        >
+          {busy === 'add-job' ? '提交中…' : '加入定时队列'}
         </button>
       </section>
     </div>

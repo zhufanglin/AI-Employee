@@ -83,6 +83,18 @@ const api = {
     create: (input: { employeeSlug: string; cronExpr: string; timezone?: string }) => ipcRenderer.invoke('cron:create', input),
     remove: (p: { cronId: string }) => ipcRenderer.invoke('cron:delete', p)
   },
+  // 定时发布（P26）：本地队列，到点由主进程自动调用平台发布。
+  queue: {
+    list: () => ipcRenderer.invoke('queue:list'),
+    add: (input: any) => ipcRenderer.invoke('queue:add', input),
+    remove: (id: string) => ipcRenderer.invoke('queue:remove', { id }),
+    retry: (id: string) => ipcRenderer.invoke('queue:retry', { id }),
+    onEvent: (cb: (p: { event: string; payload: any }) => void) => {
+      const h = (_e: any, p: any) => cb(p)
+      ipcRenderer.on('queue:event', h)
+      return () => ipcRenderer.removeListener('queue:event', h)
+    }
+  },
   employeeExecution: {
     heartbeat: () => ipcRenderer.invoke('employee-execution:heartbeat'),
     nodes: () => ipcRenderer.invoke('employee-execution:nodes'),
