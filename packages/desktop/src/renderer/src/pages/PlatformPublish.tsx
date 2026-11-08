@@ -7,6 +7,23 @@ const PLATFORMS: { id: string; name: string; tip: string; types: string }[] = [
   { id: 'shipinhao', name: '视频号', tip: '视频号助手 · 视频 / 图文', types: '视频、图文' }
 ]
 
+/** 给可能挂住的调用加个上限：主进程会话卡住时也要把按钮恢复可用 */
+function withTimeout<T>(p: Promise<T>, ms: number, message: string): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error(message)), ms)
+    p.then(
+      (value) => {
+        clearTimeout(timer)
+        resolve(value)
+      },
+      (err) => {
+        clearTimeout(timer)
+        reject(err)
+      }
+    )
+  })
+}
+
 export default function PlatformPublish() {
   const [statuses, setStatuses] = useState<PlatformStatus[]>([])
   const [loading, setLoading] = useState(false)
@@ -42,7 +59,11 @@ export default function PlatformPublish() {
     setBusy('login:' + id)
     setError('')
     try {
-      const st = await window.fcm.platform.login({ platform: id })
+      const st = await withTimeout(
+        window.fcm.platform.login({ platform: id }),
+        210000,
+        '登录等待超时（窗口可能已关闭），请重新点击「扫码登录」'
+      )
       setStatuses((prev) => {
         const next = prev.filter((s) => s.platform !== st.platform)
         next.push(st)

@@ -91,6 +91,13 @@ check('platform.ts 定义 Chrome UA', !!platformSrc && platformSrc.includes('con
 check('platform.ts 给分区设 UA', !!platformSrc && platformSrc.includes('.setUserAgent(PLATFORM_UA)'))
 check('platform.ts 轮询 READY_SCRIPT 判就绪', !!platformSrc && platformSrc.includes('const READY_SCRIPT') && platformSrc.includes('executeJavaScript(READY_SCRIPT)'))
 check('navigate 不再依赖 load 事件', !!platformSrc && !platformSrc.includes('打开页面超时（'))
+check('platform.ts 有窗口关闭赛跑 untilClosed', !!platformSrc && platformSrc.includes('private async untilClosed'))
+check('navigate 就绪探针受窗口关闭保护', !!platformSrc && /untilClosed\([\s\S]{0,80}executeJavaScript\(READY_SCRIPT\)/.test(platformSrc))
+check('attachAndEval 有取值超时 EVAL_TIMEOUT_MS', !!platformSrc && platformSrc.includes('const EVAL_TIMEOUT_MS') && platformSrc.includes('页面脚本取值超时'))
+check('doLogin 窗口关闭后立即返回中文提示', !!platformSrc && platformSrc.includes('登录窗口已关闭（未完成登录）') && platformSrc.includes('userClosed'))
+check('登录弹窗关闭后不再卡住串行锁', !!platformSrc && platformSrc.includes('await this.untilClosed(win, sleep(LOGIN_POLL_MS))'))
+check('checkStatus 对空探针不误判已登录', !!platformSrc && platformSrc.includes('页面没有响应，未能检查登录态'))
+check('页面登录加了超时兜底 withTimeout', !!pageSrc && pageSrc.includes('function withTimeout<T>') && pageSrc.includes('登录等待超时'))
 
 // 4. 执行器与能力目录
 for (const name of ['platform_publish', 'platform_status', 'platform_stats']) {

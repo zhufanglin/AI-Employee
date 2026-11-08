@@ -62,6 +62,8 @@ const LOGIN_POLL_MS = 3000
 const UPLOAD_TIMEOUT_MS = 120000
 const UPLOAD_POLL_MS = 2000
 const POST_PUBLISH_WAIT_MS = 5000
+/** 单次页面取值（CDP eval）最长等待，避免 webContents 卡死时整条链路挂住 */
+const EVAL_TIMEOUT_MS = 20000
 
 /**
  * 平台站点会屏蔽 Electron 默认 UA（默认 UA 里带 "Electron/38.8.6"）：
@@ -390,6 +392,30 @@ export class PlatformManager {
   }
 
   /**
+   * 把一次页面交互和「窗口被用户关掉」赛跑。
+   *
+   * 用户手动点 X 关掉登录窗口时，Electron 对已销毁 webContents 的 executeJavaScript / debugger 调用
+   * 可能永远不 settle，导致 login() 的 Promise 悬着、串行锁不释放 —— 表现就是「关掉弹窗后再点登录没反应」。
+   * 这里一旦窗口关闭立刻返回 null，让上层的轮询跳出并把锁释放掉。
+   */
+  private async untilClosed<T>(win: BrowserWindow, task: Promise<T>): Promise<T | null> {
+    if (win.isDestroyed()) return null
+    const closed = new Promise<null>((resolve) => {
+      const done = () => resolve(null)
+      win.once('closed', done)
+      // 正常完成时把监听摘掉，避免监听器泄漏
+      task.then(done, done).finally(() => {
+        try {
+          win.removeListener('closed', done)
+        } catch {
+          // 窗口已销毁，忽略
+        }
+      })
+    })
+    return Promise.race([task.catch(() => null), closed])
+  }
+
+  /**
    * 打开页面并等到「DOM 就绪」。
    *
    * 不能只等 loadURL 的 load 事件：抖音创作者中心有长连接子资源，实测 40 秒 load 事件都不触发，
@@ -407,9 +433,10 @@ export class PlatformManager {
     let last: { ready: boolean; href: string; bodyLen: number } | null = null
     while (Date.now() < deadline) {
       if (win.isDestroyed()) throw new Error('窗口已关闭，无法打开页面：' + url)
-      last = (await win.webContents.executeJavaScript(READY_SCRIPT).catch(() => null)) as
-        | { ready: boolean; href: string; bodyLen: number }
-        | null
+      last = (await this.untilClosed(
+        win,
+        win.webContents.executeJavaScript(READY_SCRIPT)
+      )) as { ready: boolean; href: string; bodyLen: number } | null
       if (last && last.ready && last.href && last.href !== 'about:blank') return
       await sleep(400)
     }
@@ -450,9 +477,24 @@ export class PlatformManager {
   }
 
   private async attachAndEval<T = unknown>(win: BrowserWindow, expression: string): Promise<T> {
+    if (win.isDestroyed()) throw new Error('窗口已关闭')
     await this.attach(win)
     try {
-      return await this.evalPage<T>(win, expression)
+      let timer: ReturnType<typeof setTimeout> | null = null
+      const timeout = new Promise<null>((resolve) => {
+        timer = setTimeout(() => resolve(null), EVAL_TIMEOUT_MS)
+      })
+      const value = await Promise.race([
+        this.untilClosed(win, this.evalPage<T>(win, expression)),
+        timeout
+      ])
+      if (timer) clearTimeout(timer)
+      if (value === null) {
+        if (win.isDestroyed()) throw new Error('窗口已关闭')
+        this.log('页面脚本取值超时（' + Math.round(EVAL_TIMEOUT_MS / 1000) + ' 秒），按无结果处理')
+        return null as unknown as T
+      }
+      return value as T
     } finally {
       await this.detach(win)
     }
@@ -500,7 +542,17 @@ export class PlatformManager {
       win = this.createWindow(platform, false)
       await this.navigate(win, driver.homeUrl)
       await sleep(3000)
-      const probe = await this.attachAndEval<any>(win, PROBE_SCRIPT)
+      const probe = await this.attachAndEval<any>(win, PROBE_SCRIPT).catch(() => null)
+      if (!probe) {
+        this.emit(platform, 'status', '页面无响应')
+        return {
+          platform,
+          name: driver.name,
+          loggedIn: false,
+          checkedAt,
+          error: '页面没有响应，未能检查登录态，请稍后点「刷新登录状态」重试'
+        }
+      }
       const judged = this.judgeLogin(driver, probe)
       if (judged.loggedIn) {
         this.emit(platform, 'status', '已登录' + (judged.nickname ? '（' + judged.nickname + '）' : ''))
@@ -527,13 +579,23 @@ export class PlatformManager {
     const driver = this.driver(platform)
     const checkedAt = nowIso()
     let win: BrowserWindow | null = null
+    // 用户手动关掉登录窗口时必须立刻收工，否则轮询会一直挂到超时、串行锁不释放，
+    // 表现就是「关掉弹窗后再点扫码登录没反应」。
+    let userClosed = false
     try {
       win = this.createWindow(platform, true)
+      win.once('closed', () => {
+        userClosed = true
+      })
       await this.navigate(win, driver.loginUrlHint || driver.homeUrl)
       const deadline = Date.now() + LOGIN_TIMEOUT_MS
       while (Date.now() < deadline) {
         if (win.isDestroyed()) break
-        const probe = await this.attachAndEval<any>(win, PROBE_SCRIPT).catch(() => null)
+        const probe = await this.untilClosed(
+          win,
+          this.attachAndEval<any>(win, PROBE_SCRIPT).catch(() => null)
+        )
+        if (win.isDestroyed()) break
         if (probe && this.judgeLogin(driver, probe).loggedIn) {
           this.log('[' + platform + '] 登录成功')
           this.emit(platform, 'login', '登录成功')
@@ -541,7 +603,18 @@ export class PlatformManager {
           win = null
           return await this.checkStatus(platform)
         }
-        await sleep(LOGIN_POLL_MS)
+        await this.untilClosed(win, sleep(LOGIN_POLL_MS))
+      }
+      if (userClosed || win.isDestroyed()) {
+        this.log('[' + platform + '] 登录窗口被关闭，取消登录')
+        this.emit(platform, 'login', '窗口已关闭')
+        return {
+          platform,
+          name: driver.name,
+          loggedIn: false,
+          checkedAt,
+          error: '登录窗口已关闭（未完成登录），可再次点击「扫码登录」重试'
+        }
       }
       this.emit(platform, 'login', '登录超时')
       return {
@@ -553,6 +626,16 @@ export class PlatformManager {
       }
     } catch (e) {
       const msg = errText(e)
+      if (userClosed || (win && win.isDestroyed())) {
+        this.log('[' + platform + '] 登录窗口被关闭，取消登录')
+        return {
+          platform,
+          name: driver.name,
+          loggedIn: false,
+          checkedAt,
+          error: '登录窗口已关闭（未完成登录），可再次点击「扫码登录」重试'
+        }
+      }
       this.log('[' + platform + '] 登录失败：' + msg)
       return { platform, name: driver.name, loggedIn: false, checkedAt, error: '登录失败：' + msg }
     } finally {

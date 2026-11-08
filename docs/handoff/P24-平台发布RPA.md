@@ -183,3 +183,35 @@
 - 安装包 `fcmediaagent-ai-employee-0.1.7-win-x64.exe` **127,747,896 B**，sha512 `wea8zzHGoN9BimWfkYMHyzvTWpObA0B78AQu9qUDgJAiZiFxy/nltFbygNQ+O6XlQccWuwru0YlQ/bADqjzs4Q==`。
 - 已发布 `https://updates.fcmediaagent.com/desktop/latest/latest.yml`（yml=200 exe=206），桌面端已静默升级到 0.1.7 并校验 asar 内 `VERSION=0.1.7`、`out/main/index.js` 含 `setUserAgent` 与 `READY_SCRIPT`。
 - 备份链路：发布前因本机出口 22 端口一度不可达，先把安装包与 latest.yml 传到 OSS 公网（`https://zhongke001.oss-cn-beijing.aliyuncs.com/desktop/`）以便手动下载安装；22 恢复后正式发布成功，OSS 副本保留作为应急下载源。
+## 11. 0.1.8 修复：关掉登录弹窗后「再点扫码登录没反应」
+
+用户报障（0.1.7 真机）：**点「扫码登录」弹出窗口 → 手动点 X 关掉 → 再点「扫码登录」，窗口不再出现，按钮一直显示「请在弹窗中扫码…」。**
+
+### 根因（链式三处）
+
+| 层 | 位置 | 问题 |
+| --- | --- | --- |
+| 渲染层 | `PlatformPublish.tsx` 的 `login(id)` / 按钮 `disabled={busy === 'login:' + p.id}` | 只要 `window.fcm.platform.login()` 的 Promise 不 settle，`busy` 永远清不掉，按钮永久 disabled ⇒ 表现为「点了没反应」 |
+| 主进程 | `platform.ts` 的 `doLogin()` 轮询 `await this.attachAndEval(win, PROBE_SCRIPT)` | 用户关窗后 `webContents` 已销毁，CDP `executeJavaScript`/`debugger` 调用可能**永不 settle** ⇒ login 挂死、轮询挂到 180s 超时都回不来 |
+| 串行锁 | `runExclusive(platform, task)` 把上一次的 Promise 存进 `this.locks` | 上一次 login 不结束，下一次 login 永远排队等 ⇒ **新的登录窗口根本不会被创建** |
+
+### 修法（桌面端专属，无服务端改动）
+
+1. `platform.ts` 新增 `private async untilClosed<T>(win, task): Promise<T | null>`：窗口关闭事件与 task 赛跑，窗口一关立即返回 `null`（并摘掉监听，避免泄漏）。
+2. `navigate` 的就绪探针、`attachAndEval` 的取值都走 `untilClosed`；`attachAndEval` 额外加 `EVAL_TIMEOUT_MS = 20000` 上限，超时按「无结果」返回（日志留痕），彻底杜绝「webContents 卡死 → 整条链路挂住」。
+3. `doLogin` 记录 `userClosed`（`win.once('closed')`）：窗口一关立刻跳出轮询，返回中文提示「登录窗口已关闭（未完成登录），可再次点击「扫码登录」重试」；`sleep(LOGIN_POLL_MS)` 也走 `untilClosed`。
+4. `checkStatus` 增加空探针保护：探针为 `null`（页面无响应）时返回「页面没有响应，未能检查登录态」，不再落地到 `judgeLogin(null)` 的「默认已登录」分支（旧代码会把无响应误判成已登录）。
+5. 渲染层新增 `withTimeout(promise, 210000, '登录等待超时…')` 兜底：即使将来主进程再出现挂住的情况，按钮也会在 3.5 分钟内恢复可点。
+
+### 验证
+
+- `scripts/check-desktop-p24.mjs` 增加 7 条断言（untilClosed 存在、navigate 探针受保护、EVAL_TIMEOUT_MS、doLogin 中文提示与 userClosed、untilClosed 包住 sleep、checkStatus 空探针、页面 withTimeout）⇒ 现 **66 项 OK**。
+- 真机复现脚本（Electron 38 独立探针，直接 require 打包后的 `platform.ts`）：`login('xiaohongshu')` 后第 6 秒关闭窗口 → **login 在 6611ms 立即返回**，错误为「登录窗口已关闭…」；紧接着第二次 `login('xiaohongshu')` → **`WIN_CREATED 2`（新窗口确实弹出来了）**，3527ms 内返回同一条提示 ⇒ 锁已释放、按钮可再次使用。
+
+### 0.1.8 发布记录（2026-11-09 01:00）
+
+- 安装包 `fcmediaagent-ai-employee-0.1.8-win-x64.exe` **127,748,692 B**，sha512 `YFAw5Na9/lDyLvpsZAuO50THm+jyt7m1EVsryQ+ig00mpg2hYfOKND/m5UKHTxi4JFpQOt0Ht6zYSqulSBYd+A==`。
+- 已发布 `https://updates.fcmediaagent.com/desktop/latest/latest.yml`（yml=200 exe=206，服务器 `/opt/fcmediaagent/updates/desktop/latest/` 现有 0.1.0–0.1.8）。
+- 全量 `scripts/verify.ps1 -Smoke`：23 步全 OK（含 P24 desktop check 66 项、T-28 本地能力层 34s 全绿）。
+- 本机已静默安装并校验 asar 内 `VERSION=0.1.8`。
+- 服务端无改动，本次不需要生产部署。
