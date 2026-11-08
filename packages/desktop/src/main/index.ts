@@ -22,6 +22,11 @@ function settingsPath() {
   return join(app.getPath('userData'), 'settings.json')
 }
 
+/** 本机回环地址：只可能是开发/冒烟时留下的，装好的客户端连它必然 fetch failed */
+function isLoopbackBase(base: string) {
+  return /^https?:\/\/(127\.0\.0\.1|localhost|\[::1\])(:\d+)?(\/|$)/i.test(String(base || '').trim())
+}
+
 function loadSettings() {
   try {
     if (existsSync(settingsPath())) settings = { ...settings, ...JSON.parse(readFileSync(settingsPath(), 'utf8')) }
@@ -29,6 +34,13 @@ function loadSettings() {
     console.error('[settings] load failed', e)
   }
   if (!settings.apiBase) settings.apiBase = DEFAULT_API_BASE
+  // 0.1.10：安装版里如果残留了 127.0.0.1/localhost 的服务端地址（开发、冒烟测试的历史配置），
+  // 用户会遇到「auth:sms-send: TypeError: fetch failed」这种看不出原因的报错，这里直接纠正回默认地址。
+  if (!process.env.FCM_API_BASE && app.isPackaged && isLoopbackBase(settings.apiBase)) {
+    console.warn('[settings] 本地回环地址在安装版不可用，已改回默认服务端：' + settings.apiBase + ' -> ' + DEFAULT_API_BASE)
+    settings.apiBase = DEFAULT_API_BASE
+    saveSettings()
+  }
 }
 
 function saveSettings() {
@@ -97,7 +109,14 @@ async function api(path: string, init: RequestInit & { auth?: boolean } = {}) {
   }
   const headers: Record<string, string> = { 'content-type': 'application/json', ...(init.headers as any) }
   if (init.auth !== false && settings.token) headers.authorization = 'Bearer ' + settings.token
-  const res = await fetch(settings.apiBase + path, { ...init, headers })
+  let res: Response
+  try {
+    res = await fetch(settings.apiBase + path, { ...init, headers })
+  } catch (e: any) {
+    // fetch 的网络层失败（DNS/连接被拒/断网）原始信息只有 "fetch failed"，用户完全无从下手
+    const reason = String(e?.cause?.message || e?.message || e)
+    throw new Error('连不上服务器（' + settings.apiBase + '）：' + reason + '。请检查网络，或到「设置」里更换服务器地址')
+  }
   const text = await res.text()
   let body: any = null
   try { body = text ? JSON.parse(text) : null } catch { body = text }

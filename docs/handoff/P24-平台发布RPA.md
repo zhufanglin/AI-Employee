@@ -264,3 +264,35 @@ return Promise.race([task.catch(() => null), closed])
 - 全量 `scripts/verify.ps1 -Smoke`：23 步 VERIFY GREEN（P24 desktop check 70 项、T-28 本地能力层 51s）。
 - 本机已静默安装并校验 asar 内 `VERSION=0.1.9`。
 - 服务端无改动，本次不需要生产部署。
+## 13. 0.1.10 修复：「收短信验证码」报 `auth:sms-send: TypeError: fetch failed`
+
+### 现象
+用户在本机点「发送验证码」，客户端弹错：
+
+```
+Error invoking remote method 'auth:sms-send': TypeError: fetch failed
+```
+
+生产 API 是好的（`https://ai.fcmediaagent.com/api/health` → `{"status":"ok","db":"up"}`），所以不是服务端问题。
+
+### 根因
+`%APPDATA%\中科元晟 AI员工\settings.json` 里残留了开发/冒烟时期的 **`apiBase: "http://127.0.0.1:3000/api"`**。
+安装版客户端带着这个地址去请求本机 3000 端口，本机并没有起服务 → Node `fetch` 抛 `TypeError: fetch failed`；主进程 `api()` 原样把它抛给渲染层，于是界面只显示这句英文，用户完全看不出是「服务器地址被改坏了」。
+
+这个配置是历史上用 `FCM_API_BASE`/冒烟脚本调试时留下的（同一份 settings.json 里还有旧 token 与 `onboarded: true`），只要用户曾经在这台机器上跑过开发版，就会踩到。
+
+### 修法（两层）
+1. **配置层（立即）**：把这台机器 settings.json 的 `apiBase` 改回 `https://ai.fcmediaagent.com/api`，用户当场恢复，不用装新版。
+2. **代码层（0.1.10，防止别人再踩）** — `packages/desktop/src/main/index.ts`：
+   - 新增 `isLoopbackBase(base)`（匹配 `127.0.0.1` / `localhost` / `[::1]`）；
+   - `loadSettings()` 末尾：`app.isPackaged` 且没设 `FCM_API_BASE` 且地址是回环 → 打日志「本地回环地址在安装版不可用，已改回默认服务端：<旧> -> <默认>」并写回默认地址；
+   - `api()` 的 `fetch` 包 `try/catch`，网络层失败改抛中文：**「连不上服务器（<base>）：<原因>。请检查网络，或到「设置」里更换服务器地址」**，让用户知道该去改哪里。
+
+### 验证
+- `scripts/check-desktop-p24.mjs` 新增 2 条断言（回环地址自动纠正 + 可读中文网络错误）→ `P24 desktop check OK (72 checks)`。
+- 全量 `scripts/verify.ps1 -Smoke` → **VERIFY GREEN**（23 步，T-28 本地能力层 49s）。
+- 本机静默安装 0.1.10 后 asar 校验 `VERSION=0.1.10`。
+
+### 发布记录
+- 安装包：`fcmediaagent-ai-employee-0.1.10-win-x64.exe`，**127,749,017 B**，sha512 `ElDylSIwnrX41Zh8DCLXozIErJuaMQJDaqnbEjM9b2jJqP81MlF7KEAMKWYVLvOEqgQE+fdcHU/Mr4p1KgMjcA==`（releaseDate 2026-11-08T18:40:39.169Z）。
+- 已发布到 `https://updates.fcmediaagent.com/desktop/latest/`（`yml=200 exe=206`）；桌面副本 `C:\Users\30290\Desktop\fcmediaagent-ai-employee-0.1.10-win-x64.exe`；本机已静默安装。

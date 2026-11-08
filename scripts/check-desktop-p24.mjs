@@ -80,6 +80,9 @@ for (const name of ['platform_publish', 'platform_status', 'platform_stats']) {
   check('main 拦截 ' + name, !!main && main.includes("'" + name + "'"))
 }
 check('main 在 /capabilities/run 前分流', !!main && main.includes("path === '/capabilities/run'"))
+// 0.1.10：安装版残留 127.0.0.1 服务端地址会直接 fetch failed，必须自动纠正并给可读报错
+check('main 纠正安装版的回环服务端地址', !!main && main.includes('isLoopbackBase') && main.includes('app.isPackaged') && main.includes('已改回默认服务端'))
+check('main 网络失败给出可读中文提示', !!main && main.includes('连不上服务器（') && main.includes('请检查网络，或到「设置」里更换服务器地址'))
 check("Shell Tab 含 'platform'", !!shell && shell.includes("'platform'"))
 check('Shell 含 📤 平台发布 导航', !!shell && shell.includes('📤 平台发布'))
 check('Shell 渲染 PlatformPublish', !!shell && shell.includes('<PlatformPublish />'))
