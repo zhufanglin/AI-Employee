@@ -65,3 +65,4 @@ _cu_*.png
 @AutomationLog.txt
 *.executor.json
 _deploy*.ps1
+_deploy*.sh
