@@ -174,6 +174,8 @@ Step "smoke: T-19 员工执行器" {
     & $node "scripts\smoke-p19-memory-semantic.mjs"
     if ($LASTEXITCODE -ne 0) { $script:code = $LASTEXITCODE; return }
     & $node "scripts\smoke-p20-memory.mjs"
+    if ($LASTEXITCODE -ne 0) { $script:code = $LASTEXITCODE; return }
+    & $node "scripts\smoke-p21-memory-dedupe.mjs"
     $script:code = $LASTEXITCODE
   }
 }

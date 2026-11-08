@@ -1,0 +1,102 @@
+[
+  {
+    "p": "packages/server/src/capabilities/capabilities/content.ts",
+    "size": 2614,
+    "mtime": 1793889330879
+  },
+  {
+    "p": "packages/server/src/capabilities/capabilities/customer.ts",
+    "size": 1670,
+    "mtime": 1793889288201
+  },
+  {
+    "p": "packages/server/src/capabilities/capabilities/docs-write.ts",
+    "size": 16414,
+    "mtime": 1794058465241
+  },
+  {
+    "p": "packages/server/src/capabilities/capabilities/docs.ts",
+    "size": 3890,
+    "mtime": 1794030690948
+  },
+  {
+    "p": "packages/server/src/capabilities/capabilities/employee-tools.ts",
+    "size": 12084,
+    "mtime": 1794060638409
+  },
+  {
+    "p": "packages/server/src/capabilities/capabilities/files.ts",
+    "size": 15261,
+    "mtime": 1794058717108
+  },
+  {
+    "p": "packages/server/src/capabilities/capabilities/llm.ts",
+    "size": 1303,
+    "mtime": 1793889344373
+  },
+  {
+    "p": "packages/server/src/capabilities/capabilities/media-tools.ts",
+    "size": 26435,
+    "mtime": 1794058726574
+  },
+  {
+    "p": "packages/server/src/capabilities/capabilities/memory-maintenance.ts",
+    "size": 9080,
+    "mtime": 1794129226295
+  },
+  {
+    "p": "packages/server/src/capabilities/capabilities/memory-semantic.ts",
+    "size": 12994,
+    "mtime": 1794126354341
+  },
+  {
+    "p": "packages/server/src/capabilities/capabilities/memory-tools.ts",
+    "size": 17083,
+    "mtime": 1794126422224
+  },
+  {
+    "p": "packages/server/src/capabilities/capabilities/search.ts",
+    "size": 5117,
+    "mtime": 1794027239367
+  },
+  {
+    "p": "packages/server/src/capabilities/capabilities/vision.ts",
+    "size": 5291,
+    "mtime": 1794060840972
+  },
+  {
+    "p": "packages/server/src/capabilities/capabilities/web-batch.ts",
+    "size": 3228,
+    "mtime": 1794058356577
+  },
+  {
+    "p": "packages/server/src/capabilities/capabilities/web-extract-guard.test.cjs",
+    "size": 2098,
+    "mtime": 1793911800835
+  },
+  {
+    "p": "packages/server/src/capabilities/capabilities/web-extract.ts",
+    "size": 6675,
+    "mtime": 1793911800833
+  },
+  {
+    "p": "packages/server/src/capabilities/capability.controller.ts",
+    "size": 1157,
+    "mtime": 1793889346635
+  },
+  {
+    "p": "packages/server/src/capabilities/capability.module.ts",
+    "size": 402,
+    "mtime": 1793889349367
+  },
+  {
+    "p": "packages/server/src/capabilities/capability.service.ts",
+    "size": 4632,
+    "mtime": 1794129246483
+  },
+  {
+    "p": "packages/server/src/capabilities/capability.types.ts",
+    "size": 578,
+    "mtime": 1793889268637
+  }
+]

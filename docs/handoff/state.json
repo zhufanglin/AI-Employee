@@ -1,7 +1,7 @@
 {
   "project": "中科元晟 AI员工 0.4.29 完全复刻",
   "version": 1,
-  "updatedAt": "2026-11-08T09:09:44.652Z",
+  "updatedAt": "2026-11-08T09:30:41.973Z",
   "phase": "P10（先能用三件事）派工完成，看板 29/33",
   "phaseGoal": "用户要求先能用、定价后置：T-31 桌面端出图出片 / T-32 员工多步干活 / T-33 成本护栏 已派 Codex；dsh-lead 推主线（生产可用性收口 + 复核），T-11 渠道仍 blocked(env)。",
   "owners": {
@@ -2910,6 +2910,37 @@
       },
       "finishedAt": "2026-11-08T09:09:44.651Z",
       "result": "查重合并 + 追问改写上线，单测47项/生产13项GREEN"
+    },
+    {
+      "id": "T-49",
+      "title": "P21 存量重复记忆清理（报告/执行两段式，保留较早条目）",
+      "status": "done",
+      "owner": "dsh-lead",
+      "scope": [
+        "packages/server/src/capabilities"
+      ],
+      "accept": "单测26项+全量VERIFY GREEN+生产验收14项GREEN，清理不误删无关记忆",
+      "blockedBy": [],
+      "createdAt": "2026-11-08T09:30:34.020Z",
+      "history": [
+        {
+          "at": "2026-11-08T09:30:41.849Z",
+          "by": "dsh-lead",
+          "what": "claim"
+        },
+        {
+          "at": "2026-11-08T09:30:41.973Z",
+          "by": "dsh-lead",
+          "what": "done: 完成"
+        }
+      ],
+      "lease": {
+        "at": "2026-11-08T09:30:41.848Z",
+        "heartbeat": "2026-11-08T09:30:41.849Z",
+        "reason": null
+      },
+      "finishedAt": "2026-11-08T09:30:41.971Z",
+      "result": "完成"
     }
   ],
   "primary": "dsh-lead",

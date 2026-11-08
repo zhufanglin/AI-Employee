@@ -16,6 +16,7 @@ import { descriptors as mediaDescriptors, handlers as mediaHandlers } from "./ca
 import { descriptors as visionDescriptors, buildVisionHandlers } from "./capabilities/vision";
 import { descriptors as employeeDescriptors, buildEmployeeHandlers } from "./capabilities/employee-tools";
 import { descriptors as memoryDescriptors, buildMemoryHandlers } from "./capabilities/memory-tools";
+import { descriptors as memoryMaintenanceDescriptors, buildMemoryMaintenanceHandlers } from "./capabilities/memory-maintenance";
 import { ProvidersService } from "../providers/providers.service";
 
 /**
@@ -25,7 +26,7 @@ import { ProvidersService } from "../providers/providers.service";
 @Injectable()
 export class CapabilityService {
   private readonly logger = new Logger(CapabilityService.name);
-  private readonly descriptors: CapabilityDescriptor[] = [webExtractDescriptor, webBatchDescriptor, ...contentDescriptors, ...customerDescriptors, ...llmDescriptors, searchDescriptor, ...fileDescriptors, ...docDescriptors, ...docWriteDescriptors, ...mediaDescriptors, ...visionDescriptors, ...employeeDescriptors, ...memoryDescriptors];
+  private readonly descriptors: CapabilityDescriptor[] = [webExtractDescriptor, webBatchDescriptor, ...contentDescriptors, ...customerDescriptors, ...llmDescriptors, searchDescriptor, ...fileDescriptors, ...docDescriptors, ...docWriteDescriptors, ...mediaDescriptors, ...visionDescriptors, ...employeeDescriptors, ...memoryDescriptors, ...memoryMaintenanceDescriptors];
   private readonly handlers: Record<string, CapabilityHandler>;
 
   constructor(private readonly prisma: PrismaService, private readonly toolapi: ToolapiService, private readonly providers: ProvidersService) {
@@ -43,6 +44,7 @@ export class CapabilityService {
       ...buildVisionHandlers(providers),
       ...buildEmployeeHandlers(prisma),
       ...buildMemoryHandlers(prisma, providers),
+      ...buildMemoryMaintenanceHandlers(prisma, providers),
     } as Record<string, CapabilityHandler>;
   }
 
