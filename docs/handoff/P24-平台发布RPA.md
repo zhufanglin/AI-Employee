@@ -177,3 +177,9 @@
 
 `scripts/check-desktop-p24.mjs` 增加 4 条断言把这层固定住（PLATFORM_UA / setUserAgent / READY_SCRIPT 轮询 / 不再出现旧的「打开页面超时」文案），
 现为 59 项。
+
+0.1.7 发布记录（2026-11-09 00:25）：
+
+- 安装包 `fcmediaagent-ai-employee-0.1.7-win-x64.exe` **127,747,896 B**，sha512 `wea8zzHGoN9BimWfkYMHyzvTWpObA0B78AQu9qUDgJAiZiFxy/nltFbygNQ+O6XlQccWuwru0YlQ/bADqjzs4Q==`。
+- 已发布 `https://updates.fcmediaagent.com/desktop/latest/latest.yml`（yml=200 exe=206），桌面端已静默升级到 0.1.7 并校验 asar 内 `VERSION=0.1.7`、`out/main/index.js` 含 `setUserAgent` 与 `READY_SCRIPT`。
+- 备份链路：发布前因本机出口 22 端口一度不可达，先把安装包与 latest.yml 传到 OSS 公网（`https://zhongke001.oss-cn-beijing.aliyuncs.com/desktop/`）以便手动下载安装；22 恢复后正式发布成功，OSS 副本保留作为应急下载源。
