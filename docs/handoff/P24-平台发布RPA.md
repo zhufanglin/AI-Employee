@@ -133,6 +133,8 @@
 - 生产部署：`p24.tgz` 277,026 B / 338 文件 → `/opt/fcmediaagent` → `app/dist.bak.20261108190426` 备份换 dist、`worker/tool-loop.mjs` 换新 → 重启两服务 → `API=active WORKER=active HEALTH=200`。
 - 生产验收：`P24 PROD VERIFY GREEN (16 checks)`（能力目录三项 `category=platform`；publish/status/stats 全部 `success:false` + 同一句中文提示；缺参与未知平台同样拦截）。
 - 客户端：桌面 `0.1.6` 含「📤 平台发布」页；安装后在页面里逐个平台点「扫码登录」，登录态存在 `persist:platform-<id>` partition。
+  - 安装包 `fcmediaagent-ai-employee-0.1.6-win-x64.exe` **127,747,539 B**，sha512 `0P7R3lhad5HQwg1BhmXyL/VrJm496ljyy2/r/g9E/nLMbbDvRIrFvtHPErjgPO3soQFvsGxZrhKO1QdNQpqLAw==`
+  - 已发布 `https://updates.fcmediaagent.com/desktop/latest/latest.yml`（yml=200 exe=206），老客户端可从 0.1.5 静默升级（`quitAndInstall(true, true)`）。
 
 真机校准步骤（每平台一次，约 10 分钟）：
 

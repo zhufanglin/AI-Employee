@@ -1,0 +1,37 @@
+[
+  {
+    "p": "packages/desktop/src/main/executor.ts",
+    "size": 8731,
+    "mtime": 1794036710146
+  },
+  {
+    "p": "packages/desktop/src/main/gateway.ts",
+    "size": 7089,
+    "mtime": 1793800107393
+  },
+  {
+    "p": "packages/desktop/src/main/index.ts",
+    "size": 27271,
+    "mtime": 1794134979353
+  },
+  {
+    "p": "packages/desktop/src/main/platform-drivers.ts",
+    "size": 5009,
+    "mtime": 1794135100785
+  },
+  {
+    "p": "packages/desktop/src/main/platform.ts",
+    "size": 31526,
+    "mtime": 1794135237437
+  },
+  {
+    "p": "packages/desktop/src/main/update.ts",
+    "size": 4117,
+    "mtime": 1794025118787
+  },
+  {
+    "p": "packages/desktop/src/main/workspace-assets.ts",
+    "size": 3461,
+    "mtime": 1793800169364
+  }
+]
