@@ -1,4 +1,5 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, Query } from "@nestjs/common";
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post, Put, Query } from "@nestjs/common";
+import { MemoryCleanupService } from "../capabilities/memory-cleanup.service";
 import { Roles } from "../common/decorators";
 import { AdminExtraService } from "./admin-extra.service";
 import { AdminService } from "./admin.service";
@@ -14,7 +15,23 @@ export class AdminExtraController {
   constructor(
     private readonly extra: AdminExtraService,
     private readonly admin: AdminService,
+    private readonly memoryCleanup: MemoryCleanupService,
   ) {}
+
+  // ---------- 长期记忆清理（P22 定时任务） ----------
+  /** 定时清理的状态：开关、周期、下次执行、上次结果。 */
+  @Get("memory-cleanup")
+  memoryCleanupStatus() {
+    return this.memoryCleanup.status();
+  }
+
+  /** 立即手动跑一轮（默认 apply；body.mode=report 只出报告）。 */
+  @Post("memory-cleanup/run")
+  @HttpCode(HttpStatus.OK)
+  memoryCleanupRun(@Body() body: any) {
+    const mode = body && body.mode === "report" ? "report" : "apply";
+    return this.memoryCleanup.runOnce("管理员手动", mode);
+  }
 
   // ---------- 站点 / 集成 ----------
   @Get("site-config")
