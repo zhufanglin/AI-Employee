@@ -1,6 +1,15 @@
 import { BadRequestException } from "@nestjs/common";
 import type { CapabilityContext, CapabilityDescriptor, CapabilityHandler } from "../capability.types";
-import { SEMANTIC_LIMITS, combineScores, expandQuery, rerank, semanticEnabled } from "./memory-semantic";
+import {
+  REWRITE_CONTEXT_MAX,
+  SEMANTIC_LIMITS,
+  combineScores,
+  expandQuery,
+  judgeMemory,
+  rerank,
+  rewriteQuery,
+  semanticEnabled,
+} from "./memory-semantic";
 
 /**
  * 长期记忆能力（P18）。
@@ -10,6 +19,7 @@ import { SEMANTIC_LIMITS, combineScores, expandQuery, rerank, semanticEnabled } 
  * - 召回：Prisma contains（MySQL LIKE）取候选，先取最近 200 条，避免历史长大后全表扫描。
  * - 排序：关键词分（命中次数 + 标题权重 + 标签权重 + 新鲜度）与语义分（小模型重排 0–100）加权合并，
  *   语义部分见 memory-semantic.ts（P19：没有 embedding 凭证，用「查询扩展 + 模型重排」实现语义检索）。
+ * - P20：写入前查重（duplicate 不新增 / merge 合并正文）、检索支持追问改写（context 补全指代）；
  * - 语义三步（扩展 → 召回补齐 → 重排）任何一步失败都自动退回纯关键词排序，检索永远可用；
  *   传 mode=keyword 可强制关掉语义。候选补齐见 memory_search 里的注释：光靠扩展词做 LIKE，
  *   遇到「查结汇、记忆里写回款走 Payoneer」这种纯语义查询会一条都召不回来。
@@ -21,6 +31,10 @@ const MAX_TAGS = 512;
 const CANDIDATE_ROWS = 200;
 /** 关键词召回不够时，用最近的记忆把重排候选位补满 */
 const SUPPLEMENT_ROWS = 60;
+/** 写入前最多拿几条已有记忆给模型比对（多了变慢，少了容易漏掉改写过的同义记忆） */
+const DEDUPE_CANDIDATES = 6;
+/** 字面完全对不上时（「赵姐只收季度付」vs「赵姐 prefer 季度结账」），用最近的记忆补齐比对候选 */
+const DEDUPE_SUPPLEMENT_ROWS = 12;
 const KINDS = new Set(["note", "fact", "preference", "lesson"]);
 
 function str(value: any, name: string, max?: number): string {
@@ -94,28 +108,59 @@ function shape(row: any) {
   };
 }
 
+function iso(value: any): any {
+  return value instanceof Date ? value.toISOString() : value;
+}
+
+/** 合并标签（逗号分隔），去重后按总长度 512 截断 */
+function mergeTagStrings(existing: any, incoming: string | null): string | null {
+  const list: string[] = [];
+  const push = (raw: any) => {
+    for (const item of String(raw || "").split(",")) {
+      const tag = item.trim();
+      if (tag && !list.includes(tag)) list.push(tag);
+    }
+  };
+  push(existing);
+  push(incoming);
+  if (!list.length) return null;
+  const out: string[] = [];
+  let length = 0;
+  for (const tag of list) {
+    const next = length ? length + 1 + tag.length : tag.length;
+    if (next > MAX_TAGS) break;
+    out.push(tag);
+    length = next;
+  }
+  return out.length ? out.join(",") : null;
+}
+
 export const descriptors: CapabilityDescriptor[] = [
   {
     name: "memory_save",
     title: "记住一件事（长期记忆）",
     category: "memory",
-    description: "把值得长期记住的信息写进记忆库：客户偏好、报价口径、项目结论、踩过的坑",
+    description:
+      "把值得长期记住的信息写进记忆库：客户偏好、报价口径、项目结论、踩过的坑。会自动查重：意思相同的记忆不重复写，同一主题的新事实合并进原记忆",
     params: {
       content: "必填，要记住的内容（不超过 4000 字）",
       title: "可选，短标题（不超过 191 字）",
       tags: "可选，标签，逗号分隔或数组，最多 10 个",
       kind: "可选，类型：note（默认）|fact|preference|lesson",
+      dedupe: "可选，auto（默认，先和已有记忆比对再决定新增/合并）| off（直接新增，不查重）",
     },
   },
   {
     name: "memory_search",
     title: "回忆（语义检索长期记忆）",
     category: "memory",
-    description: "检索记忆库，按语义相关性返回最相关的若干条记忆（字面不同、意思相近也能召回）",
+    description:
+      "检索记忆库，按语义相关性返回最相关的若干条记忆（字面不同、意思相近也能召回）。追问式检索（「那她呢」）会自动结合最近对话改写查询",
     params: {
       query: "必填，要回忆的问题或关键词，例如「这个客户的价格怎么收」",
       limit: "可选，返回条数，默认 5，最多 20",
       mode: "可选，auto（默认，语义+关键词）| keyword（只用关键词，更快更省）",
+      context: "可选，最近几轮对话原文（不超过 " + REWRITE_CONTEXT_MAX + " 字）；普通的追问系统会自动带入，一般不用手填",
     },
   },
   {
@@ -142,24 +187,87 @@ export function buildMemoryHandlers(prisma: any, providers?: any): Record<string
       const tags = normalizeTags(ctx.params.tags);
       const kindRaw = optionalStr(ctx.params.kind, "kind", 20) || "note";
       if (!KINDS.has(kindRaw)) throw new BadRequestException("kind 只能是 note/fact/preference/lesson");
+      const dedupeRaw = optionalStr(ctx.params.dedupe, "dedupe", 16) || "auto";
+      if (dedupeRaw !== "auto" && dedupeRaw !== "off") throw new BadRequestException("dedupe 只能是 auto 或 off");
       const employeeSlug = optionalStr(ctx.params.employeeSlug, "employeeSlug", 64);
       const sourceTaskId = optionalStr(ctx.params.sourceTaskId, "sourceTaskId", 64);
+
+      // P20 第一步：查重。先用关键词召回「可能是同一件事」的记忆；字面对不上时用最近的记忆补齐候选，
+      // 因为「赵姐只收季度付」和「赵姐 prefer 季度结账」这种改写，LIKE 一条都召不回来。
+      const useDedupe = !!providers && semanticEnabled() && dedupeRaw === "auto";
+      if (useDedupe) {
+        const terms = splitTerms(content + " " + (title || "")).slice(0, 8);
+        const probes: any[] = terms.length
+          ? await prisma.agentMemory.findMany({
+              where: {
+                userId: ctx.userId,
+                OR: terms.flatMap((term) => [{ content: { contains: term } }, { title: { contains: term } }, { tags: { contains: term } }]),
+              },
+              orderBy: { createdAt: "desc" },
+              take: DEDUPE_CANDIDATES,
+            })
+          : [];
+        if (probes.length < DEDUPE_CANDIDATES) {
+          const picked = new Set(probes.map((row: any) => row.id));
+          const recent = await prisma.agentMemory.findMany({
+            where: { userId: ctx.userId },
+            orderBy: { createdAt: "desc" },
+            take: DEDUPE_SUPPLEMENT_ROWS,
+          });
+          for (const row of recent) {
+            if (picked.has(row.id)) continue;
+            probes.push(row);
+            picked.add(row.id);
+            if (probes.length >= DEDUPE_CANDIDATES) break;
+          }
+        }
+        const verdict = probes.length
+          ? await judgeMemory(providers, content, probes.map((row: any) => ({ id: row.id, title: row.title, text: row.content })))
+          : null;
+        const hit = verdict?.id ? probes.find((row: any) => row.id === verdict.id) : null;
+        if (hit) {
+          if (verdict?.relation === "duplicate") {
+            await prisma.agentMemory.updateMany({
+              where: { id: hit.id, userId: ctx.userId },
+              data: { hitCount: { increment: 1 }, tags: mergeTagStrings(hit.tags, tags) },
+            });
+            return { id: hit.id, kind: hit.kind, title: hit.title, createdAt: iso(hit.createdAt), action: "duplicate" };
+          }
+          if (verdict?.relation === "merge") {
+            const merged = (verdict.merged ? verdict.merged.trim() : String(hit.content || "").trim() + "\n" + content).slice(0, MAX_CONTENT);
+            const mergedTitle = title || hit.title || null;
+            const mergedTags = mergeTagStrings(hit.tags, tags);
+            await prisma.agentMemory.updateMany({
+              where: { id: hit.id, userId: ctx.userId },
+              data: { content: merged, title: mergedTitle, tags: mergedTags },
+            });
+            return { id: hit.id, kind: hit.kind, title: mergedTitle, createdAt: iso(hit.createdAt), action: "merged", content: merged };
+          }
+        }
+      }
+
       const row = await prisma.agentMemory.create({
         data: { userId: ctx.userId, kind: kindRaw, title, content, tags, employeeSlug, sourceTaskId },
       });
-      return { id: row.id, kind: row.kind, title: row.title, createdAt: row.createdAt instanceof Date ? row.createdAt.toISOString() : row.createdAt };
+      return { id: row.id, kind: row.kind, title: row.title, createdAt: iso(row.createdAt), action: "created" };
     },
 
     memory_search: async (ctx: CapabilityContext) => {
       const query = str(ctx.params.query, "query", 200);
       const limit = Math.min(Math.max(Math.trunc(Number(ctx.params.limit) || 5), 1), 20);
       const mode = optionalStr(ctx.params.mode, "mode", 16) || "auto";
-      const baseTerms = splitTerms(query);
+      const context = optionalStr(ctx.params.context, "context", REWRITE_CONTEXT_MAX);
       const useSemantic = !!providers && semanticEnabled() && mode !== "keyword";
-      if (!baseTerms.length) throw new BadRequestException("query 至少要有一个关键词");
+      if (!splitTerms(query).length) throw new BadRequestException("query 至少要有一个关键词");
+
+      // P20 多轮追问改写：「那她呢」「上面那个方案」这类追问我，先结合最近对话补全成完整问题，
+      // 否则扩展和重排拿到的只是一个代词（改写失败/无需改写时 rewritten 为 null，继续用原问题）。
+      const rewritten = useSemantic && context ? await rewriteQuery(providers, query, context) : null;
+      const effectiveQuery = rewritten || query;
+      const baseTerms = splitTerms(effectiveQuery);
 
       // 语义第一步：查询扩展。「这个客户价格怎么收」扩成 价格/报价/收费… 才能召回「报价只接受季度付」
-      const expanded = useSemantic ? await expandQuery(providers, query) : [];
+      const expanded = useSemantic ? await expandQuery(providers, effectiveQuery) : [];
       const terms = Array.from(new Set([...baseTerms, ...expanded])).slice(0, 16);
       const rows = await prisma.agentMemory.findMany({
         where: { userId: ctx.userId, OR: terms.flatMap((term) => [{ content: { contains: term } }, { title: { contains: term } }, { tags: { contains: term } }]) },
@@ -193,7 +301,7 @@ export function buildMemoryHandlers(prisma: any, providers?: any): Record<string
 
       // 语义第三步：模型重排（0–100 相关度），候选补齐进来的条目关键词分为 0，只能靠语义分进榜
       const semanticScores: Map<string, number> | null = useSemantic && candidates.length
-        ? await rerank(providers, query, candidates.map((entry: any) => ({ id: entry.row.id, title: entry.row.title, text: entry.row.content })))
+        ? await rerank(providers, effectiveQuery, candidates.map((entry: any) => ({ id: entry.row.id, title: entry.row.title, text: entry.row.content })))
         : null;
       const maxKeyword = candidates.reduce((max: number, entry: any) => Math.max(max, entry.keyword), 0);
       const ranked = candidates
@@ -213,6 +321,8 @@ export function buildMemoryHandlers(prisma: any, providers?: any): Record<string
       }
       return {
         query,
+        rewritten,
+        effectiveQuery,
         terms,
         expandedTerms: expanded,
         semantic: !!semanticScores,

@@ -1,6 +1,6 @@
 # 任务看板（自动生成，勿手改）
 
-> 生成时间 2026-11-07T15:57:40.641Z · 单一事实源 `docs/handoff/state.json`
+> 生成时间 2026-11-08T09:09:44.654Z · 单一事实源 `docs/handoff/state.json`
 
 **当前阶段**：P10（先能用三件事）派工完成，看板 29/33 —— 用户要求先能用、定价后置：T-31 桌面端出图出片 / T-32 员工多步干活 / T-33 成本护栏 已派 Codex；dsh-lead 推主线（生产可用性收口 + 复核），T-11 渠道仍 blocked(env)。
 
@@ -53,6 +53,7 @@
 | T-45 | P17 工具第三批：image_understand 看图 + 员工派活/查任务 + 定时任务创建/列表/删除 | done | dsh-lead | 11-07 14:26 | packages/server/src/capabilities, packages/worker, scripts |
 | T-46 | P18 长期记忆检索（记忆保存/搜索/列表/删除） | done | dsh-lead | 11-07 14:48 | packages/server/src/capabilities/capabilities/memory-tools.ts |
 | T-47 | P19 记忆语义检索（扩展+候选补齐+重排，关思考提速） | done | dsh-lead | 11-07 15:57 | packages/server/src/capabilities |
+| T-48 | P20 记忆自动去重/合并 + 多轮追问改写 | done | dsh-lead | 11-08 09:09 | packages/server/src/capabilities |
 
 **未完成任务详情**
 

@@ -163,6 +163,109 @@ export async function rerank(providers: any, query: string, items: { id: string;
   }
 }
 
+/**
+ * 多轮追问改写（P20）：把「那她呢」「上面说的那个客户」这类带指代的追问，
+ * 结合最近几轮对话补全成能独立检索的问题，否则语义检索拿到的只是一个代词。
+ */
+const REWRITE_TTL_MS = 10 * 60 * 1000;
+const REWRITE_CACHE_MAX = 300;
+const REWRITE_MAX_CHARS = 80;
+export const REWRITE_CONTEXT_MAX = 1200;
+
+const rewriteCache = new Map<string, { text: string; at: number }>();
+
+export function clearRewriteCache(): void {
+  rewriteCache.clear();
+}
+
+export async function rewriteQuery(providers: any, query: string, context: string): Promise<string | null> {
+  const history = String(context || "").trim().slice(-REWRITE_CONTEXT_MAX);
+  if (!providers || !semanticEnabled() || !history) return null;
+  const key = history.slice(-240) + "\u0000" + query;
+  const cached = rewriteCache.get(key);
+  if (cached && Date.now() - cached.at <= REWRITE_TTL_MS) return cached.text;
+  const prompt =
+    "你是检索改写助手。下面是用户与助手最近几轮对话，以及用户现在的问题。\n" +
+    "请把「现在的问题」改写成一句独立、完整、能单独拿去检索记忆库的中文问题：\n" +
+    "1) 「她 / 他 / 那个客户 / 上面那个方案 / 刚才说的」这类指代，必须按对话补全成具体名字或对象；\n" +
+    "2) 问题本身已经完整（没有任何指代）时，原样输出；\n" +
+    "3) 只输出改写后的问题本身，不要解释、不要引号、不要超过 " + REWRITE_MAX_CHARS + " 字。\n\n" +
+    "最近对话：\n" + history + "\n\n现在的问题：" + query;
+  try {
+    const text = await callModel(providers, prompt, 120);
+    const out = String(text || "")
+      .trim()
+      .split("\n")[0]
+      .trim()
+      .replace(/^["'“”]+|["'“”]+$/g, "")
+      .trim();
+    if (!out || out.length > REWRITE_MAX_CHARS || out === query) return null;
+    if (rewriteCache.size >= REWRITE_CACHE_MAX) {
+      const oldest = rewriteCache.keys().next().value;
+      if (oldest !== undefined) rewriteCache.delete(oldest);
+    }
+    rewriteCache.set(key, { text: out, at: Date.now() });
+    return out;
+  } catch (e: any) {
+    logger.warn("追问改写失败，按原问题检索：" + (e?.message ?? e));
+    return null;
+  }
+}
+
+export type MemoryMergeVerdict = {
+  relation: "duplicate" | "merge" | "different";
+  id?: string;
+  merged?: string;
+};
+
+const MERGE_MAX_CHARS = 1000;
+
+/**
+ * 写入前去重/合并判定（P20）：把新记忆与已有候选交给模型比对，
+ * 同义重复返回 duplicate（不新增），同主题有新事实返回 merge（给出合并后正文）。
+ * 任何异常都返回 null，调用方按原逻辑新增，绝不因为判定失败而丢记忆。
+ */
+export async function judgeMemory(
+  providers: any,
+  content: string,
+  candidates: { id: string; title?: string | null; text: string }[],
+): Promise<MemoryMergeVerdict | null> {
+  if (!providers || !semanticEnabled() || !candidates.length) return null;
+  const payload = candidates.map((item) => ({
+    id: item.id,
+    title: String(item.title || ""),
+    text: String(item.text || "").slice(0, 400),
+  }));
+  const prompt =
+    "你是记忆库管理员。下面是「新记忆」和「已有记忆」（JSON）。请判断新记忆与哪一条已有记忆是同一件事：\n" +
+    "- duplicate：意思完全相同，只是措辞不同，没有新增任何事实；\n" +
+    "- merge：同一对象/同一主题，但新记忆补充或更新了事实（新的偏好、新的报价、新的进展）；\n" +
+    "- different：讲的是不同的事。\n" +
+    "只输出 JSON 对象：{\"relation\":\"duplicate|merge|different\",\"id\":\"命中的已有记忆 id\",\"merged\":\"合并后的正文\"}；\n" +
+    "relation=merge 时 merged 必须保留两者全部具体事实（人名、数字、日期、金额、渠道），去掉重复表述，不超过 " +
+    MERGE_MAX_CHARS +
+    " 字；duplicate 和 different 时 merged 留空字符串。不要输出别的。\n\n新记忆：\n" +
+    content +
+    "\n\n已有记忆：\n" +
+    JSON.stringify(payload);
+  try {
+    const text = await callModel(providers, prompt, 900);
+    const parsed = extractJson(text, "{", "}");
+    const relation = parsed && typeof parsed.relation === "string" ? parsed.relation.trim() : "";
+    if (relation !== "duplicate" && relation !== "merge" && relation !== "different") return null;
+    if (relation === "different") return { relation };
+    const id = parsed && typeof parsed.id === "string" ? parsed.id.trim() : "";
+    if (!id || !candidates.some((item) => item.id === id)) return null;
+    if (relation === "duplicate") return { relation, id };
+    const merged = parsed && typeof parsed.merged === "string" ? parsed.merged.trim() : "";
+    if (!merged) return { relation: "merge", id };
+    return { relation: "merge", id, merged: merged.slice(0, MERGE_MAX_CHARS) };
+  } catch (e: any) {
+    logger.warn("记忆去重判定失败，按新增写入：" + (e?.message ?? e));
+    return null;
+  }
+}
+
 /** 合并关键词分与语义分（0–100 归一化）：关键词占 40%，语义占 60% */
 export function combineScores(keywordScore: number, maxKeywordScore: number, semanticScore: number | undefined): number {
   const normKeyword = maxKeywordScore > 0 ? (keywordScore / maxKeywordScore) * 100 : 0;
