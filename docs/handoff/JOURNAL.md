@@ -417,3 +417,5 @@ ode scripts/coord.mjs done T-40 --agent codex --note ...，并回一条 msg 给 
 - 2026-11-08T20:16:35.398Z | dsh-lead | SAVE | T-54 publish-queue.ts 完成（队列/校验/串行/补跑/崩溃恢复）；main+preload+types+Scheduled 页接线；smoke 47 项 + desktop check 32 项 GREEN；verify.ps1 已加两步；0.1.12 打包中
 - 2026-11-08T21:09:09.665Z | dsh-lead | SAVE | T-54 P26 定时发布队列完成，0.1.12 已发布+安装，verify GREEN，git 7ae4d11
 - 2026-11-08T21:09:10.099Z | dsh-lead | DONE | T-54 T-54 P26 定时发布（客户端本地队列 + 到点自动发 + 桌面页） —— P26 完成：客户端本地发布队列（状态机/持久化/崩溃恢复/串行/迟到标记），0.1.12 已发布 https://updates.fcmediaagent.com/desktop/latest/ 并静默安装，全量 verify GREEN，git 7ae4d11 已推送
+- 2026-11-08T21:14:41.097Z | dsh-lead | ADD | T-55 T-55 发布前置登录态预检 + 0.1.13
+- 2026-11-08T21:14:41.599Z | dsh-lead | CLAIM | T-55 T-55 发布前置登录态预检 + 0.1.13

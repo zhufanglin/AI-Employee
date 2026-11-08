@@ -951,6 +951,17 @@ export class PlatformManager {
         return '已打开 ' + driver.homeUrl
       })
 
+      // 未登录时后台会停在扫码登录页，后面每一步都会以「选择器未命中」失败，
+      // 用户看到的是一堆看不懂的选择器错误。这里先判一次登录态，给出能直接照做的中文提示。
+      await run('检查登录状态', async () => {
+        const probe = await this.attachAndEval<any>(w, PROBE_SCRIPT).catch(() => null)
+        const judged = probe ? this.judgeLogin(driver, probe) : { loggedIn: false }
+        if (!judged.loggedIn) {
+          throw new Error('还没有登录 ' + driver.name + '：请在「发布」页点「扫码登录」完成登录后再发布')
+        }
+        return '已登录' + (judged.nickname ? '（' + judged.nickname + '）' : '')
+      })
+
       await run('上传素材', async () => {
         const selector = await this.uploadFiles(w, platform, files)
         const detail = await this.waitUploadDone(w, platform)

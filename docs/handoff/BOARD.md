@@ -1,6 +1,6 @@
 # 任务看板（自动生成，勿手改）
 
-> 生成时间 2026-11-08T21:09:09.860Z · 单一事实源 `docs/handoff/state.json`
+> 生成时间 2026-11-08T21:14:41.410Z · 单一事实源 `docs/handoff/state.json`
 
 **当前阶段**：P10（先能用三件事）派工完成，看板 29/33 —— 用户要求先能用、定价后置：T-31 桌面端出图出片 / T-32 员工多步干活 / T-33 成本护栏 已派 Codex；dsh-lead 推主线（生产可用性收口 + 复核），T-11 渠道仍 blocked(env)。
 
@@ -60,6 +60,7 @@
 | T-52 | P24 平台发布 RPA（抖音/小红书/视频号，本机 Electron 自动化） | done | dsh-lead | 11-08 11:09 | packages/desktop/src/main |
 | T-53 | P25 平台作品数据快照 + P27 桌面文件/定时任务接线（0.1.11） | done | dsh-lead | 11-08 19:37 | packages/desktop |
 | T-54 | T-54 P26 定时发布（客户端本地队列 + 到点自动发 + 桌面页） | done | dsh-lead | 11-08 21:09 | - |
+| T-55 | T-55 发布前置登录态预检 + 0.1.13 | doing | dsh-lead | 11-08 21:14 | - |
 
 **未完成任务详情**
 
@@ -68,3 +69,8 @@
 - 验收：至少一条外部 IM 消息走通 网关→agent→计费→回复
 - 写作用域：packages/server/src/channels, packages/desktop/src/main
 - 断点：`docs/handoff/checkpoints/T-11.md`
+
+### T-55 · T-55 发布前置登录态预检 + 0.1.13
+- 状态：doing · 负责人：dsh-lead
+- 验收：-
+- 写作用域：-

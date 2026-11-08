@@ -51,6 +51,8 @@ check('platform.ts 用持久化 partition', !!platformSrc && /persist:platform-/
 check('platform.ts 用 CDP 设置文件输入', !!platformSrc && /DOM\.setFileInputFiles/.test(platformSrc))
 check('platform.ts 每步截图', !!platformSrc && /capturePage\(\)/.test(platformSrc))
 check('platform.ts 写截图目录 platform-logs', !!platformSrc && /platform-logs/.test(platformSrc))
+check('发布前先判登录态（避免选择器错误误导用户）', !!platformSrc && platformSrc.includes("run('检查登录状态'"))
+check('未登录提示可照做（点扫码登录）', !!platformSrc && platformSrc.includes('请在「发布」页点「扫码登录」完成登录后再发布'))
 check('platform-drivers.ts 存在', !!drivers, drivers ? driversFile : 'missing')
 for (const id of ['douyin', 'xiaohongshu', 'shipinhao']) {
   check('drivers 含平台 ' + id, !!drivers && new RegExp(id + ':\\s*\\{').test(drivers))
