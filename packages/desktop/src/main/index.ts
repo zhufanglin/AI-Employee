@@ -5,6 +5,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { GatewayManager } from './gateway'
 import { TaskExecutor } from './executor'
 import { initUpdater, updateStatus, checkForUpdates, downloadUpdate, quitAndInstall } from './update'
+import { PlatformManager } from './platform'
 
 const DEFAULT_API_BASE = process.env.FCM_API_BASE || 'https://ai.fcmediaagent.com/api'
 
@@ -15,6 +16,7 @@ let win: BrowserWindow | null = null
 let gateway: GatewayManager | null = null
 let heartbeatTimer: NodeJS.Timeout | null = null
 let executor: TaskExecutor | null = null
+let platform: PlatformManager | null = null
 
 function settingsPath() {
   return join(app.getPath('userData'), 'settings.json')
@@ -49,7 +51,50 @@ async function sendExecutionHeartbeat() {
   } catch (e) { console.warn('[employee-execution] heartbeat failed', e) }
 }
 
+// 本机专属能力：平台发布走用户电脑上的浏览器，服务端只做登记（见 docs/handoff/P24-平台发布RPA-契约.md）。
+const LOCAL_CAPABILITIES = new Set(['platform_publish', 'platform_status', 'platform_stats'])
+
+function toList(value: unknown): string[] {
+  if (Array.isArray(value)) return value.map((v) => String(v).trim()).filter(Boolean)
+  if (typeof value === 'string') return value.split(/[,，\n]/).map((v) => v.trim()).filter(Boolean)
+  return []
+}
+
+async function runLocalCapability(name: string, params: any) {
+  const args = params && typeof params === 'object' ? params : {}
+  try {
+    if (!platform) throw new Error('平台发布模块尚未就绪，请重启客户端')
+    if (name === 'platform_publish') {
+      const input = {
+        platform: String(args.platform || '').trim(),
+        type: args.type === 'image' ? 'image' : 'video',
+        title: typeof args.title === 'string' ? args.title : '',
+        content: typeof args.content === 'string' ? args.content : '',
+        tags: toList(args.tags),
+        mediaPaths: toList(args.mediaPaths || args.media),
+        scheduledAt: typeof args.scheduledAt === 'string' ? args.scheduledAt : undefined
+      }
+      if (!input.platform) throw new Error('platform 必填（douyin / xiaohongshu / shipinhao）')
+      if (!input.mediaPaths.length) throw new Error('mediaPaths 必填：请给出本机素材文件路径')
+      const result = await platform.publish(input as any)
+      return { success: true, data: result }
+    }
+    if (name === 'platform_status') {
+      return { success: true, data: { items: await platform.status(args.platform ? String(args.platform) : undefined) } }
+    }
+    return { success: true, data: { note: '作品数据统计暂未实现，请直接在创作后台查看' } }
+  } catch (error: any) {
+    return { success: false, error: String(error?.message || error) }
+  }
+}
+
 async function api(path: string, init: RequestInit & { auth?: boolean } = {}) {
+  if (path === '/capabilities/run' && typeof init.body === 'string') {
+    try {
+      const payload = JSON.parse(init.body)
+      if (payload && LOCAL_CAPABILITIES.has(String(payload.name))) return await runLocalCapability(String(payload.name), payload.params)
+    } catch { /* 非 JSON 体按普通请求转发 */ }
+  }
   const headers: Record<string, string> = { 'content-type': 'application/json', ...(init.headers as any) }
   if (init.auth !== false && settings.token) headers.authorization = 'Bearer ' + settings.token
   const res = await fetch(settings.apiBase + path, { ...init, headers })
@@ -293,6 +338,28 @@ function registerIpc() {
   ipcMain.handle('employee-tasks:list', (_e, q: string) => api('/employee-tasks' + (q || '')))
   ipcMain.handle('employee-tasks:approve', (_e, p: { id: string; reason?: string }) => api('/employee-tasks/' + encodeURIComponent(p.id) + '/approve', { method: 'POST', body: JSON.stringify({ reason: p.reason }) }))
   ipcMain.handle('employee-tasks:reject', (_e, p: { id: string; reason?: string }) => api('/employee-tasks/' + encodeURIComponent(p.id) + '/reject', { method: 'POST', body: JSON.stringify({ reason: p.reason }) }))
+  // 平台发布：每个平台一个持久化 partition，用户扫码登录一次即可长期复用。
+  platform = new PlatformManager({
+    userDataDir: app.getPath('userData'),
+    log: (message: string) => console.log('[platform] ' + message)
+  })
+  ipcMain.handle('platform:status', (_e, p: { platform?: string }) => platform!.status(p?.platform))
+  ipcMain.handle('platform:login', (_e, p: { platform: string }) => platform!.login(p.platform))
+  ipcMain.handle('platform:logout', async (_e, p: { platform: string }) => { await platform!.logout(p.platform); return { ok: true } })
+  ipcMain.handle('platform:publish', (_e, input: any) => platform!.publish(input))
+  ipcMain.handle('platform:open-debug', async (_e, p: { platform: string }) => { await platform!.openDebug(p.platform); return { ok: true } })
+  ipcMain.handle('platform:pick-media', async (_e, p: { type?: 'video' | 'image' }) => {
+    if (!win) return { paths: [] }
+    const image = p?.type === 'image'
+    const picked = await dialog.showOpenDialog(win, {
+      title: image ? '选择要发布的图片' : '选择要发布的视频',
+      properties: ['openFile', image ? 'multiSelections' : undefined].filter(Boolean) as any,
+      filters: image ? [{ name: '图片', extensions: ['png', 'jpg', 'jpeg', 'webp'] }] : [{ name: '视频', extensions: ['mp4', 'mov', 'm4v'] }]
+    })
+    if (picked.canceled) return { paths: [] }
+    return { paths: picked.filePaths }
+  })
+
   executor = new TaskExecutor({ api, getToken: () => settings.token })
   ipcMain.handle('employee-execution:heartbeat', () => sendExecutionHeartbeat().then(() => true))
   ipcMain.handle('employee-execution:status', () => executor!.status())

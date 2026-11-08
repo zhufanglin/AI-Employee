@@ -182,6 +182,12 @@ Step "smoke: T-19 员工执行器" {
     & $node "scripts\smoke-p23-memory-api.mjs"
     if ($LASTEXITCODE -ne 0) { $script:code = $LASTEXITCODE; return }
     & $node "scripts\check-desktop-p23.mjs"
+    if ($LASTEXITCODE -ne 0) { $script:code = $LASTEXITCODE; return }
+    & $node "scripts\smoke-p24-platform-drivers.mjs"
+    if ($LASTEXITCODE -ne 0) { $script:code = $LASTEXITCODE; return }
+    & $node "scripts\smoke-p24-platform-tools.mjs"
+    if ($LASTEXITCODE -ne 0) { $script:code = $LASTEXITCODE; return }
+    & $node "scripts\check-desktop-p24.mjs"
     $script:code = $LASTEXITCODE
   }
 }

@@ -5,11 +5,12 @@ import Settings from './Settings'
 import Gateway from './Gateway'
 import EmployeeOffice from './EmployeeOffice'
 import Memory from './Memory'
+import PlatformPublish from './PlatformPublish'
 import MediaStudio from './MediaStudio'
 import MediaCreation from './MediaCreation'
 import { Model } from '../types'
 
-type Tab = 'chat' | 'employees' | 'digital' | 'voice' | 'image' | 'video' | 'memory' | 'credits' | 'gateway' | 'settings'
+type Tab = 'chat' | 'employees' | 'digital' | 'voice' | 'image' | 'video' | 'memory' | 'platform' | 'credits' | 'gateway' | 'settings'
 
 export default function Shell({ user, config, onLogout }: { user: any; config: any; onLogout: () => void }) {
   const [tab, setTab] = useState<Tab>('chat')
@@ -59,6 +60,7 @@ export default function Shell({ user, config, onLogout }: { user: any; config: a
             )}
           </div>
           <button className={tab === 'memory' ? 'on' : ''} onClick={() => setTab('memory')}>🧠 记忆</button>
+          <button className={tab === 'platform' ? 'on' : ''} onClick={() => setTab('platform')}>📤 平台发布</button>
           <button className={tab === 'credits' ? 'on' : ''} onClick={() => setTab('credits')}>📊 积分与用量</button>
           <button className={tab === 'gateway' ? 'on' : ''} onClick={() => setTab('gateway')}>🔌 渠道网关</button>
           <button className={tab === 'settings' ? 'on' : ''} onClick={() => setTab('settings')}>⚙️ 设置</button>
@@ -84,6 +86,7 @@ export default function Shell({ user, config, onLogout }: { user: any; config: a
         <div hidden={tab !== 'image'}><MediaCreation mode="image" onBalance={setBalance} /></div>
         <div hidden={tab !== 'video'}><MediaCreation mode="video" onBalance={setBalance} /></div>
         {tab === 'memory' && <Memory />}
+        {tab === 'platform' && <PlatformPublish />}
         {tab === 'credits' && <Credits />}
         {tab === 'gateway' && <Gateway />}
         {tab === 'settings' && <Settings config={config} />}

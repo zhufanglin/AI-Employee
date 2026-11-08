@@ -235,3 +235,27 @@ form label { display: block; margin: 14px 0 6px; color: var(--muted); font-size:
 .memory-proposal-preview { white-space: pre-wrap; overflow-wrap: anywhere; background: var(--bg-2); border-radius: 8px; padding: 10px; margin: 10px 0 0; font-size: 12px; line-height: 1.6; color: #b8c0cf; max-height: 180px; overflow: auto; }
 @media (max-width: 900px) { .memory-toolbar .primary.office-button { margin-left: 0; } }
 
+/* 平台发布（P24 本机 RPA） */
+.platform-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 18px; }
+.platform-card { background: var(--bg-2); border: 1px solid var(--line); border-radius: 12px; padding: 14px; }
+.platform-card.on { border-color: #315a42; }
+.platform-card-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.platform-card-head b { font-size: 15px; }
+.platform-card .muted.small { margin-top: 6px; }
+.pill.ok { color: #8be0a6; border-color: #315a42; background: #17281f; }
+.platform-card-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.platform-card-actions .ghost { padding: 7px 10px; font-size: 12px; }
+.platform-form { margin-bottom: 18px; }
+.platform-form h3 { margin: 0 0 12px; font-size: 15px; }
+.platform-form label { display: block; margin: 12px 0 6px; color: var(--muted); font-size: 12px; }
+.platform-form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.platform-form-row label { margin-top: 0; }
+.platform-form .primary { margin-top: 16px; }
+.platform-media { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 14px; }
+.platform-media .ghost { margin-top: 0; white-space: nowrap; }
+.platform-media .muted.small { margin-top: 0; overflow-wrap: anywhere; }
+.platform-steps { margin: 12px 0 0; padding-left: 0; list-style: none; display: grid; gap: 6px; }
+.platform-steps li { display: flex; justify-content: space-between; gap: 12px; font-size: 12px; color: #c3cad8; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; overflow-wrap: anywhere; }
+.platform-steps li.fail { color: #ff9d9d; border-color: #62383a; }
+.platform-steps li span { color: inherit; font-size: 12px; display: inline; }
+.ok-text { color: #8be0a6; font-size: 13px; }

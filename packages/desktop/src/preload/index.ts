@@ -56,6 +56,15 @@ const api = {
     merge: (p: { keepId: string; dropId: string }) => ipcRenderer.invoke('memory:merge', p),
     dedupe: (p: { mode: 'report' | 'apply'; limit?: number }) => ipcRenderer.invoke('memory:dedupe', p)
   },
+  // 平台发布（本机 RPA）：抖音 / 小红书 / 视频号 创作后台自动上传发布。
+  platform: {
+    status: (p?: { platform?: string }) => ipcRenderer.invoke('platform:status', p || {}),
+    login: (p: { platform: string }) => ipcRenderer.invoke('platform:login', p),
+    logout: (p: { platform: string }) => ipcRenderer.invoke('platform:logout', p),
+    publish: (p: any) => ipcRenderer.invoke('platform:publish', p),
+    openDebug: (p: { platform: string }) => ipcRenderer.invoke('platform:open-debug', p),
+    pickMedia: (p: { type?: 'video' | 'image' }) => ipcRenderer.invoke('platform:pick-media', p || {})
+  },
   employeeExecution: {
     heartbeat: () => ipcRenderer.invoke('employee-execution:heartbeat'),
     nodes: () => ipcRenderer.invoke('employee-execution:nodes'),

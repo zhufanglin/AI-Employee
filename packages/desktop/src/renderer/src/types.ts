@@ -43,7 +43,46 @@ export type FcmApi = {
     logs: () => Promise<string[]>
     controlUrl: () => Promise<string>
   }
+  // 平台发布（本机 RPA，见 docs/handoff/P24-平台发布RPA-契约.md）
+  platform: {
+    status: (p?: { platform?: string }) => Promise<PlatformStatus[]>
+    login: (p: { platform: string }) => Promise<PlatformStatus>
+    logout: (p: { platform: string }) => Promise<{ ok: boolean }>
+    publish: (p: PlatformPublishInput) => Promise<PlatformPublishResult>
+    openDebug: (p: { platform: string }) => Promise<{ ok: boolean }>
+    pickMedia: (p: { type?: 'video' | 'image' }) => Promise<{ paths: string[] }>
+  }
   window: { minimize: () => void; maximize: () => void; close: () => void }
+}
+
+export type PlatformId = 'douyin' | 'xiaohongshu' | 'shipinhao'
+
+export type PlatformStatus = {
+  platform: string
+  name: string
+  loggedIn: boolean
+  nickname?: string
+  checkedAt: string
+  error?: string
+}
+
+export type PlatformPublishInput = {
+  platform: PlatformId | string
+  type: 'video' | 'image'
+  title?: string
+  content: string
+  tags?: string[]
+  mediaPaths: string[]
+  scheduledAt?: string
+}
+
+export type PlatformPublishResult = {
+  platform: string
+  ok: boolean
+  message: string
+  url?: string
+  screenshots: string[]
+  steps: { step: string; ok: boolean; detail?: string }[]
 }
 
 export type Model = {
