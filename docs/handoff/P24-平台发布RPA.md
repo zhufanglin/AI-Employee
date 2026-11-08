@@ -215,3 +215,52 @@
 - 全量 `scripts/verify.ps1 -Smoke`：23 步全 OK（含 P24 desktop check 66 项、T-28 本地能力层 34s 全绿）。
 - 本机已静默安装并校验 asar 内 `VERSION=0.1.8`。
 - 服务端无改动，本次不需要生产部署。
+
+
+## 12. 0.1.9 修复：「打开后台」报「窗口已关闭 / 页面没有响应」，登录态检查也全挂
+
+用户报障（0.1.8 真机）：点「抖音 · 打开后台」弹 `Error invoking remote method 'platform:open-debug': Error: 窗口已关闭，无法打开页面：https://creator.douyin.com/creator-micro/content/upload`。
+
+### 根因：0.1.8 引入的 `untilClosed` 竞态（致命）
+
+0.1.8 里 `untilClosed` 这样写：
+
+```ts
+const closed = new Promise<null>((resolve) => {
+  const done = () => resolve(null)
+  win.once('closed', done)
+  task.then(done, done).finally(() => win.removeListener('closed', done))   // ← 问题在这
+})
+return Promise.race([task.catch(() => null), closed])
+```
+
+`task.then(done, done)` 是在 `new Promise` 执行器里注册的，比 `Promise.race` 挂的 `task.catch(...)` **更早**。于是任务成功时，微任务顺序是「done 先跑 → `closed` 解成 null → race 拿到 null」，**真实返回值永远被丢掉**。后果是全局性的：
+
+- `navigate` 每 400ms 取一次页面快照，永远拿到 null ⇒ 轮询满 30 秒后报「打开页面失败：页面没有响应」；用户中途把窗口关掉则报「窗口已关闭，无法打开页面」。
+- `attachAndEval` 同样永远拿到 null ⇒ `checkStatus` 一直返回「页面没有响应，未能检查登录态」，`doLogin` 永远检测不到登录成功（只能等 180 秒超时）。
+- 0.1.8 之前能登录成功，是因为当时还没有 `untilClosed`；这个 bug 是修「关窗后按钮卡死」时引入的。
+
+### 修法
+
+1. `untilClosed` 只由窗口的 `closed` 事件把结果解成 null，任务本身成功时如实返回：`const closed = new Promise(r => { settle = r })` + `win.once('closed', () => settle(null))`，`Promise.race([task.catch(() => null), closed])`，监听在 `finally` 里摘掉。
+2. `navigate` 每次取值再套一层 `NAV_EVAL_WAIT_MS = 2000` 上限：页面还没 commit 时 `executeJavaScript` 会**挂着不返回**（不是抛错），实测首帧冷启动一次调用卡过 78 秒，必须每轮限时。
+3. `navigate` 循环里对取值异常做 `try/catch` 记录后继续轮询（frame 未就绪时抛错属正常）。
+4. `openDebug`（打开后台）改成「窗口开出来就算成功」：`navigate` 最多等 `OPEN_DEBUG_TIMEOUT_MS = 20000`，超时只记日志 + 提示「已打开窗口，页面还在加载」，不再把错误抛到界面上。
+
+### 验证（Electron 独立探针，真实跑平台页）
+
+| 场景 | 0.1.8 | 0.1.9 |
+| --- | --- | --- |
+| `status('douyin')`（隐藏窗检查登录态） | 恒为「页面没有响应」 | **14,336ms 返回，正常判定「未登录」** |
+| `openDebug('douyin')` | 30s 后抛「页面没有响应」 | **9,167ms 成功**，窗口保留 |
+| 关掉登录窗后再点登录（0.1.8 的修复点） | 立即返回 + 新窗口 | 仍然：`FIRST_MS 6441` 立即返回、`WIN_CREATED 2` + `SECOND_MS 926` |
+
+`scripts/check-desktop-p24.mjs` 增加 4 条断言（`!platformSrc.includes('task.then(done, done)')`、closed 事件解 null、`NAV_EVAL_WAIT_MS` 赛跑、`OPEN_DEBUG_TIMEOUT_MS` + 「已打开窗口，页面还在加载」）⇒ 现 **70 项 OK**。
+
+### 0.1.9 发布记录（2026-11-09 01:52）
+
+- 安装包 `fcmediaagent-ai-employee-0.1.9-win-x64.exe` **127,748,737 B**，sha512 `mvuN0hYgWz/rxYuqRoyl9Vj+5EcK4lMSKdL1wHotTKduTObtiyXnNOlfNh6VsVwzeF42j3k8P9rDpEdLaOOZBw==`。
+- 已发布 `https://updates.fcmediaagent.com/desktop/latest/latest.yml`（yml=200 exe=206，服务器 `latest/` 现有 0.1.0–0.1.9）。
+- 全量 `scripts/verify.ps1 -Smoke`：23 步 VERIFY GREEN（P24 desktop check 70 项、T-28 本地能力层 51s）。
+- 本机已静默安装并校验 asar 内 `VERSION=0.1.9`。
+- 服务端无改动，本次不需要生产部署。

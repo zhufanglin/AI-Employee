@@ -98,6 +98,12 @@ check('doLogin 窗口关闭后立即返回中文提示', !!platformSrc && platfo
 check('登录弹窗关闭后不再卡住串行锁', !!platformSrc && platformSrc.includes('await this.untilClosed(win, sleep(LOGIN_POLL_MS))'))
 check('checkStatus 对空探针不误判已登录', !!platformSrc && platformSrc.includes('页面没有响应，未能检查登录态'))
 check('页面登录加了超时兜底 withTimeout', !!pageSrc && pageSrc.includes('function withTimeout<T>') && pageSrc.includes('登录等待超时'))
+// 0.1.9 修：untilClosed 里早先挂了 task.then(done)，任务一成功就先把 closed 解成 null，
+// 导致 navigate 永远拿不到快照（「打开后台」报「页面没有响应」/「窗口已关闭」）
+check('untilClosed 不再让任务成功也解成 null', !!platformSrc && !platformSrc.includes('task.then(done, done)'))
+check('untilClosed 由 closed 事件解 null', !!platformSrc && platformSrc.includes('const onClosed = () =>') && platformSrc.includes('win.once(\'closed\', onClosed)'))
+check('navigate 每次取值有 2 秒上限', !!platformSrc && platformSrc.includes('const NAV_EVAL_WAIT_MS') && /Promise.race\(\[[\s\S]{0,120}NAV_EVAL_WAIT_MS/.test(platformSrc))
+check('打开后台超时不再弹报错', !!platformSrc && platformSrc.includes('const OPEN_DEBUG_TIMEOUT_MS') && platformSrc.includes('已打开窗口，页面还在加载'))
 
 // 4. 执行器与能力目录
 for (const name of ['platform_publish', 'platform_status', 'platform_stats']) {

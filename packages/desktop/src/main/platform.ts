@@ -64,6 +64,10 @@ const UPLOAD_POLL_MS = 2000
 const POST_PUBLISH_WAIT_MS = 5000
 /** 单次页面取值（CDP eval）最长等待，避免 webContents 卡死时整条链路挂住 */
 const EVAL_TIMEOUT_MS = 20000
+/** navigate 轮询里每次页面取值的上限：页面未 commit 时 executeJavaScript 会挂着不返回 */
+const NAV_EVAL_WAIT_MS = 2000
+/** 「打开后台」最多等多久，超时也不报错（窗口已经开着，用户能自己看） */
+const OPEN_DEBUG_TIMEOUT_MS = 20000
 
 /**
  * 平台站点会屏蔽 Electron 默认 UA（默认 UA 里带 "Electron/38.8.6"）：
@@ -303,8 +307,14 @@ export class PlatformManager {
       win.on('closed', () => {
         if (this.debugWindows.get(platform) === win) this.debugWindows.delete(platform)
       })
-      await this.navigate(win, driver.homeUrl)
-      this.emit(platform, 'debug', '已打开调试窗口：' + driver.homeUrl)
+      try {
+        await this.navigate(win, driver.homeUrl, OPEN_DEBUG_TIMEOUT_MS)
+        this.emit(platform, 'debug', '已打开调试窗口：' + driver.homeUrl)
+      } catch (e) {
+        // 窗口已经开出来了（用户看得见），页面慢就让它慢慢加载，不要用报错打断用户
+        this.log('[' + platform + '] 调试窗口页面加载较慢：' + errText(e))
+        this.emit(platform, 'debug', '已打开窗口，页面还在加载：' + driver.homeUrl)
+      }
     })
   }
 
@@ -400,19 +410,26 @@ export class PlatformManager {
    */
   private async untilClosed<T>(win: BrowserWindow, task: Promise<T>): Promise<T | null> {
     if (win.isDestroyed()) return null
-    const closed = new Promise<null>((resolve) => {
-      const done = () => resolve(null)
-      win.once('closed', done)
-      // 正常完成时把监听摘掉，避免监听器泄漏
-      task.then(done, done).finally(() => {
-        try {
-          win.removeListener('closed', done)
-        } catch {
-          // 窗口已销毁，忽略
-        }
-      })
+    // 只由窗口的 closed 事件把结果解成 null；任务本身成功时必须把真实返回值交出去。
+    // （早先的实现里额外挂了 task.then(done)，它在 race 之前注册，任务一成功就会先把
+    //  closed 解成 null，导致 navigate 永远拿不到页面快照、30 秒后误报「页面没有响应」。）
+    let settle: ((value: T | null) => void) | null = null
+    const closed = new Promise<T | null>((resolve) => {
+      settle = resolve
     })
-    return Promise.race([task.catch(() => null), closed])
+    const onClosed = () => {
+      if (settle) settle(null)
+    }
+    win.once('closed', onClosed)
+    try {
+      return await Promise.race([task.catch(() => null as T | null), closed])
+    } finally {
+      try {
+        win.removeListener('closed', onClosed)
+      } catch {
+        // 窗口已销毁，忽略
+      }
+    }
   }
 
   /**
@@ -432,11 +449,19 @@ export class PlatformManager {
     const deadline = Date.now() + timeoutMs
     let last: { ready: boolean; href: string; bodyLen: number } | null = null
     while (Date.now() < deadline) {
-      if (win.isDestroyed()) throw new Error('窗口已关闭，无法打开页面：' + url)
-      last = (await this.untilClosed(
-        win,
-        win.webContents.executeJavaScript(READY_SCRIPT)
-      )) as { ready: boolean; href: string; bodyLen: number } | null
+      if (win.isDestroyed()) throw new Error('窗口被关闭了，请重新点击「打开后台」：' + url)
+      try {
+        // 页面还没 commit 时 executeJavaScript 会一直挂着（不是抛错），所以每次取值再套 2 秒上限，
+        // 否则一次调用就能把整个轮询卡死（实测首帧冷启动时卡过 70 多秒）。
+        last = (await Promise.race([
+          this.untilClosed(win, win.webContents.executeJavaScript(READY_SCRIPT)),
+          sleep(NAV_EVAL_WAIT_MS).then(() => null)
+        ])) as { ready: boolean; href: string; bodyLen: number } | null
+      } catch (e) {
+        // 页面还没建好时 executeJavaScript 会抛（frame 未就绪），记下原因继续轮询
+        failures.push(errText(e))
+        last = null
+      }
       if (last && last.ready && last.href && last.href !== 'about:blank') return
       await sleep(400)
     }
