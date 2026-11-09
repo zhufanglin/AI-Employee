@@ -198,6 +198,20 @@ Step "smoke: T-19 员工执行器" {
     & $node "scripts\check-desktop-p26.mjs"
     if ($LASTEXITCODE -ne 0) { $script:code = $LASTEXITCODE; return }
     & $node "scripts\check-desktop-p25.mjs"
+    if ($LASTEXITCODE -ne 0) { $script:code = $LASTEXITCODE; return }
+    & $node "scripts\smoke-p30-platform-metrics.mjs"
+    if ($LASTEXITCODE -ne 0) { $script:code = $LASTEXITCODE; return }
+    & $node "scripts\check-desktop-p30.mjs"
+    if ($LASTEXITCODE -ne 0) { $script:code = $LASTEXITCODE; return }
+    & $node "scripts\smoke-p31-multi-platform-queue.mjs"
+    if ($LASTEXITCODE -ne 0) { $script:code = $LASTEXITCODE; return }
+    & $node "scripts\check-desktop-p31.mjs"
+    if ($LASTEXITCODE -ne 0) { $script:code = $LASTEXITCODE; return }
+    & $node "scripts\smoke-p32-comments.mjs"
+    if ($LASTEXITCODE -ne 0) { $script:code = $LASTEXITCODE; return }
+    & $node "scripts\check-desktop-p32.mjs"
+    if ($LASTEXITCODE -ne 0) { $script:code = $LASTEXITCODE; return }
+    & $node "scripts\check-desktop-p33.mjs"
     $script:code = $LASTEXITCODE
   }
 }

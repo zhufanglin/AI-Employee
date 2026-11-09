@@ -26,7 +26,11 @@ interface CronApi {
 // ---- 定时发布（P26）：本地队列，到点由主进程 client 触发平台发布 ----
 interface QueueJob {
   id: string
+  /** 兼容老队列：等于 platforms[0] */
   platform: string
+  /** P31 多平台 */
+  platforms?: string[]
+  results?: { platform: string; ok: boolean; url?: string; message: string }[]
   type: 'video' | 'image'
   title: string
   content: string
@@ -132,13 +136,22 @@ export default function Scheduled() {
   // 定时发布表单
   const [jobs, setJobs] = useState<QueueJob[]>([])
   const [jobsLoading, setJobsLoading] = useState(true)
-  const [platform, setPlatform] = useState('douyin')
+  // 新建任务默认勾选抖音；可勾 1~3 个平台，到点按勾选顺序串行发布。
+  const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>(['douyin'])
   const [mediaType, setMediaType] = useState<'video' | 'image'>('video')
   const [pubTitle, setPubTitle] = useState('')
   const [pubContent, setPubContent] = useState('')
   const [pubTags, setPubTags] = useState('')
   const [mediaPaths, setMediaPaths] = useState<string[]>([])
   const [scheduledAt, setScheduledAt] = useState(defaultScheduleInput())
+
+  function togglePlatform(id: string): void {
+    setSelectedPlatforms((prev) => (prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]))
+  }
+
+  function toggleAllPlatforms(): void {
+    setSelectedPlatforms((prev) => (prev.length === PLATFORMS.length ? [] : PLATFORMS.map((item) => item.id)))
+  }
 
   async function refresh(): Promise<void> {
     setLoading(true)
@@ -214,7 +227,7 @@ export default function Scheduled() {
     setBusy('add-job')
     try {
       const result = await queueApi().add({
-        platform,
+        platforms: selectedPlatforms,
         type: mediaType,
         title: pubTitle.trim(),
         content: pubContent,
@@ -226,7 +239,8 @@ export default function Scheduled() {
         setError(result.error || '加入定时队列失败')
         return
       }
-      setNotice('已排程：' + platformName(result.data!.platform) + '「' + result.data!.title + '」将于 ' + fmtTime(result.data!.scheduledAt) + ' 自动发布')
+      const savedPlatforms = result.data!.platforms && result.data!.platforms.length > 0 ? result.data!.platforms : [result.data!.platform]
+      setNotice('已排程：' + savedPlatforms.map(platformName).join('/') + '「' + result.data!.title + '」将于 ' + fmtTime(result.data!.scheduledAt) + ' 自动发布')
       setPubTitle('')
       setPubContent('')
       setPubTags('')
@@ -479,14 +493,33 @@ export default function Scheduled() {
                       {fmtTime(job.scheduledAt)}
                       {job.late ? <span className="muted small"> 迟到补发</span> : null}
                     </td>
-                    <td>{platformName(job.platform)}</td>
+                    <td>
+                      {(job.platforms && job.platforms.length > 0 ? job.platforms : [job.platform]).map(platformName).join('/')}
+                    </td>
                     <td title={job.title}>{job.title.length > 18 ? job.title.slice(0, 18) + '…' : job.title}</td>
                     <td>
                       <span className={meta.cls}>{meta.label}</span>
                       {job.attempts > 1 ? <span className="muted small"> 第 {job.attempts} 次</span> : null}
                     </td>
                     <td>
-                      {job.url ? (
+                      {job.results && job.results.length > 0 ? (
+                        job.results.map((result) => (
+                          <div key={result.platform} className={result.ok ? 'muted small' : 'error small'}>
+                            {result.ok ? '✓' : '✗'} {platformName(result.platform)}{' '}
+                            {result.ok ? (
+                              result.url ? (
+                                <a href={result.url} target="_blank" rel="noreferrer">
+                                  已发布
+                                </a>
+                              ) : (
+                                '已发布'
+                              )
+                            ) : (
+                              result.message
+                            )}
+                          </div>
+                        ))
+                      ) : job.url ? (
                         <a href={job.url} target="_blank" rel="noreferrer">
                           打开作品
                         </a>
@@ -521,16 +554,27 @@ export default function Scheduled() {
       <section className="card platform-form">
         <h3>新建定时发布</h3>
         <div className="platform-form-row">
-          <label>
-            平台
-            <select value={platform} onChange={(e) => setPlatform(e.target.value)}>
+          <div>
+            <span className="muted small">平台（可多选，到点按勾选顺序串行发布）</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', marginTop: 6 }}>
               {PLATFORMS.map((item) => (
-                <option key={item.id} value={item.id}>
+                <label
+                  key={item.id}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: 4, margin: 0, color: 'inherit', fontSize: 13 }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={selectedPlatforms.includes(item.id)}
+                    onChange={() => togglePlatform(item.id)}
+                  />
                   {item.label}
-                </option>
+                </label>
               ))}
-            </select>
-          </label>
+              <button type="button" className="ghost small" onClick={toggleAllPlatforms}>
+                {selectedPlatforms.length === PLATFORMS.length ? '取消全选' : '全选'}
+              </button>
+            </div>
+          </div>
           <label>
             素材类型
             <select value={mediaType} onChange={(e) => setMediaType(e.target.value as 'video' | 'image')}>
@@ -544,7 +588,7 @@ export default function Scheduled() {
           <input
             value={pubTitle}
             onChange={(e) => setPubTitle(e.target.value)}
-            placeholder={platform === 'xiaohongshu' ? '小红书标题建议 20 字以内' : '作品标题'}
+            placeholder={selectedPlatforms.includes('xiaohongshu') ? '小红书标题建议 20 字以内' : '作品标题'}
             autoComplete="off"
           />
         </label>
@@ -584,12 +628,14 @@ export default function Scheduled() {
           </div>
         </label>
         <p className="hint">
-          到点后客户端会用已登录的账号自动上传并发布，每步截图存在 platform-logs 目录便于排查。
+          到点后客户端会用已登录的账号逐个平台串行上传发布（不会同时开多个窗口），勾的平台越多耗时越长。
+          每步截图存在 platform-logs 目录便于排查。
           {mediaType === 'image' ? ' 图文支持一次选多张图片。' : ''}
+          {selectedPlatforms.length === 0 ? ' 请至少勾选一个平台。' : ''}
         </p>
         <button
           className="primary"
-          disabled={busy !== '' || !pubTitle.trim() || mediaPaths.length === 0 || !scheduledAt}
+          disabled={busy !== '' || !pubTitle.trim() || mediaPaths.length === 0 || !scheduledAt || selectedPlatforms.length === 0}
           onClick={() => void addJob()}
         >
           {busy === 'add-job' ? '提交中…' : '加入定时队列'}

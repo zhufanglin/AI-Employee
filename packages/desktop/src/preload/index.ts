@@ -58,13 +58,18 @@ const api = {
   },
   // 平台发布（本机 RPA）：抖音 / 小红书 / 视频号 创作后台自动上传发布。
   platform: {
+    warm: (p?: { platform?: string }) => ipcRenderer.invoke('platform:warm', p || {}),
     status: (p?: { platform?: string; force?: boolean }) => ipcRenderer.invoke('platform:status', p || {}),
     login: (p: { platform: string }) => ipcRenderer.invoke('platform:login', p),
     logout: (p: { platform: string }) => ipcRenderer.invoke('platform:logout', p),
     publish: (p: any) => ipcRenderer.invoke('platform:publish', p),
     openDebug: (p: { platform: string }) => ipcRenderer.invoke('platform:open-debug', p),
     pickMedia: (p: { type?: 'video' | 'image' }) => ipcRenderer.invoke('platform:pick-media', p || {}),
-    stats: (p: { platform: string; maxChars?: number }) => ipcRenderer.invoke('platform:stats', p)
+    stats: (p: { platform: string; maxChars?: number }) => ipcRenderer.invoke('platform:stats', p),
+    parseMetrics: (p: { platform: string; text: string }) => ipcRenderer.invoke('platform:parse-metrics', p),
+    comments: (p: { platform: string; maxItems?: number }) => ipcRenderer.invoke('platform:comments', p),
+    replyComment: (p: { platform: string; index?: number; match?: string; text: string }) =>
+      ipcRenderer.invoke('platform:reply-comment', p)
   },
   // 工作区文件管理（P27）：只在客户端工作区目录内读写，供 Workspace 页面使用。
   files: {

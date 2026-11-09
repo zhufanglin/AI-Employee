@@ -12,9 +12,21 @@
  */
 
 import { BrowserWindow, session } from 'electron'
+import type { Session } from 'electron'
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs'
 import { extname, join } from 'node:path'
-import { DRIVERS, PLATFORMS, buildContent, clampTitle, type PlatformDriver, type PlatformId } from './platform-drivers'
+import {
+  COMMENT_TEXT_MAX,
+  DRIVERS,
+  PLATFORMS,
+  buildContent,
+  clampTitle,
+  clickReplyScript,
+  replyOutcomeScript,
+  scanCommentsScript,
+  type PlatformDriver,
+  type PlatformId
+} from './platform-drivers'
 
 export interface PlatformManagerDeps {
   userDataDir: string
@@ -42,6 +54,36 @@ export interface PlatformStatsSnapshot {
   text: string
   screenshots: string[]
   message: string
+}
+
+/** P32：一条评论（index 是本次扫描顺序，仅用于定位，跨次抓取会变） */
+export interface PlatformCommentItem {
+  index: number
+  text: string
+}
+
+/** P32：评论列表快照 */
+export interface PlatformCommentsSnapshot {
+  platform: string
+  name: string
+  ok: boolean
+  loggedIn: boolean
+  pageTitle: string
+  href: string
+  selector: string
+  items: PlatformCommentItem[]
+  screenshots: string[]
+  message: string
+}
+
+/** P32：回复一条评论的结果 */
+export interface PlatformReplyResult {
+  platform: string
+  ok: boolean
+  message: string
+  target?: string
+  screenshots: string[]
+  steps: PublishStep[]
 }
 
 export interface PublishInput {
@@ -84,6 +126,14 @@ const OPEN_DEBUG_TIMEOUT_MS = 20000
 
 /** 登录态缓存时长：切换页面回来不该重跑一次十几秒的检查（用户实测反馈：等完刷新再切页又得等） */
 export const STATUS_CACHE_MS = 5 * 60 * 1000
+
+/**
+ * 平台页面允许的协议。别的一律拦掉：
+ * 抖音/小红书页面上有「打开客户端」这类自定义协议（snssdk:// xhsdiscover:// …），
+ * Chromium 遇到未知协议会走系统外部协议处理，Windows 就弹出「在 Microsoft Store 中查找应用」的系统弹窗
+ * （用户实测反馈：一直弹「没有下载」的商店提示）。
+ */
+const ALLOWED_SCHEME = /^(https?|wss?|data|blob|about|chrome-extension|devtools|file):/i
 
 /**
  * 平台站点会屏蔽 Electron 默认 UA（默认 UA 里带 "Electron/38.8.6"）：
@@ -274,9 +324,12 @@ function verifyScript(text: string) {
 export class PlatformManager {
   private readonly deps: PlatformManagerDeps
   private readonly locks = new Map<string, Promise<unknown>>()
-  private readonly debugWindows = new Map<string, BrowserWindow>()
   /** 最近一次登录态检查结果，避免每次进页面都开窗口重查 */
   private readonly statusCache = new Map<string, { at: number; status: PlatformStatus }>()
+  /** 常驻的隐藏窗口（每个平台一个）：窗口和渲染进程都留着，命中就不用再付一次冷启动 */
+  private readonly windows = new Map<string, BrowserWindow>()
+  /** 已挂过协议守卫的分区，webRequest 监听每个 session 只能挂一次 */
+  private readonly guarded = new Set<string>()
 
   constructor(deps: PlatformManagerDeps) {
     this.deps = deps
@@ -291,20 +344,35 @@ export class PlatformManager {
   async status(platform?: string, opts: { maxAgeMs?: number } = {}): Promise<PlatformStatus[]> {
     const ids = platform ? [platform] : PLATFORMS.map((p) => p.id as string)
     const maxAge = opts.maxAgeMs === undefined ? STATUS_CACHE_MS : opts.maxAgeMs
-    const out: PlatformStatus[] = []
-    for (const id of ids) {
+    // 三个平台并行查（锁是按平台分的，互不影响）：用户反馈「打开三个应用有点慢」，串行是主因之一
+    const jobs = ids.map(async (id) => {
       if (!(DRIVERS as Record<string, PlatformDriver>)[id]) {
-        out.push({ platform: id, name: id, loggedIn: false, checkedAt: nowIso(), error: '未知平台：' + id })
-        continue
+        return { platform: id, name: id, loggedIn: false, checkedAt: nowIso(), error: '未知平台：' + id } as PlatformStatus
       }
       const cached = this.statusCache.get(id)
-      if (cached && maxAge > 0 && Date.now() - cached.at <= maxAge) {
-        out.push(cached.status)
-        continue
+      if (cached && maxAge > 0 && Date.now() - cached.at <= maxAge) return cached.status
+      return this.runExclusive(id, () => this.checkStatus(id))
+    })
+    return Promise.all(jobs)
+  }
+
+  /**
+   * 预热：提前把隐藏窗口和登录页拉起来（不阻塞界面）。
+   * 用户点「扫码登录」时窗口已经热好了，弹出几乎是瞬时的（用户反馈打开弹窗慢）。
+   */
+  warmUp(platform?: string): void {
+    const ids = platform ? [platform] : PLATFORMS.map((p) => p.id as string)
+    for (const id of ids) {
+      const driver = (DRIVERS as Record<string, PlatformDriver>)[id]
+      if (!driver) continue
+      if (this.windows.has(id)) continue
+      try {
+        const win = this.ensureWindow(id, false)
+        void this.navigate(win, driver.loginUrlHint || driver.homeUrl, NAV_EVAL_WAIT_MS).catch(() => null)
+      } catch (e) {
+        this.log('[' + id + '] 预热窗口失败：' + errText(e))
       }
-      out.push(await this.runExclusive(id, () => this.checkStatus(id)))
     }
-    return out
   }
 
   /** 打开可见窗口让用户扫码，每 3 秒轮询，最长 180 秒 */
@@ -316,11 +384,9 @@ export class PlatformManager {
   async logout(platform: string): Promise<void> {
     return this.runExclusive(platform, async () => {
       this.driver(platform)
-      const opened = this.debugWindows.get(platform)
-      if (opened) {
-        this.closeWindow(opened)
-        this.debugWindows.delete(platform)
-      }
+      // 退登要真的销毁窗口：留着旧页面会让「已退出」的会话继续渲染
+      this.destroyWindow(this.windows.get(platform) || null)
+      this.windows.delete(platform)
       const ses = session.fromPartition(this.partitionOf(platform))
       await ses.clearStorageData()
       this.statusCache.delete(platform)
@@ -333,17 +399,12 @@ export class PlatformManager {
   async openDebug(platform: string): Promise<void> {
     return this.runExclusive(platform, async () => {
       const driver = this.driver(platform)
-      const existing = this.debugWindows.get(platform)
-      if (existing && !existing.isDestroyed()) {
-        existing.show()
-        existing.focus()
+      const pooled = this.windows.get(platform)
+      if (pooled && !pooled.isDestroyed() && pooled.isVisible()) {
+        pooled.focus()
         return
       }
-      const win = this.createWindow(platform, true)
-      this.debugWindows.set(platform, win)
-      win.on('closed', () => {
-        if (this.debugWindows.get(platform) === win) this.debugWindows.delete(platform)
-      })
+      const win = this.ensureWindow(platform, true)
       try {
         await this.navigate(win, driver.homeUrl, OPEN_DEBUG_TIMEOUT_MS)
         this.emit(platform, 'debug', '已打开调试窗口：' + driver.homeUrl)
@@ -399,7 +460,7 @@ export class PlatformManager {
       snapshot.name = driver.name
       let win: BrowserWindow | null = null
       try {
-        win = this.createWindow(id, false)
+        win = this.ensureWindow(id, false)
         try {
           await this.navigate(win, driver.dataUrl)
         } catch (e) {
@@ -431,6 +492,207 @@ export class PlatformManager {
       } catch (e) {
         snapshot.message = '读取 ' + driver.name + ' 数据失败：' + errText(e)
         return snapshot
+      } finally {
+        this.closeWindow(win)
+      }
+    })
+  }
+
+  /**
+   * P32 评论列表：打开平台的「评论管理」页，把可见评论条目读回来。
+   * 只做「读」不做字段猜测——条目文本整段返回，交给用户/模型判断该回哪条。
+   */
+  async comments(platform: string, opts?: { maxItems?: number }): Promise<PlatformCommentsSnapshot> {
+    const id = String(platform || '')
+    const maxItems = Math.min(Math.max(Number(opts?.maxItems) || 20, 1), 50)
+    const snapshot: PlatformCommentsSnapshot = {
+      platform: id,
+      name: id,
+      ok: false,
+      loggedIn: false,
+      pageTitle: '',
+      href: '',
+      selector: '',
+      items: [],
+      screenshots: [],
+      message: ''
+    }
+    let driver: PlatformDriver
+    try {
+      driver = this.driver(id)
+    } catch (e) {
+      snapshot.message = errText(e)
+      return snapshot
+    }
+    return this.runExclusive(id, async () => {
+      snapshot.name = driver.name
+      let win: BrowserWindow | null = null
+      try {
+        win = this.ensureWindow(id, false)
+        try {
+          await this.navigate(win, driver.commentsUrl)
+        } catch (e) {
+          this.log('[' + id + '] 评论页打不开，回落到首页：' + errText(e))
+          await this.navigate(win, driver.homeUrl)
+        }
+        await sleep(4000)
+        const probe = await this.attachAndEval<any>(win, PROBE_SCRIPT).catch(() => null)
+        const judged = probe ? this.judgeLogin(driver, probe) : { loggedIn: false }
+        snapshot.loggedIn = judged.loggedIn
+        if (!judged.loggedIn) {
+          snapshot.message = '还没有登录 ' + driver.name + '，请先点「扫码登录」'
+          snapshot.screenshots.push(...(await this.shotList(win, id, 'comments-login')))
+          return snapshot
+        }
+        const info = await this.attachAndEval<any>(win, scanCommentsScript(driver)).catch(() => null)
+        if (info) {
+          snapshot.pageTitle = String(info.title || '')
+          snapshot.href = String(info.href || '')
+          snapshot.selector = String(info.selector || '')
+          const list = Array.isArray(info.items) ? info.items : []
+          snapshot.items = list.slice(0, maxItems).map((it: any) => ({
+            index: Number(it?.index) || 0,
+            text: String(it?.text || '')
+          }))
+        }
+        snapshot.screenshots.push(...(await this.shotList(win, id, 'comments')))
+        snapshot.ok = snapshot.items.length > 0
+        snapshot.message = snapshot.ok
+          ? '已读取 ' + driver.name + ' 评论 ' + snapshot.items.length + ' 条' + (snapshot.selector ? '（选择器 ' + snapshot.selector + '）' : '')
+          : '没读到评论：可能这个账号还没有评论，或页面结构变了（可点「打开后台」手动看一眼）'
+        this.emit(id, 'comments', snapshot.message)
+        return snapshot
+      } catch (e) {
+        snapshot.message = '读取 ' + driver.name + ' 评论失败：' + errText(e)
+        return snapshot
+      } finally {
+        this.closeWindow(win)
+      }
+    })
+  }
+
+  /**
+   * P32 回复评论：定位某条评论（index 或文本包含 match）→ 点它的「回复」→ 填内容 → 发送。
+   * 选择器未真机校准时会在某一步抛中文错误并落截图，和发布链路保持一致。
+   */
+  async replyComment(
+    platform: string,
+    input: { index?: number; match?: string; text?: string }
+  ): Promise<PlatformReplyResult> {
+    const id = String(platform || '')
+    const text = typeof input?.text === 'string' ? input.text.trim() : ''
+    const result: PlatformReplyResult = { platform: id, ok: false, message: '', screenshots: [], steps: [] }
+    let driver: PlatformDriver
+    try {
+      driver = this.driver(id)
+    } catch (e) {
+      result.message = errText(e)
+      return result
+    }
+    if (!text) {
+      result.message = '回复内容不能为空'
+      return result
+    }
+    if (Array.from(text).length > COMMENT_TEXT_MAX) {
+      result.message = '回复内容太长（' + Array.from(text).length + ' 字），最多 ' + COMMENT_TEXT_MAX + ' 字'
+      return result
+    }
+    const hasIndex = Number.isFinite(Number(input?.index))
+    const match = String(input?.match || '').trim()
+    if (!hasIndex && !match) {
+      result.message = '请指定要回复哪条评论：给 index（第几条，0 开始）或 match（评论里的几个字）'
+      return result
+    }
+    return this.runExclusive(id, async () => {
+      let win: BrowserWindow | null = null
+      try {
+        win = this.ensureWindow(id, false)
+        const w = win
+        const run = async (name: string, fn: () => Promise<string | undefined>, critical = true) => {
+          try {
+            const detail = await fn()
+            result.steps.push({ step: name, ok: true, detail })
+            result.screenshots.push((await this.shot(w, id, 'reply-' + name)) || '')
+            this.emit(id, 'comment-reply', name + '：成功' + (detail ? '（' + detail + '）' : ''))
+            return true
+          } catch (e) {
+            const msg = errText(e)
+            result.steps.push({ step: name, ok: false, detail: msg })
+            result.screenshots.push((await this.shot(w, id, 'reply-' + name + '-failed')) || '')
+            this.emit(id, 'comment-reply', name + '：失败（' + msg + '）')
+            if (critical) throw e
+            return false
+          }
+        }
+
+        await run('打开评论管理', async () => {
+          try {
+            await this.navigate(w, driver.commentsUrl)
+          } catch (e) {
+            await this.navigate(w, driver.homeUrl)
+            return '评论页打不开，已回落到 ' + driver.homeUrl + '：' + errText(e)
+          }
+          await sleep(3000)
+          return '已打开 ' + driver.commentsUrl
+        })
+
+        await run('检查登录状态', async () => {
+          const probe = await this.attachAndEval<any>(w, PROBE_SCRIPT).catch(() => null)
+          const judged = probe ? this.judgeLogin(driver, probe) : { loggedIn: false }
+          if (!judged.loggedIn) {
+            throw new Error('还没有登录 ' + driver.name + '：请先在「发布」页点「扫码登录」完成登录')
+          }
+          return '已登录' + (judged.nickname ? '（' + judged.nickname + '）' : '')
+        })
+
+        await run('定位评论并点回复', async () => {
+          const hit = await this.attachAndEval<any>(w, clickReplyScript(driver, { index: input?.index, match }))
+          if (!hit) throw new Error('页面没有返回结果（可能还在加载），请重试')
+          if (!hit.ok) throw new Error(String(hit.error || '没找到要回复的评论'))
+          result.target = String(hit.text || '').slice(0, 120)
+          return '命中「' + String(hit.text || '').slice(0, 40) + '…」（按钮 ' + String(hit.selector || '') + '）'
+        })
+
+        await sleep(1500)
+
+        await run('填写回复', async () => {
+          return this.fillField(w, id, '回复', driver.commentReplyInput, text)
+        })
+
+        await run('点击发送', async () => {
+          const clickAction = 'el.scrollIntoView({ block: "center" }); el.click();'
+          const found = await this.evalPage<any>(w, locateScript(driver.commentSendButton, clickAction))
+          if (!found || !found.ok) {
+            throw new Error(
+              '选择器未命中：没找到发送按钮（' + id + '），候选 ' + driver.commentSendButton.join(' | ')
+            )
+          }
+          return '已点击发送：' + found.selector
+        })
+
+        await run('确认回复结果', async () => {
+          await sleep(2500)
+          const outcome = await this.attachAndEval<any>(w, replyOutcomeScript(driver, text)).catch(() => null)
+          const details: string[] = []
+          if (outcome?.hint) details.push('命中成功提示「' + outcome.hint + '」')
+          if (outcome?.cleared) details.push('回复输入框已清空')
+          if (!details.length) {
+            throw new Error('没确认到回复成功（既没有成功提示，输入框也没清空），请查看截图人工确认')
+          }
+          return details.join('；')
+        })
+
+        result.ok = true
+        const last = result.steps[result.steps.length - 1]
+        result.message = '已回复 ' + driver.name + ' 评论：' + ((last && last.detail) || '') + (result.target ? '｜针对「' + result.target.slice(0, 40) + '…」' : '')
+        this.emit(id, 'comment-reply', result.message)
+        return result
+      } catch (e) {
+        result.ok = false
+        result.message = '回复失败：' + errText(e)
+        this.log('[' + id + '] ' + result.message)
+        this.emit(id, 'comment-reply', result.message)
+        return result
       } finally {
         this.closeWindow(win)
       }
@@ -483,8 +745,10 @@ export class PlatformManager {
   private createWindow(platform: string, show: boolean): BrowserWindow {
     const driver = this.driver(platform)
     const partition = this.partitionOf(platform)
+    const ses = session.fromPartition(partition)
     // 每个平台独立分区，UA 必须挂在分区上（窗口级设置对导航不生效）
-    session.fromPartition(partition).setUserAgent(PLATFORM_UA)
+    ses.setUserAgent(PLATFORM_UA)
+    this.ensureSchemeGuard(partition, ses)
     const win = new BrowserWindow({
       width: 1280,
       height: 900,
@@ -496,19 +760,81 @@ export class PlatformManager {
         partition,
         contextIsolation: true,
         nodeIntegration: false,
-        sandbox: true
+        sandbox: true,
+        // 隐藏窗口也要正常跑定时器/渲染，否则取数和登录态检查会被节流拖慢
+        backgroundThrottling: false
       }
     })
     win.webContents.setWindowOpenHandler(() => ({ action: 'deny' }))
     return win
   }
 
+  /** 非 HTTP(S) 协议一律拦掉：平台页的「打开客户端」链接会调起系统外部协议处理，Windows 就弹商店搜索框 */
+  private ensureSchemeGuard(partition: string, ses: Session) {
+    if (this.guarded.has(partition)) return
+    this.guarded.add(partition)
+    try {
+      ses.webRequest.onBeforeRequest((details, callback) => {
+        const url = String(details && details.url ? details.url : '')
+        if (!url || ALLOWED_SCHEME.test(url)) {
+          callback({})
+          return
+        }
+        this.log('[guard] 拦截外部协议请求：' + url.slice(0, 120))
+        callback({ cancel: true })
+      })
+    } catch (e) {
+      this.log('[guard] 协议守卫挂载失败：' + errText(e))
+    }
+  }
+
+  /**
+   * 取窗口：优先复用一个平台已经存在的那个窗口（隐藏着也留着）。
+   * 冷启动一次要建渲染进程 + 拉页面，三平台串行要十几秒；复用后基本只剩导航时间。
+   */
+  private ensureWindow(platform: string, show: boolean): BrowserWindow {
+    const existing = this.windows.get(platform)
+    if (existing && !existing.isDestroyed()) {
+      if (show) {
+        try {
+          existing.show()
+          existing.focus()
+        } catch {
+          // 忽略了：窗口可能刚好在被销毁
+        }
+      }
+      return existing
+    }
+    const win = this.createWindow(platform, show)
+    this.windows.set(platform, win)
+    win.on('closed', () => {
+      if (this.windows.get(platform) === win) this.windows.delete(platform)
+    })
+    return win
+  }
+
+  /** 用完不销毁：隐藏起来留着，下次直接复用（用户手动点 X 关掉时窗口会自己从池里移除） */
   private closeWindow(win: BrowserWindow | null) {
     try {
-      if (win && !win.isDestroyed()) win.destroy()
+      if (win && !win.isDestroyed()) win.hide()
     } catch {
       // 窗口可能已被平台页面关掉
     }
+  }
+
+  /** 真正销毁窗口（退出登录 / 应用退出时清场） */
+  private destroyWindow(win: BrowserWindow | null) {
+    try {
+      if (win && !win.isDestroyed()) win.destroy()
+    } catch {
+      // 忽略
+    }
+  }
+
+  /** 应用退出前销毁所有常驻窗口，避免 Electron 卡在退出流程 */
+  disposeAll() {
+    for (const win of Array.from(this.windows.values())) this.destroyWindow(win)
+    this.windows.clear()
   }
 
   /**
@@ -691,17 +1017,18 @@ export class PlatformManager {
     const checkedAt = nowIso()
     let win: BrowserWindow | null = null
     try {
-      win = this.createWindow(platform, false)
+      win = this.ensureWindow(platform, false)
       await this.navigate(win, driver.homeUrl)
       // 页面文案要等渲染出来：空白页既没有登录标志也没有登录线索，早读会误判（0.1.11）
       let probe: any = null
-      for (let i = 0; i < 10; i++) {
-        await sleep(1000)
+      // 首页已经预热过，通常 1 秒内就有内容；查满 8 轮（≈7s）还没结果就按「无响应」处理
+      for (let i = 0; i < 8; i++) {
+        await sleep(i === 0 ? 600 : 900)
         probe = await this.attachAndEval<any>(win, PROBE_SCRIPT).catch(() => null)
         if (!probe) continue
         const text = String(probe.text || '')
         if (probe.loginWord || probe.qr) break
-        if (text.length > 200) break
+        if (text.length > 120) break
       }
       if (!probe) {
         this.emit(platform, 'status', '页面无响应')
@@ -743,7 +1070,7 @@ export class PlatformManager {
     // 表现就是「关掉弹窗后再点扫码登录没反应」。
     let userClosed = false
     try {
-      win = this.createWindow(platform, true)
+      win = this.ensureWindow(platform, true)
       win.once('closed', () => {
         userClosed = true
       })
@@ -949,7 +1276,7 @@ export class PlatformManager {
       const body = buildContent(input.content, input.tags)
       if (!body) throw new Error('正文为空：请提供 content 或 tags')
 
-      win = this.createWindow(platform, false)
+      win = this.ensureWindow(platform, false)
       const w = win
 
       const run = async (name: string, fn: () => Promise<string | undefined>, critical = true) => {

@@ -261,3 +261,73 @@ form label { display: block; margin: 14px 0 6px; color: var(--muted); font-size:
 .ok-text { color: #8be0a6; font-size: 13px; }
 /* P25 作品数据快照：原样显示平台页面文案，保留换行 */
 .platform-stats-text { max-height: 320px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 12px; line-height: 1.6; color: #c3cad8; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 10px; margin: 8px 0; }
+/* P30 数据快照结构化：指标卡片 + 作品表格 */
+.platform-metrics { margin: 10px 0; }
+.platform-metrics-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: 8px; margin-bottom: 12px; }
+.platform-metric { display: flex; flex-direction: column; gap: 2px; padding: 8px 10px; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; }
+.platform-metric-label { font-size: 12px; color: var(--muted); }
+.platform-metric-value { font-size: 18px; color: #e8edf6; font-variant-numeric: tabular-nums; }
+.platform-metric-raw { font-size: 11px; color: var(--muted); }
+.platform-works { width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 10px; }
+.platform-works th, .platform-works td { border-bottom: 1px solid var(--line); padding: 6px 8px; text-align: left; vertical-align: top; }
+.platform-works th { color: var(--muted); font-weight: 500; }
+.platform-works td:nth-child(n + 2) { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.platform-metrics-notes { margin: 6px 0 0 18px; padding: 0; }
+.platform-stats-raw summary { cursor: pointer; font-size: 12px; color: var(--muted); }
+
+/* P32 评论回复 */
+.platform-comment-list { list-style: none; padding: 0; margin: 12px 0 0; display: flex; flex-direction: column; gap: 10px; }
+.platform-comment-item { border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 10px; padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; }
+.platform-comment-text { display: flex; gap: 8px; align-items: flex-start; font-size: 13px; line-height: 1.5; }
+.platform-comment-text > span:last-child { white-space: pre-wrap; word-break: break-word; }
+.platform-comment-reply { display: flex; gap: 8px; }
+.platform-comment-reply input { flex: 1; }
+.platform-reply-result { margin-top: 12px; }
+
+
+/* P33 一键分发：多平台多选 + 分发结果表 */
+.platform-targets {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+}
+.platform-target {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 13px;
+}
+.platform-target.on {
+  border-color: var(--accent, #6b8afd);
+  background: rgba(107, 138, 253, 0.12);
+}
+.platform-target input {
+  margin: 0;
+}
+button.ghost.tiny {
+  padding: 4px 8px;
+  font-size: 12px;
+}
+.platform-result-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  margin: 8px 0 4px;
+}
+.platform-result-table th,
+.platform-result-table td {
+  text-align: left;
+  padding: 6px 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  vertical-align: top;
+}
+.platform-result-table th {
+  color: var(--muted, #8a90a2);
+  font-weight: 500;
+}

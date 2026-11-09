@@ -79,8 +79,8 @@ check(!platformSrc.includes("    if (probe?.qr || probe?.loginWord) return { log
 check(has('judgeLogin 先看登录线索', platformSrc, "if (probe?.qr || probe?.loginWord) return { loggedIn: false }"))
 check(has('judgeLogin 用 loggedInCues 确认已登录', platformSrc, 'driver.loggedInCues'))
 check(re('judgeLogin 末尾返回未登录', platformSrc, /\/\/ 页面几乎是空的 = 还没渲染出来，这不算已登录\n    return \{ loggedIn: false \}/))
-check(re('checkStatus 轮询等待渲染（最多 10 轮）', platformSrc, /for \(let i = 0; i < 10; i\+\+\)/))
-check(has('checkStatus 正文超过 200 字即停', platformSrc, 'text.length > 200'))
+check(re('checkStatus 轮询等待渲染（P29 起最多 8 轮、首轮 600ms）', platformSrc, /for \(let i = 0; i < 8; i\+\+\)\s*\{\s*await sleep\(i === 0 \? 600 : 900\)/))
+check(has('checkStatus 正文超过 120 字即停（P29 提速）', platformSrc, 'text.length > 120'))
 
 // 4. 主进程接线
 check(has('main 引入 registerFileOps', mainSrc, "import { registerFileOps } from './file-ops'"))

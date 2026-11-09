@@ -24,6 +24,16 @@ export interface PlatformDriver {
   loggedInCues: string[]
   /** 作品数据页（0.1.11：P25 取数用，打不开就回落到 homeUrl） */
   dataUrl: string
+  /** 评论管理页（P32：读评论/回评论用，打不开就回落到 homeUrl） */
+  commentsUrl: string
+  /** 评论条目容器候选（P32：读评论列表用，按可信度从高到低） */
+  commentItems: string[]
+  /** 评论条目里的「回复」按钮候选（P32：按条目范围匹配，也支持 text=回复） */
+  commentReplyButton: string[]
+  /** 回复输入框候选（P32：点开回复后出现） */
+  commentReplyInput: string[]
+  /** 发送回复按钮候选（P32） */
+  commentSendButton: string[]
 }
 
 export const DRIVERS: Record<PlatformId, PlatformDriver> = {
@@ -38,7 +48,12 @@ export const DRIVERS: Record<PlatformId, PlatformDriver> = {
     successHint: ['发布成功', '作品发布成功', '发布完成', '已发布'],
     loggedInCookies: ['sessionid', 'sessionid_ss', 'sid_tt', 'passport_csrf_token'],
     loggedInCues: ['发布作品', '上传视频', '作品管理', '创作灵感', '数据概览'],
-    dataUrl: 'https://creator.douyin.com/creator-micro/data/content'
+    dataUrl: 'https://creator.douyin.com/creator-micro/data/content',
+    commentsUrl: 'https://creator.douyin.com/creator-micro/interaction/comment',
+    commentItems: ['.comment-item', '[class*="comment-item"]', '[class*="CommentItem"]', '[class*="comment-list"] [class*="item"]'],
+    commentReplyButton: ['text=回复', '[class*="reply"]', 'button[class*="reply"]', '.comment-reply-btn'],
+    commentReplyInput: ['textarea[placeholder*="回复"]', '[contenteditable="true"]', 'textarea', '.comment-input textarea'],
+    commentSendButton: ['text=发送', 'text=回复', 'button[class*="send"]', '.comment-send-btn']
   },
   xiaohongshu: {
     name: '小红书',
@@ -50,7 +65,12 @@ export const DRIVERS: Record<PlatformId, PlatformDriver> = {
     submitButton: ['text=发布', '.publishBtn', 'button[class*="publish"]'],
     successHint: ['发布成功', '笔记发布成功', '发布完成', '已发布'],
     loggedInCues: ['发布笔记', '上传图文', '笔记管理', '数据看板'],
-    dataUrl: 'https://creator.xiaohongshu.com/new/statistics/data'
+    dataUrl: 'https://creator.xiaohongshu.com/new/statistics/data',
+    commentsUrl: 'https://creator.xiaohongshu.com/new/interaction',
+    commentItems: ['.comment-item', '[class*="comment-item"]', '[class*="CommentItem"]', '[class*="comment"] [class*="item"]'],
+    commentReplyButton: ['text=回复', '[class*="reply"]', 'button[class*="reply"]', '.reply-btn'],
+    commentReplyInput: ['textarea[placeholder*="回复"]', '[contenteditable="true"]', 'textarea', '[class*="reply"] textarea'],
+    commentSendButton: ['text=发送', 'text=回复', 'button[class*="send"]', '[class*="reply"] button[class*="primary"]']
   },
   shipinhao: {
     name: '视频号',
@@ -62,7 +82,12 @@ export const DRIVERS: Record<PlatformId, PlatformDriver> = {
     submitButton: ['text=发表', '.weui-desktop-btn_primary', 'button[class*="primary"]'],
     successHint: ['发表成功', '发布成功', '发表完成', '已发表'],
     loggedInCues: ['发表动态', '上传视频', '内容管理', '数据中心'],
-    dataUrl: 'https://channels.weixin.qq.com/platform/statistics'
+    dataUrl: 'https://channels.weixin.qq.com/platform/statistics',
+    commentsUrl: 'https://channels.weixin.qq.com/platform/interaction/comment',
+    commentItems: ['.comment-item', '[class*="comment-item"]', '[class*="CommentItem"]', '[class*="comment_list"] [class*="item"]'],
+    commentReplyButton: ['text=回复', '[class*="reply"]', 'button[class*="reply"]', '.weui-desktop-link_primary'],
+    commentReplyInput: ['textarea[placeholder*="回复"]', '[contenteditable="true"]', 'textarea', '.weui-desktop-form__textarea'],
+    commentSendButton: ['text=发送', 'text=回复', 'text=发表', '.weui-desktop-btn_primary', 'button[class*="send"]']
   }
 }
 
@@ -105,4 +130,114 @@ export function clampTitle(platform: string, title?: string): string {
 export function platformSupports(platform: string, type: string): boolean {
   const row = PLATFORMS.find((p) => p.id === platform)
   return !!row && row.types.indexOf(type as MediaType) >= 0
+}
+// ---------- P32 评论回复：页面脚本生成器（纯函数，可单测） ----------
+
+/** 单条回复的字数上限（三个平台都在 300~1000，取保守值） */
+export const COMMENT_TEXT_MAX = 500
+/** 一次最多读回来的评论条目数 */
+export const COMMENT_ITEMS_MAX = 50
+
+const VISIBLE_FN =
+  'const __visible = (el) => { if (!el) return false; const r = el.getBoundingClientRect();' +
+  ' if (r.width <= 0 || r.height <= 0) return false; const st = window.getComputedStyle(el);' +
+  ' return st.display !== "none" && st.visibility !== "hidden" && st.opacity !== "0"; };'
+
+function collectItemsScript(driver: PlatformDriver): string {
+  return (
+    'const sels = ' + JSON.stringify(driver.commentItems) + ';' +
+    ' const all = (sel) => { try { return Array.from(document.querySelectorAll(sel)); } catch (e) { return []; } };' +
+    ' const norm = (el) => ((el && (el.innerText || el.textContent)) || "").replace(/\\s+/g, " ").trim();' +
+    ' let scanNodes = []; let used = "";' +
+    ' for (const sel of sels) { const hits = all(sel).filter(__visible); if (hits.length) { scanNodes = hits; used = sel; break; } }' +
+    ' const seen = new Set(); const scanItems = [];' +
+    ' for (const node of scanNodes) {' +
+    '   const text = norm(node);' +
+    '   if (text.length < 2 || text.length > 600) continue;' +
+    '   if (seen.has(text)) continue;' +
+    '   seen.add(text);' +
+    '   scanItems.push({ index: scanItems.length, text: text });' +
+    '   if (scanItems.length >= ' + COMMENT_ITEMS_MAX + ') break;' +
+    ' }' +
+    ' const scanResult = { items: scanItems, nodes: scanNodes, selector: used };'
+  )
+}
+
+/** 读评论列表的页面脚本：返回 { ok, title, href, selector, items:[{index,text}] } */
+export function scanCommentsScript(driver: PlatformDriver): string {
+  return (
+    '(() => {' +
+    VISIBLE_FN +
+    collectItemsScript(driver) +
+    ' return { ok: scanResult.items.length > 0, title: document.title || "", href: location.href, selector: scanResult.selector, items: scanResult.items, total: scanResult.nodes.length };' +
+    '})()'
+  )
+}
+
+/**
+ * 定位某条评论并在它的范围内点「回复」的页面脚本。
+ * target.match 按文本包含匹配；target.index 按扫描顺序（0 起）。
+ * 先把条目滚进视野，再在条目内按候选找按钮（没找到就找文本含「回复」的可点元素）。
+ */
+export function clickReplyScript(driver: PlatformDriver, target: { index?: number; match?: string }): string {
+  const buttons = JSON.stringify(driver.commentReplyButton)
+  const match = JSON.stringify(target.match || '')
+  const index = Number.isFinite(Number(target.index)) ? Number(target.index) : -1
+  return (
+    '(() => {' +
+    VISIBLE_FN +
+    collectItemsScript(driver) +
+    ' const items = scanResult.items; const nodes = scanResult.nodes;' +
+    ' if (!items.length) return { ok: false, error: "没读到评论列表（页面结构可能变了，或还没登录）" };' +
+    ' const want = ' + match + ';' +
+    ' const idx = ' + index + ';' +
+    ' let hit = -1;' +
+    ' if (want) { hit = items.findIndex((it) => it.text.indexOf(want) >= 0); }' +
+    ' if (hit < 0 && idx >= 0 && idx < items.length) hit = idx;' +
+    ' if (hit < 0) return { ok: false, error: "没找到要回复的评论（共 " + items.length + " 条）", items: items.slice(0, 20) };' +
+    ' const el = nodes[hit];' +
+    ' el.scrollIntoView({ block: "center" });' +
+    ' const cands = ' + buttons + ';' +
+    ' const norm2 = (n) => ((n && n.textContent) || "").replace(/\\s+/g, "");' +
+    ' let btn = null; let usedSel = "";' +
+    ' for (const sel of cands) {' +
+    '   const scope = (sel.indexOf("text=") === 0) ? null : (() => { try { return Array.from(el.querySelectorAll(sel)).filter(__visible); } catch (e) { return []; } })();' +
+    '   if (scope && scope.length) { btn = scope[0]; usedSel = sel; break; }' +
+    '   if (sel.indexOf("text=") === 0) {' +
+    '     const word = sel.slice(5).trim();' +
+    '     const inner = Array.from(el.querySelectorAll("button, a, span, div, [role=\\"button\\"]")).filter((n) => __visible(n) && norm2(n) === word);' +
+    '     if (inner.length) { btn = inner[inner.length - 1]; usedSel = sel; break; }' +
+    '   }' +
+    ' }' +
+    ' if (!btn) {' +
+    '   const loose = Array.from(el.querySelectorAll("button, a, span, div, [role=\\"button\\"]")).filter((n) => __visible(n) && norm2(n).indexOf("回复") >= 0 && norm2(n).length <= 8);' +
+    '   if (loose.length) { btn = loose[loose.length - 1]; usedSel = "文本兜底:回复"; }' +
+    ' }' +
+    ' if (!btn) return { ok: false, error: "这条评论里没找到「回复」按钮", text: items[hit].text };' +
+    ' try { btn.click(); } catch (e) { return { ok: false, error: "点击回复失败：" + String((e && e.message) || e), text: items[hit].text }; }' +
+    ' return { ok: true, text: items[hit].text, selector: usedSel, index: hit };' +
+    '})()'
+  )
+}
+
+/** 回复结果探针：成功提示文案 or 输入框已清空 */
+export function replyOutcomeScript(driver: PlatformDriver, replyText: string): string {
+  return (
+    '(() => {' +
+    VISIBLE_FN +
+    ' const text = document.body ? document.body.innerText : "";' +
+    ' const hints = ["回复成功", "评论成功", "已回复", "发送成功"];' +
+    ' let hint = "";' +
+    ' for (const h of hints) { if (text.indexOf(h) >= 0) { hint = h; break; } }' +
+    ' const boxes = Array.from(document.querySelectorAll(' + JSON.stringify(driver.commentReplyInput) + ')).filter(__visible);' +
+    ' let cleared = false;' +
+    ' for (const b of boxes) {' +
+    '   const v = (b.value !== undefined && b.value !== null) ? String(b.value) : (b.textContent || "");' +
+    '   if (!v.trim()) { cleared = true; break; }' +
+    ' }' +
+    ' const still = ' + JSON.stringify(Array.from(replyText).slice(0, 8).join('')) + ';' +
+    ' const echoed = still ? text.indexOf(still) >= 0 : false;' +
+    ' return { hint: hint, cleared: cleared, echoed: echoed };' +
+    '})()'
+  )
 }

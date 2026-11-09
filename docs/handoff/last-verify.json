@@ -1,5 +1,5 @@
 ﻿{
-    "at":  "2026-11-09T12:47:01.3558418+08:00",
+    "at":  "2026-11-09T15:27:47.8246251+08:00",
     "ok":  true,
     "failed":  0,
     "steps":  [
@@ -7,13 +7,19 @@
                       "name":  "server tsc",
                       "ok":  true,
                       "exit":  0,
-                      "seconds":  6
+                      "seconds":  33
+                  },
+                  {
+                      "name":  "desktop electron-vite build",
+                      "ok":  true,
+                      "exit":  0,
+                      "seconds":  4
                   },
                   {
                       "name":  "server restart (fresh dist, kill stale :3000)",
                       "ok":  true,
                       "exit":  0,
-                      "seconds":  12
+                      "seconds":  49
                   },
                   {
                       "name":  "unit: 员工工具循环 JSON 容错",
@@ -49,19 +55,19 @@
                       "name":  "smoke: T-11 长结果页（全文链接）",
                       "ok":  true,
                       "exit":  0,
-                      "seconds":  1
+                      "seconds":  0
                   },
                   {
                       "name":  "smoke: W2",
                       "ok":  true,
                       "exit":  0,
-                      "seconds":  22
+                      "seconds":  13
                   },
                   {
                       "name":  "smoke: W2 计费隔离",
                       "ok":  true,
                       "exit":  0,
-                      "seconds":  4
+                      "seconds":  3
                   },
                   {
                       "name":  "smoke: M6.5",
@@ -79,19 +85,19 @@
                       "name":  "smoke: T-12 支付与后台",
                       "ok":  true,
                       "exit":  0,
-                      "seconds":  2
+                      "seconds":  1
                   },
                   {
                       "name":  "smoke: T-08 套餐与订单",
                       "ok":  true,
                       "exit":  0,
-                      "seconds":  2
+                      "seconds":  1
                   },
                   {
                       "name":  "smoke: T-14 管理端扩展",
                       "ok":  true,
                       "exit":  0,
-                      "seconds":  3
+                      "seconds":  5
                   },
                   {
                       "name":  "smoke: T-29 运营后台",
@@ -109,7 +115,7 @@
                       "name":  "smoke: T-30 媒体编排",
                       "ok":  true,
                       "exit":  0,
-                      "seconds":  2
+                      "seconds":  1
                   },
                   {
                       "name":  "smoke: T-33 媒体成本护栏（模拟上游）",
@@ -133,7 +139,7 @@
                       "name":  "smoke: T-28 本地能力层",
                       "ok":  true,
                       "exit":  0,
-                      "seconds":  49
+                      "seconds":  58
                   }
               ]
 }

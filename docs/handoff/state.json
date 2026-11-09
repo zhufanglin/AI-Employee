@@ -1,7 +1,7 @@
 {
   "project": "中科元晟 AI员工 0.4.29 完全复刻",
   "version": 1,
-  "updatedAt": "2026-11-09T04:38:08.673Z",
+  "updatedAt": "2026-11-09T07:27:28.616Z",
   "phase": "P10（先能用三件事）派工完成，看板 29/33",
   "phaseGoal": "用户要求先能用、定价后置：T-31 桌面端出图出片 / T-32 员工多步干活 / T-33 成本护栏 已派 Codex；dsh-lead 推主线（生产可用性收口 + 复核），T-11 渠道仍 blocked(env)。",
   "owners": {
@@ -3166,7 +3166,7 @@
     {
       "id": "T-56",
       "title": "P28 登录态检查缓存（切页不重查）",
-      "status": "doing",
+      "status": "done",
       "owner": "dsh-lead",
       "scope": [
         "packages/desktop/src/main/platform.ts",
@@ -3180,11 +3180,69 @@
           "at": "2026-11-09T04:38:08.673Z",
           "by": "dsh-lead",
           "what": "claim"
+        },
+        {
+          "at": "2026-11-09T04:56:32.552Z",
+          "by": "dsh-lead",
+          "what": "done: 完成"
         }
       ],
       "lease": {
         "at": "2026-11-09T04:38:08.654Z",
         "heartbeat": "2026-11-09T04:38:08.673Z",
+        "reason": null
+      },
+      "finishedAt": "2026-11-09T04:56:32.551Z",
+      "result": "完成"
+    },
+    {
+      "id": "T-57",
+      "title": "T-57 P29 窗口复用+协议守卫 + P30 取数接线 + P31 多平台分发（0.1.15）",
+      "status": "done",
+      "owner": "dsh-lead",
+      "scope": [],
+      "accept": "",
+      "blockedBy": [],
+      "createdAt": "2026-11-09T07:27:07.422Z",
+      "history": [
+        {
+          "at": "2026-11-09T07:27:28.098Z",
+          "by": "dsh-lead",
+          "what": "claim"
+        },
+        {
+          "at": "2026-11-09T07:27:28.374Z",
+          "by": "dsh-lead",
+          "what": "done: 完成"
+        }
+      ],
+      "lease": {
+        "at": "2026-11-09T07:27:28.095Z",
+        "heartbeat": "2026-11-09T07:27:28.098Z",
+        "reason": null
+      },
+      "finishedAt": "2026-11-09T07:27:28.369Z",
+      "result": "完成"
+    },
+    {
+      "id": "T-58",
+      "title": "T-58 P32 平台评论回复（读评论+回复）+ 0.1.16 发布",
+      "status": "doing",
+      "owner": "dsh-lead",
+      "scope": [],
+      "accept": "",
+      "blockedBy": [],
+      "createdAt": "2026-11-09T07:27:09.047Z",
+      "history": [
+        {
+          "at": "2026-11-09T07:27:28.616Z",
+          "by": "dsh-lead",
+          "what": "claim"
+        }
+      ],
+      "lease": {
+        "at": "2026-11-09T07:27:28.614Z",
+        "heartbeat": "2026-11-09T07:27:28.616Z",
         "reason": null
       }
     }

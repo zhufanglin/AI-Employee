@@ -190,7 +190,7 @@ app.whenReady().then(async () => {
 })
 
 app.on('before-quit', async () => { try { await gateway?.stop() } catch {} })
-app.on('before-quit', () => { if (heartbeatTimer) clearInterval(heartbeatTimer); if (queueTimer) clearInterval(queueTimer); executor?.stop() })
+app.on('before-quit', () => { if (heartbeatTimer) clearInterval(heartbeatTimer); if (queueTimer) clearInterval(queueTimer); executor?.stop(); platform?.disposeAll() })
 app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit() })
 
 function runSmoke() {
@@ -392,12 +392,31 @@ function registerIpc() {
     userDataDir: app.getPath('userData'),
     log: (message: string) => console.log('[platform] ' + message)
   })
+  ipcMain.handle('platform:warm', (_e, p: { platform?: string }) => { platform!.warmUp(p?.platform); return { ok: true } })
   ipcMain.handle('platform:status', (_e, p: { platform?: string; force?: boolean }) => platform!.status(p?.platform, { maxAgeMs: p?.force ? 0 : undefined }))
   ipcMain.handle('platform:login', (_e, p: { platform: string }) => platform!.login(p.platform))
   ipcMain.handle('platform:logout', async (_e, p: { platform: string }) => { await platform!.logout(p.platform); return { ok: true } })
   ipcMain.handle('platform:publish', (_e, input: any) => platform!.publish(input))
   ipcMain.handle('platform:stats', (_e, p: { platform: string; maxChars?: number }) => platform!.stats(p?.platform, { maxChars: p?.maxChars }))
+  ipcMain.handle('platform:comments', (_e, p: { platform: string; maxItems?: number }) => platform!.comments(p?.platform, { maxItems: p?.maxItems }))
+  ipcMain.handle('platform:reply-comment', (_e, p: { platform: string; index?: number; match?: string; text?: string }) => platform!.replyComment(p?.platform, { index: p?.index, match: p?.match, text: p?.text }))
   ipcMain.handle('platform:open-debug', async (_e, p: { platform: string }) => { await platform!.openDebug(p.platform); return { ok: true } })
+  // P30 接线：把数据快照的整页文本交给服务端纯函数解析成结构化指标（能力失败也是 HTTP 201，看 body.success）
+  ipcMain.handle('platform:parse-metrics', async (_e, p: { platform?: string; text?: string }) => {
+    try {
+      const body = await api('/capabilities/run', {
+        method: 'POST',
+        body: JSON.stringify({
+          name: 'platform_metrics_parse',
+          params: { platform: String(p?.platform || ''), text: String(p?.text || '') }
+        })
+      })
+      if (body && body.success === false) return { ok: false, error: String((body.error && body.error.message) || body.error || '解析失败') }
+      return { ok: true, data: body && body.data !== undefined ? body.data : body }
+    } catch (e: any) {
+      return { ok: false, error: String(e?.message || e) }
+    }
+  })
   ipcMain.handle('platform:pick-media', async (_e, p: { type?: 'video' | 'image' }) => {
     if (!win) return { paths: [] }
     const image = p?.type === 'image'

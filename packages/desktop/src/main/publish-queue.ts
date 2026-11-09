@@ -8,7 +8,8 @@
  *   关掉客户端再打开也不会丢，到点（或补跑）由主进程的 tick 触发。
  *
  * 设计要点：
- *   - 单实例串行：同一时间只发一条，避免三个平台同时抢窗口和鼠标。
+ *   - 单实例串行：同一时间只发一条任务；任务内勾选多个平台时也逐个串行，
+ *     避免多个平台同时抢窗口和鼠标（P31 多平台分发）。
  *   - 错过就补跑：客户端关着的时候到点的任务，打开后会立刻补发（超过 LATE_MS 记为迟到）。
  *   - 状态只前进不后退：pending → running → done | failed，failed 可手动重试。
  *   - 文件写入用「临时文件 + rename」，避免断电/崩溃留下半截 JSON。
@@ -19,9 +20,24 @@ import { dirname, join } from 'node:path'
 
 export type JobStatus = 'pending' | 'running' | 'done' | 'failed'
 
+/** 单个平台的发布结果。多平台串行发布时，每发完一个就往 job.results 里落一条。 */
+export interface PublishResult {
+  platform: string
+  ok: boolean
+  /** 成功时的作品链接 */
+  url?: string
+  /** 成功提示或中文失败原因 */
+  message: string
+}
+
 export interface ScheduledJob {
   id: string
+  /** 兼容老队列文件与老界面：等于 platforms[0] */
   platform: string
+  /** 这条任务要发的平台（去重后 1~3 个，按用户勾选顺序串行发布） */
+  platforms: string[]
+  /** 已经发完的平台结果；中途崩溃也能从盘上看到完成到哪一步 */
+  results: PublishResult[]
   type: 'video' | 'image'
   title: string
   content: string
@@ -55,6 +71,17 @@ export interface PublishQueueDeps {
 }
 
 export const PLATFORMS = ['douyin', 'xiaohongshu', 'shipinhao'] as const
+/** 平台中文名，用于队列日志与多平台失败汇总文案 */
+export const PLATFORM_LABELS: Record<string, string> = {
+  douyin: '抖音',
+  xiaohongshu: '小红书',
+  shipinhao: '视频号'
+}
+export const MAX_PLATFORMS = 3
+
+export function platformLabel(id: string): string {
+  return PLATFORM_LABELS[id] || id
+}
 export const MAX_JOBS = 200
 /** 超过这么久还没发，仍会补发，但标记 late 便于用户分辨 */
 export const LATE_MS = 10 * 60 * 1000
@@ -82,6 +109,68 @@ function toList(value: unknown): string[] {
     .split(/[,，\s]+/)
     .map((item) => item.trim())
     .filter(Boolean)
+}
+
+function dedupePlatforms(value: unknown): string[] {
+  const out: string[] = []
+  if (!Array.isArray(value)) return out
+  for (const item of value) {
+    const id = text(item)
+    if (id && !out.includes(id)) out.push(id)
+  }
+  return out
+}
+
+/**
+ * 把新增入参归一成平台数组：优先 platforms，其次兼容旧的 platform。
+ * 规则：至少 1 个、最多 3 个、必须在白名单内、去重；非法抛中文错误。
+ */
+export function normalizePlatforms(input: any): string[] {
+  const hasPlatforms = !!input && Object.prototype.hasOwnProperty.call(input, 'platforms') && input.platforms !== undefined
+  if (hasPlatforms) {
+    if (!Array.isArray(input.platforms)) throw new Error('平台参数格式不对：platforms 必须是平台 id 数组')
+    if (input.platforms.length > MAX_PLATFORMS) throw new Error(`最多选择 ${MAX_PLATFORMS} 个发布平台`)
+    const picked = dedupePlatforms(input.platforms)
+    if (picked.length === 0) throw new Error('至少选择一个发布平台')
+    const invalid = picked.filter((id) => !PLATFORMS.includes(id as any))
+    if (invalid.length > 0) {
+      throw new Error('平台只能是 douyin / xiaohongshu / shipinhao（收到：' + invalid.join('、') + '）')
+    }
+    return picked
+  }
+  const single = text(input?.platform)
+  if (!single) throw new Error('至少选择一个发布平台')
+  if (!PLATFORMS.includes(single as any)) {
+    throw new Error('平台只能是 douyin / xiaohongshu / shipinhao（收到：' + single + '）')
+  }
+  return [single]
+}
+
+/** 读老队列文件时的平台归一：platforms 优先，缺失时退回 platform；非法项丢弃。 */
+function loadPlatforms(raw: any): string[] {
+  const list = Array.isArray(raw?.platforms) ? dedupePlatforms(raw.platforms) : []
+  const single = text(raw?.platform)
+  const candidates = list.length > 0 ? list : single ? [single] : []
+  return candidates.filter((id) => PLATFORMS.includes(id as any)).slice(0, MAX_PLATFORMS)
+}
+
+/** 读盘时只保留结构合法的结果项，避免旧文件/手改文件把界面搞崩。 */
+function loadResults(raw: any): PublishResult[] {
+  if (!Array.isArray(raw)) return []
+  const out: PublishResult[] = []
+  for (const item of raw) {
+    if (!item || typeof item !== 'object') continue
+    const platform = text(item.platform)
+    if (!PLATFORMS.includes(platform as any)) continue
+    const ok = item.ok === true
+    out.push({
+      platform,
+      ok,
+      url: text(item.url) || undefined,
+      message: text(item.message) || (ok ? '发布成功' : '发布失败，原因未知')
+    })
+  }
+  return out
 }
 
 /** 解析 datetime-local（2026-11-09T09:30）或 ISO 字符串 */
@@ -146,8 +235,9 @@ export class PublishQueue {
 
   private normalize(raw: any): ScheduledJob | null {
     if (!raw || typeof raw !== 'object') return null
-    const platform = text(raw.platform)
-    if (!PLATFORMS.includes(platform as any)) return null
+    // 老队列文件只有 platform；新文件有 platforms，统一归一成数组。
+    const platforms = loadPlatforms(raw)
+    if (platforms.length === 0) return null
     const scheduledAt = text(raw.scheduledAt)
     if (!Number.isFinite(parseWhen(scheduledAt))) return null
     const status: JobStatus = ['pending', 'running', 'done', 'failed'].includes(raw.status)
@@ -155,7 +245,9 @@ export class PublishQueue {
       : 'pending'
     return {
       id: text(raw.id) || newId(this.nowMs()),
-      platform,
+      platform: platforms[0],
+      platforms,
+      results: loadResults(raw.results),
       type: raw.type === 'image' ? 'image' : 'video',
       title: text(raw.title),
       content: typeof raw.content === 'string' ? raw.content : '',
@@ -203,8 +295,7 @@ export class PublishQueue {
   /** 新增一条定时发布。校验失败抛中文错误，由 IPC 层转成 { ok:false, error }。 */
   add(input: any): ScheduledJob {
     this.load()
-    const platform = text(input?.platform)
-    if (!PLATFORMS.includes(platform as any)) throw new Error('平台只能是 douyin / xiaohongshu / shipinhao')
+    const platforms = normalizePlatforms(input)
     const title = text(input?.title)
     if (!title) throw new Error('标题必填')
     const type: 'video' | 'image' = input?.type === 'image' ? 'image' : 'video'
@@ -219,7 +310,9 @@ export class PublishQueue {
 
     const job: ScheduledJob = {
       id: newId(this.nowMs()),
-      platform,
+      platform: platforms[0],
+      platforms,
+      results: [],
       type,
       title,
       content: typeof input?.content === 'string' ? input.content : text(input?.content),
@@ -232,7 +325,7 @@ export class PublishQueue {
     }
     this.jobs.push(job)
     this.save()
-    this.log(`已排程发布：${platform} «${title}» @ ${job.scheduledAt}`)
+    this.log(`已排程发布：${platforms.map(platformLabel).join('/')} «${title}» @ ${job.scheduledAt}`)
     this.notify('queue', { action: 'add', job })
     return job
   }
@@ -261,6 +354,8 @@ export class PublishQueue {
     job.message = undefined
     job.finishedAt = undefined
     job.late = false
+    // 重试会把所有平台重发一遍（包括上次已成功的），所以清空旧结果。
+    job.results = []
     this.save()
     this.notify('queue', { action: 'retry', job })
     return job
@@ -300,6 +395,17 @@ export class PublishQueue {
     return executed
   }
 
+  /** 取任务的平台列表；老数据没有 platforms 时退回 platform。 */
+  private platformsOf(job: ScheduledJob): string[] {
+    const list = Array.isArray(job.platforms) && job.platforms.length > 0 ? job.platforms : [job.platform]
+    return list.filter((id) => PLATFORMS.includes(id as any))
+  }
+
+  /**
+   * 执行一条任务：按勾选顺序逐个平台串行发布（平台窗口/鼠标不能并发抢）。
+   * 每发完一个平台就 push 一条 result 并落盘，进程中途崩溃也能看到完成到哪一步。
+   * 某个平台抛异常只记该平台失败，继续发后面的平台。
+   */
   private async runJob(job: ScheduledJob): Promise<void> {
     const startedMs = this.nowMs()
     job.status = 'running'
@@ -307,33 +413,86 @@ export class PublishQueue {
     job.startedAt = new Date(startedMs).toISOString()
     job.late = startedMs - parseWhen(job.scheduledAt) > LATE_MS
     job.message = undefined
+    job.url = undefined
+    // 重新跑就重发所有平台，先清空上一次尝试的中间结果（之后每发完一个会立刻写盘）。
+    job.results = []
     this.save()
     this.notify('queue', { action: 'start', job })
 
-    try {
-      const result = await this.deps.publish({
-        platform: job.platform,
-        type: job.type,
-        title: job.title,
-        content: job.content,
-        tags: job.tags,
-        mediaPaths: job.mediaPaths
-      })
-      const ok = result && (result.ok === true || result.success === true)
-      if (ok) {
-        job.status = 'done'
-        job.url = text(result?.url) || undefined
-        job.message = text(result?.message) || '发布成功'
-        this.log(`定时发布成功：${job.platform} «${job.title}»${job.url ? ' → ' + job.url : ''}`)
-      } else {
-        job.status = 'failed'
-        job.message = text(result?.message) || text(result?.error) || '发布失败，原因未知'
-        this.log(`定时发布失败：${job.platform} «${job.title}»：${job.message}`)
-      }
-    } catch (e) {
+    const platforms = this.platformsOf(job)
+    if (platforms.length === 0) {
       job.status = 'failed'
-      job.message = text(e) || '发布失败，原因未知'
-      this.log(`定时发布异常：${job.platform} «${job.title}»：${job.message}`)
+      job.message = '任务没有可发布的平台（数据可能已损坏，请删除后重建）'
+      job.finishedAt = new Date(this.nowMs()).toISOString()
+      this.save()
+      this.notify('queue', { action: 'failed', job })
+      return
+    }
+
+    for (const platform of platforms) {
+      let result: PublishResult
+      try {
+        const published = await this.deps.publish({
+          platform,
+          type: job.type,
+          title: job.title,
+          content: job.content,
+          tags: job.tags,
+          mediaPaths: job.mediaPaths
+        })
+        const ok = published && (published.ok === true || published.success === true)
+        if (ok) {
+          result = {
+            platform,
+            ok: true,
+            url: text(published?.url) || undefined,
+            message: text(published?.message) || '发布成功'
+          }
+          this.log(`定时发布成功：${platformLabel(platform)} «${job.title}»${result.url ? ' → ' + result.url : ''}`)
+        } else {
+          result = {
+            platform,
+            ok: false,
+            message: text(published?.message) || text(published?.error) || '发布失败，原因未知'
+          }
+          this.log(`定时发布失败：${platformLabel(platform)} «${job.title}»：${result.message}`)
+        }
+      } catch (e) {
+        result = { platform, ok: false, message: text(e) || '发布失败，原因未知' }
+        this.log(`定时发布异常：${platformLabel(platform)} «${job.title}»：${result.message}`)
+      }
+      job.results.push(result)
+      // 单个平台一结束就落盘 + 通知界面，中途崩溃也能看到已完成哪几个。
+      this.save()
+      this.notify('queue', { action: 'progress', job, result })
+    }
+
+    const total = job.results.length
+    const succeeded = job.results.filter((item) => item.ok)
+    const failed = job.results.filter((item) => !item.ok)
+    if (total === 1) {
+      // 单平台保持 P26 的原文案（成功提示 / 失败原因原样展示），老界面与老用例不受影响。
+      const only = job.results[0]
+      job.status = only.ok ? 'done' : 'failed'
+      job.url = only.ok ? only.url : undefined
+      job.message = only.message
+    } else if (failed.length === 0) {
+      job.status = 'done'
+      job.url = succeeded[0]?.url
+      job.message = `${total} 个平台全部发布成功`
+    } else if (succeeded.length > 0) {
+      // 部分成功也记为 done：保留「已完成」语义，同时避免自动重试把已成功的平台再发一遍。
+      job.status = 'done'
+      job.url = succeeded[0]?.url
+      job.message =
+        `${succeeded.length}/${total} 个平台发布成功，失败：` +
+        failed.map((item) => `${platformLabel(item.platform)}（${item.message}）`).join('、')
+    } else {
+      job.status = 'failed'
+      job.url = undefined
+      job.message =
+        '全部平台发布失败：' +
+        failed.map((item) => `${platformLabel(item.platform)}（${item.message}）`).join('、')
     }
 
     job.finishedAt = new Date(this.nowMs()).toISOString()

@@ -19,6 +19,7 @@ import { descriptors as memoryDescriptors, buildMemoryHandlers } from "./capabil
 import { descriptors as memoryMaintenanceDescriptors, buildMemoryMaintenanceHandlers } from "./capabilities/memory-maintenance";
 import { descriptors as platformDescriptors, buildPlatformHandlers } from "./capabilities/platform-tools";
 import { ProvidersService } from "../providers/providers.service";
+import { descriptor as platformMetricsDescriptor, handler as platformMetricsHandler } from "./platform-metrics";
 
 /**
  * 能力层：原版 agent-tool-box 的 36 个 .pyc 原子能力的明文本地重写。
@@ -27,7 +28,7 @@ import { ProvidersService } from "../providers/providers.service";
 @Injectable()
 export class CapabilityService {
   private readonly logger = new Logger(CapabilityService.name);
-  private readonly descriptors: CapabilityDescriptor[] = [webExtractDescriptor, webBatchDescriptor, ...contentDescriptors, ...customerDescriptors, ...llmDescriptors, searchDescriptor, ...fileDescriptors, ...docDescriptors, ...docWriteDescriptors, ...mediaDescriptors, ...visionDescriptors, ...employeeDescriptors, ...memoryDescriptors, ...memoryMaintenanceDescriptors, ...platformDescriptors];
+  private readonly descriptors: CapabilityDescriptor[] = [webExtractDescriptor, webBatchDescriptor, ...contentDescriptors, ...customerDescriptors, ...llmDescriptors, searchDescriptor, ...fileDescriptors, ...docDescriptors, ...docWriteDescriptors, ...mediaDescriptors, ...visionDescriptors, ...employeeDescriptors, ...memoryDescriptors, ...memoryMaintenanceDescriptors, ...platformDescriptors, platformMetricsDescriptor];
   private readonly handlers: Record<string, CapabilityHandler>;
 
   constructor(private readonly prisma: PrismaService, private readonly toolapi: ToolapiService, private readonly providers: ProvidersService) {
@@ -47,6 +48,7 @@ export class CapabilityService {
       ...buildMemoryHandlers(prisma, providers),
       ...buildMemoryMaintenanceHandlers(prisma, providers),
       ...buildPlatformHandlers(),
+      platform_metrics_parse: platformMetricsHandler,
     } as Record<string, CapabilityHandler>;
   }
 

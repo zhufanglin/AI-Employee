@@ -119,6 +119,18 @@ check('渲染层切页复用登录态（不再重查十几秒）', !!pageSrc && 
 check('刷新按钮走强制重查', !!pageSrc && pageSrc.includes('void refresh(true)') && pageSrc.includes('{ force: true }'))
 check('preload/types 透出 force 参数', !!preload && preload.includes('force?: boolean') && !!types && types.includes('force?: boolean'))
 
+// 0.1.15 P29：窗口复用 + 并行检查 + 拦掉外部协议（Windows 弹「Microsoft Store 查找应用」的真凶）
+check('platform.ts 复用常驻窗口池', !!platformSrc && platformSrc.includes('private readonly windows = new Map<string, BrowserWindow>()') && platformSrc.includes('private ensureWindow('))
+check('用完只隐藏不销毁（下次直接复用）', !!platformSrc && /private closeWindow\([\s\S]{0,220}win\.hide\(\)/.test(platformSrc))
+check('退出登录真的销毁窗口', !!platformSrc && platformSrc.includes('private destroyWindow(') && platformSrc.includes('this.destroyWindow(this.windows.get(platform) || null)'))
+check('应用退出时清掉常驻窗口', !!platformSrc && platformSrc.includes('disposeAll()') && !!main && main.includes('platform?.disposeAll()'))
+check('三个平台并行查登录态', !!platformSrc && platformSrc.includes('const jobs = ids.map(async (id) =>') && platformSrc.includes('return Promise.all(jobs)'))
+check('非 HTTP(S) 协议请求被拦掉', !!platformSrc && platformSrc.includes('ALLOWED_SCHEME') && platformSrc.includes('onBeforeRequest'))
+check('协议守卫每个分区只挂一次', !!platformSrc && platformSrc.includes('private readonly guarded = new Set<string>()') && platformSrc.includes('this.guarded.has(partition)'))
+check('窗口池支持预热（扫码弹窗更快）', !!platformSrc && platformSrc.includes('warmUp(platform?: string): void') && !!preload && preload.includes("invoke('platform:warm'"))
+check('隐藏窗口不做后台节流', !!platformSrc && platformSrc.includes('backgroundThrottling: false'))
+check('发布页进入时先预热窗口', !!pageSrc && pageSrc.includes('window.fcm.platform.warm?.()'))
+
 // 4. 执行器与能力目录
 for (const name of ['platform_publish', 'platform_status', 'platform_stats']) {
   check('worker 白名单含 ' + name, !!worker && worker.includes("'" + name + "'"))

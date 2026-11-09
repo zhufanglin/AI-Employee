@@ -45,6 +45,8 @@ export type FcmApi = {
   }
   // 平台发布（本机 RPA，见 docs/handoff/P24-平台发布RPA-契约.md）
   platform: {
+    /** 预热隐藏窗口（提前拉起登录页，点「扫码登录」时几乎瞬时弹出） */
+    warm: (p?: { platform?: string }) => Promise<{ ok: boolean }>
     status: (p?: { platform?: string; force?: boolean }) => Promise<PlatformStatus[]>
     login: (p: { platform: string }) => Promise<PlatformStatus>
     logout: (p: { platform: string }) => Promise<{ ok: boolean }>
@@ -52,6 +54,12 @@ export type FcmApi = {
     openDebug: (p: { platform: string }) => Promise<{ ok: boolean }>
     pickMedia: (p: { type?: 'video' | 'image' }) => Promise<{ paths: string[] }>
     stats: (p: { platform: string; maxChars?: number }) => Promise<PlatformStatsSnapshot>
+    /** 把数据快照的整页文本解析成结构化指标（P30，服务端纯函数） */
+    parseMetrics: (p: { platform: string; text: string }) => Promise<PlatformMetricsParseResult>
+    /** 读评论管理页的评论列表（P32） */
+    comments: (p: { platform: string; maxItems?: number }) => Promise<PlatformCommentsSnapshot>
+    /** 回复某条评论：index（0 起）或 match（评论里的几个字）定位（P32） */
+    replyComment: (p: { platform: string; index?: number; match?: string; text: string }) => Promise<PlatformReplyResult>
   }
   // 工作区文件管理（P27，见 docs/handoff/P27-文件管理.md）
   files: {
@@ -125,6 +133,52 @@ export type PlatformStatsSnapshot = {
   message: string
 }
 
+// P32：评论列表（index 是本次扫描顺序，只用于定位）
+export type PlatformCommentItem = { index: number; text: string }
+export type PlatformCommentsSnapshot = {
+  platform: string
+  name: string
+  ok: boolean
+  loggedIn: boolean
+  pageTitle: string
+  href: string
+  selector: string
+  items: PlatformCommentItem[]
+  screenshots: string[]
+  message: string
+}
+export type PlatformReplyResult = {
+  platform: string
+  ok: boolean
+  message: string
+  target?: string
+  screenshots: string[]
+  steps: { step: string; ok: boolean; detail?: string }[]
+}
+
+// P30：平台数据快照的结构化解析结果（服务端能力 platform_metrics_parse）
+export type PlatformMetricItem = {
+  label: string
+  value: number | null
+  raw: string
+}
+export type PlatformWorkItem = {
+  title: string
+  playCount: number | null
+  likeCount: number | null
+  commentCount: number | null
+  publishedAt: string | null
+  raw: string
+}
+export type PlatformMetrics = {
+  platform: string
+  ok: boolean
+  metrics: PlatformMetricItem[]
+  works: PlatformWorkItem[]
+  notes: string[]
+}
+export type PlatformMetricsParseResult = { ok: true; data: PlatformMetrics } | { ok: false; error: string }
+
 export type PlatformPublishResult = {
   platform: string
   ok: boolean
@@ -134,10 +188,23 @@ export type PlatformPublishResult = {
   steps: { step: string; ok: boolean; detail?: string }[]
 }
 
+// 与 packages/desktop/src/main/publish-queue.ts 的 PublishResult 逐字对齐
+export type ScheduledPublishResult = {
+  platform: string
+  ok: boolean
+  url?: string
+  message: string
+}
+
 // 与 packages/desktop/src/main/publish-queue.ts 的 ScheduledJob 逐字对齐
 export type ScheduledPublishJob = {
   id: string
+  /** 兼容老 UI：等于 platforms[0] */
   platform: string
+  /** P31 多平台：这条任务串行发布的平台列表 */
+  platforms: string[]
+  /** P31：每发完一个平台落一条，崩溃后也能看到进度 */
+  results: ScheduledPublishResult[]
   type: 'video' | 'image'
   title: string
   content: string
@@ -155,7 +222,10 @@ export type ScheduledPublishJob = {
 }
 
 export type ScheduledPublishInput = {
-  platform: PlatformId | string
+  /** 旧字段：只发一个平台时仍可用，内部归一成 platforms: [platform] */
+  platform?: PlatformId | string
+  /** 新字段：一条任务最多 3 个平台，去重后串行发布 */
+  platforms?: (PlatformId | string)[]
   type?: 'video' | 'image'
   title: string
   content?: string
