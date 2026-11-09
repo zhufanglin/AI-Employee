@@ -1,6 +1,6 @@
 # 任务看板（自动生成，勿手改）
 
-> 生成时间 2026-11-09T11:27:55.333Z · 单一事实源 `docs/handoff/state.json`
+> 生成时间 2026-11-09T16:51:58.858Z · 单一事实源 `docs/handoff/state.json`
 
 **当前阶段**：P10（先能用三件事）派工完成，看板 29/33 —— 用户要求先能用、定价后置：T-31 桌面端出图出片 / T-32 员工多步干活 / T-33 成本护栏 已派 Codex；dsh-lead 推主线（生产可用性收口 + 复核），T-11 渠道仍 blocked(env)。
 
@@ -64,7 +64,8 @@
 | T-56 | P28 登录态检查缓存（切页不重查） | done | dsh-lead | 11-09 04:38 | packages/desktop/src/main/platform.ts, packages/desktop/src/renderer/src/pages/PlatformPublish.tsx |
 | T-57 | T-57 P29 窗口复用+协议守卫 + P30 取数接线 + P31 多平台分发（0.1.15） | done | dsh-lead | 11-09 07:27 | - |
 | T-58 | T-58 P32 平台评论回复（读评论+回复）+ 0.1.16 发布 | done | dsh-lead | 11-09 08:26 | - |
-| T-59 | P34 抖音/小红书真机发布校准 + 0.1.17 | doing | dsh-lead | 11-09 11:27 | - |
+| T-59 | P34 抖音/小红书真机发布校准 + 0.1.17 | done | dsh-lead | 11-09 11:58 | - |
+| T-60 | P35 评论真机校准（视频号读+回复）+ 0.1.18 | doing | dsh-lead | 11-09 16:51 | - |
 
 **未完成任务详情**
 
@@ -74,7 +75,8 @@
 - 写作用域：packages/server/src/channels, packages/desktop/src/main
 - 断点：`docs/handoff/checkpoints/T-11.md`
 
-### T-59 · P34 抖音/小红书真机发布校准 + 0.1.17
+### T-60 · P35 评论真机校准（视频号读+回复）+ 0.1.18
 - 状态：doing · 负责人：dsh-lead
 - 验收：-
 - 写作用域：-
+- 断点：`docs/handoff/checkpoints/T-60.md`

@@ -1,7 +1,7 @@
 {
   "project": "中科元晟 AI员工 0.4.29 完全复刻",
   "version": 1,
-  "updatedAt": "2026-11-09T11:27:55.331Z",
+  "updatedAt": "2026-11-09T16:51:58.848Z",
   "phase": "P10（先能用三件事）派工完成，看板 29/33",
   "phaseGoal": "用户要求先能用、定价后置：T-31 桌面端出图出片 / T-32 员工多步干活 / T-33 成本护栏 已派 Codex；dsh-lead 推主线（生产可用性收口 + 复核），T-11 渠道仍 blocked(env)。",
   "owners": {
@@ -3268,7 +3268,7 @@
     {
       "id": "T-59",
       "title": "P34 抖音/小红书真机发布校准 + 0.1.17",
-      "status": "doing",
+      "status": "done",
       "owner": "dsh-lead",
       "scope": [],
       "accept": "",
@@ -3279,12 +3279,75 @@
           "at": "2026-11-09T11:27:55.331Z",
           "by": "dsh-lead",
           "what": "claim"
+        },
+        {
+          "at": "2026-11-09T11:58:36.104Z",
+          "by": "dsh-lead",
+          "what": "save: 0.1.17 已发布安装；抖音/小红书真机发布成功；P26 定时真机端到端成功"
+        },
+        {
+          "at": "2026-11-09T11:58:36.273Z",
+          "by": "dsh-lead",
+          "what": "done: 完成"
         }
       ],
       "lease": {
         "at": "2026-11-09T11:27:55.330Z",
-        "heartbeat": "2026-11-09T11:27:55.331Z",
+        "heartbeat": "2026-11-09T11:58:36.104Z",
         "reason": null
+      },
+      "checkpoint": {
+        "progress": [],
+        "notes": [
+          "11:58 0.1.17 已发布安装；抖音/小红书真机发布成功；P26 定时真机端到端成功"
+        ],
+        "files": []
+      },
+      "finishedAt": "2026-11-09T11:58:36.271Z",
+      "result": "完成"
+    },
+    {
+      "id": "T-60",
+      "title": "P35 评论真机校准（视频号读+回复）+ 0.1.18",
+      "status": "doing",
+      "owner": "dsh-lead",
+      "scope": [],
+      "accept": "",
+      "blockedBy": [],
+      "createdAt": "2026-11-09T16:11:01.419Z",
+      "history": [
+        {
+          "at": "2026-11-09T16:11:01.686Z",
+          "by": "dsh-lead",
+          "what": "claim"
+        },
+        {
+          "at": "2026-11-09T16:11:27.733Z",
+          "by": "dsh-lead",
+          "what": "save: 视频号读评论+回复真机跑通（shadowRoot/作品列表/字段化/verifyScript value/attachAndEval 修复）；抖音登录态失效待扫码；小红书网页版无评论入口；verify GREEN；正在打 0.1.18"
+        },
+        {
+          "at": "2026-11-09T16:51:39.593Z",
+          "by": "coord-check",
+          "what": "stalled: 40min 无心跳"
+        },
+        {
+          "at": "2026-11-09T16:51:58.847Z",
+          "by": "dsh-lead",
+          "what": "takeover from dsh-lead"
+        }
+      ],
+      "lease": {
+        "at": "2026-11-09T16:11:01.678Z",
+        "heartbeat": "2026-11-09T16:51:58.843Z",
+        "reason": null
+      },
+      "checkpoint": {
+        "progress": [],
+        "notes": [
+          "16:11 视频号读评论+回复真机跑通（shadowRoot/作品列表/字段化/verifyScript value/attachAndEval 修复）；抖音登录态失效待扫码；小红书网页版无评论入口；verify GREEN；正在打 0.1.18"
+        ],
+        "files": []
       }
     }
   ],

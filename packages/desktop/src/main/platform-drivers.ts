@@ -40,6 +40,26 @@ export interface PlatformDriver {
   commentReplyInput: string[]
   /** 发送回复按钮候选（P32） */
   commentSendButton: string[]
+  /**
+   * 评论管理页在「微前端 shadow DOM」里的宿主元素选择器（P32 真机：视频号助手用 wujie 把子应用挂在
+   * <wujie-app> 的 shadowRoot 里，document.querySelector 搜不到任何评论节点）。
+   * 配了之后读评论/回复的页面脚本会优先在宿主 shadowRoot 里查。
+   */
+  commentShadowHost?: string
+  /**
+   * 评论管理页左侧的「作品（视频/笔记）」列表条目候选（P32 真机：视频号必须先点某条作品，
+   * 右侧才出现该作品下的评论；没有这一层直接扫会读到 0 条）。
+   */
+  commentFeedItem?: string[]
+  /**
+   * 评论条目里「子回复列表」的容器候选（视频号：父评论内部嵌 .comment-reply-list，
+   * 不排掉的话同一条回复会被读成两条评论，父评论文本也会把子回复的话吞进去）。
+   */
+  commentReplyList?: string[]
+  /** 评论条目内的结构化字段选择器（有则按字段组装文本，避免把动作条/隐藏弹层文案带进来） */
+  commentFields?: { author?: string[]; content?: string[]; time?: string[] }
+  /** 该平台页面只有窗口可见时才渲染（真机：视频号隐藏窗口 body 只有「视频号 · 助手」，SPA 不加载） */
+  needsVisibleWindow?: boolean
   /** 图文 tab 候选（真机：抖音上传页默认停在「发布视频」，jpg 会被视频上传器拒掉，必须先切这个 tab） */
   imageTab: string[]
   /** 视频 tab 候选（只有切过图文 tab 才需要切回来） */
@@ -107,13 +127,26 @@ export const DRIVERS: Record<PlatformId, PlatformDriver> = {
     successHint: ['发表成功', '发布成功', '发表完成', '已发表'],
     loggedInCues: ['发表动态', '上传视频', '内容管理', '数据中心'],
     dataUrl: 'https://channels.weixin.qq.com/platform/statistics',
+    // 真机（2026-11-09）：评论管理真实路由 = /platform/interaction/comment（左侧作品列表 + 右侧评论）
     commentsUrl: 'https://channels.weixin.qq.com/platform/interaction/comment',
+    commentsSupported: true,
+    // 真机：视频号窗口隐藏时 wujie 子应用不渲染（body 只有「视频号 · 助手」），读评论/取数时要先显示窗口
+    needsVisibleWindow: true,
     imageTab: ['text=图片', 'text=图文'],
     videoTab: ['text=视频'],
-    commentItems: ['.comment-item', '[class*="comment-item"]', '[class*="CommentItem"]', '[class*="comment_list"] [class*="item"]'],
-    commentReplyButton: ['text=回复', '[class*="reply"]', 'button[class*="reply"]', '.weui-desktop-link_primary'],
-    commentReplyInput: ['textarea[placeholder*="回复"]', '[contenteditable="true"]', 'textarea', '.weui-desktop-form__textarea'],
-    commentSendButton: ['text=发送', 'text=回复', 'text=发表', '.weui-desktop-btn_primary', 'button[class*="send"]']
+    // 真机（2026-11-09）：整个评论管理子应用挂在 <wujie-app> 的 shadowRoot 里；先点左侧作品才有右侧评论
+    commentShadowHost: 'wujie-app',
+    commentFeedItem: ['.comment-feed-wrap', '.comment-feed-wrap.inactive-feed'],
+    commentItems: ['.comment-item', '.comment-main-content', '[class*="comment-item"]'],
+    commentReplyList: ['.comment-reply-list', '.reply-list', '[class*="reply-list"]'],
+    commentFields: {
+      author: ['.comment-user-name'],
+      content: ['.comment-content', '.comment-row__main'],
+      time: ['.comment-time'],
+    },
+    commentReplyButton: ['text=回复', '.action-item', '[class*="reply"]', 'button[class*="reply"]'],
+    commentReplyInput: ['textarea.create-input', 'textarea[placeholder*="回复"]', 'textarea', '[contenteditable="true"]'],
+    commentSendButton: ['.create-ft .tag-wrap.primary', 'text=评论', '.weui-desktop-btn_primary', 'button[class*="send"]']
   }
 }
 
@@ -169,16 +202,68 @@ const VISIBLE_FN =
   ' if (r.width <= 0 || r.height <= 0) return false; const st = window.getComputedStyle(el);' +
   ' return st.display !== "none" && st.visibility !== "hidden" && st.opacity !== "0"; };'
 
+/**
+ * 页面脚本的「根节点」前缀：评论管理页可能整体在微前端 shadowRoot 里（视频号 wujie）。
+ * 定义 __roots()（优先 shadowRoot，其次 document）、__all(sel)、__text()（含 shadow 内文本）。
+ */
+function rootPrefix(driver: PlatformDriver): string {
+  const host = driver.commentShadowHost ? JSON.stringify(driver.commentShadowHost) : 'null'
+  return (
+    'const __hostSel = ' + host + ';' +
+    ' const __roots = () => {' +
+    '   const out = [];' +
+    '   if (__hostSel) { const h = document.querySelector(__hostSel); if (h && h.shadowRoot) out.push(h.shadowRoot); }' +
+    '   out.push(document);' +
+    '   return out;' +
+    ' };' +
+    ' const __all = (sel) => {' +
+    '   for (const root of __roots()) {' +
+    '     let hits = [];' +
+    '     try { hits = Array.from(root.querySelectorAll(sel)); } catch (e) { hits = []; }' +
+    '     if (hits.length) return hits;' +
+    '   }' +
+    '   return [];' +
+    ' };' +
+    ' const __text = () => __roots().map((r) => (r && (r.body ? (r.body.innerText || r.body.textContent) : r.textContent)) || "").join(" ");'
+  )
+}
+
 function collectItemsScript(driver: PlatformDriver): string {
   return (
-    'const sels = ' + JSON.stringify(driver.commentItems) + ';' +
-    ' const all = (sel) => { try { return Array.from(document.querySelectorAll(sel)); } catch (e) { return []; } };' +
+    rootPrefix(driver) +
+    ' const sels = ' + JSON.stringify(driver.commentItems) + ';' +
+    ' const all = __all;' +
     ' const norm = (el) => ((el && (el.innerText || el.textContent)) || "").replace(/\\s+/g, " ").trim();' +
+    // 子回复容器（视频号 .comment-reply-list）里的条目不算独立评论，父评论文本里也要把它们剪掉
+    ' const nested = ' + JSON.stringify(driver.commentReplyList || []) + ';' +
+    ' const isNested = (el) => nested.some((sel) => { try { return !!el.closest(sel); } catch (e) { return false; } });' +
+    ' const textOf = (el) => {' +
+    '   try {' +
+    '     if (!nested.length) return norm(el);' +
+    '     const c = el.cloneNode(true);' +
+    '     for (const sel of nested) { for (const n of Array.from(c.querySelectorAll(sel))) { n.remove(); } }' +
+    '     return norm(c);' +
+    '   } catch (e) { return norm(el); }' +
+    ' };' +
+    ' const fields = ' + JSON.stringify(driver.commentFields || null) + ';' +
+    ' const pick = (node, sels) => {' +
+    '   if (!sels) return "";' +
+    '   for (const sel of sels) { try { const hit = node.querySelector(sel); if (hit) return norm(hit); } catch (e) {} }' +
+    '   return "";' +
+    ' };' +
+    ' const richText = (node) => {' +
+    '   if (!fields) return textOf(node);' +
+    '   const author = pick(node, fields.author);' +
+    '   const content = pick(node, fields.content);' +
+    '   const time = pick(node, fields.time);' +
+    '   if (!content) return textOf(node);' +
+    '   return (author ? author + "：" : "") + content + (time ? "（" + time + "）" : "");' +
+    ' };' +
     ' let scanNodes = []; let used = "";' +
-    ' for (const sel of sels) { const hits = all(sel).filter(__visible); if (hits.length) { scanNodes = hits; used = sel; break; } }' +
+    ' for (const sel of sels) { const hits = all(sel).filter(__visible).filter((el) => !isNested(el)); if (hits.length) { scanNodes = hits; used = sel; break; } }' +
     ' const seen = new Set(); const scanItems = [];' +
     ' for (const node of scanNodes) {' +
-    '   const text = norm(node);' +
+    '   const text = richText(node);' +
     '   if (text.length < 2 || text.length > 600) continue;' +
     '   if (seen.has(text)) continue;' +
     '   seen.add(text);' +
@@ -246,16 +331,63 @@ export function clickReplyScript(driver: PlatformDriver, target: { index?: numbe
   )
 }
 
+/**
+ * 评论管理页左侧「作品列表」探针（视频号：必须先点某条作品，右侧才出该作品的评论）。
+ * 返回 { ok, count, feeds:[{ index, text, active }] }，按 DOM 顺序，最多 20 条。
+ */
+export function feedListScript(driver: PlatformDriver): string {
+  return (
+    '(() => {' +
+    VISIBLE_FN +
+    rootPrefix(driver) +
+    ' const sels = ' + JSON.stringify(driver.commentFeedItem || []) + ';' +
+    ' let nodes = [];' +
+    ' for (const sel of sels) { const hits = __all(sel).filter(__visible); if (hits.length) { nodes = hits; break; } }' +
+    ' const feeds = nodes.slice(0, 20).map((el, i) => ({' +
+    '   index: i,' +
+    '   text: ((el.innerText || el.textContent || "") || "").replace(/\s+/g, " ").trim().slice(0, 80),' +
+    '   active: String(el.className || "").indexOf("inactive") < 0' +
+    ' }));' +
+    ' return { ok: feeds.length > 0, count: nodes.length, feeds: feeds };' +
+    '})()'
+  )
+}
+
+/** 点左侧作品列表里的第 index 条（0 起），让它右侧加载出该作品的评论 */
+export function selectFeedScript(driver: PlatformDriver, index: number): string {
+  const idx = Number.isFinite(Number(index)) ? Number(index) : 0
+  return (
+    '(() => {' +
+    VISIBLE_FN +
+    rootPrefix(driver) +
+    ' const sels = ' + JSON.stringify(driver.commentFeedItem || []) + ';' +
+    ' let nodes = [];' +
+    ' for (const sel of sels) { const hits = __all(sel).filter(__visible); if (hits.length) { nodes = hits; break; } }' +
+    ' const idx = ' + idx + ';' +
+    ' if (!nodes.length) return { ok: false, error: "没找到作品列表（页面结构可能变了）" };' +
+    ' if (idx < 0 || idx >= nodes.length) return { ok: false, error: "作品序号越界（共 " + nodes.length + " 条）" };' +
+    ' const el = nodes[idx];' +
+    ' el.scrollIntoView({ block: "center" });' +
+    ' for (const type of ["mouseover", "mousedown", "mouseup"]) {' +
+    '   try { el.dispatchEvent(new MouseEvent(type, { bubbles: true })); } catch (e) {}' +
+    ' }' +
+    ' try { el.click(); } catch (e) { return { ok: false, error: "点击作品失败：" + String((e && e.message) || e) }; }' +
+    ' return { ok: true, index: idx, text: ((el.innerText || el.textContent || "") || "").replace(/\s+/g, " ").trim().slice(0, 60) };' +
+    '})()'
+  )
+}
+
 /** 回复结果探针：成功提示文案 or 输入框已清空 */
 export function replyOutcomeScript(driver: PlatformDriver, replyText: string): string {
   return (
     '(() => {' +
     VISIBLE_FN +
-    ' const text = document.body ? document.body.innerText : "";' +
+    rootPrefix(driver) +
+    ' const text = __text();' +
     ' const hints = ["回复成功", "评论成功", "已回复", "发送成功"];' +
     ' let hint = "";' +
     ' for (const h of hints) { if (text.indexOf(h) >= 0) { hint = h; break; } }' +
-    ' const boxes = Array.from(document.querySelectorAll(' + JSON.stringify(driver.commentReplyInput) + ')).filter(__visible);' +
+    ' const boxes = __all(' + JSON.stringify(driver.commentReplyInput) + ').filter(__visible);' +
     ' let cleared = false;' +
     ' for (const b of boxes) {' +
     '   const v = (b.value !== undefined && b.value !== null) ? String(b.value) : (b.textContent || "");' +

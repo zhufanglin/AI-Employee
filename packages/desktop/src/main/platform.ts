@@ -22,8 +22,10 @@ import {
   buildContent,
   clampTitle,
   clickReplyScript,
+  feedListScript,
   replyOutcomeScript,
   scanCommentsScript,
+  selectFeedScript,
   type PlatformDriver,
   type PlatformId
 } from './platform-drivers'
@@ -128,6 +130,10 @@ const FIELD_WAIT_POLL_MS = 1500
 // 因此必须等到成功提示或跳转到作品管理页才算发出去
 // 抖音点发布后有一段「发文助手检测中」，检测没跑完时点发布会被静默忽略（真机：30 秒后仍停在编辑页、
 // 页面无任何报错，几分钟后再点就成功了）⇒ 窗口放长，并且在等待期间补点几次
+/** P32 评论：左侧作品列表最多枚举几条（视频号必须先点作品才有评论） */
+const COMMENT_FEED_MAX = 8
+/** P32 评论：点完作品后等右侧评论渲染的时间 */
+const COMMENT_FEED_WAIT_MS = 2200
 const PUBLISH_RESULT_TIMEOUT_MS = 120000
 const PUBLISH_RESULT_POLL_MS = 2000
 const PUBLISH_RETRY_CLICK_MS = 25000
@@ -196,7 +202,25 @@ function locateScript(selectors: string[], action: string) {
     '(() => {' +
     VISIBLE_FN +
     ' const sels = ' + JSON.stringify(selectors) + ';' +
-    ' const all = (sel) => { try { return Array.from(document.querySelectorAll(sel)); } catch (e) { return []; } };' +
+    // 真机（2026-11-09 视频号）：表单/按钮可能整体在微前端 shadowRoot 里，直接查询命中 0 个元素；
+    // 先查 document，查不到再逐层走进 shadowRoot 兜底（只在没命中时才付这个代价）。
+    ' const all = (sel) => {' +
+    '   let hits = [];' +
+    '   try { hits = Array.from(document.querySelectorAll(sel)); } catch (e) { hits = []; }' +
+    '   if (hits.length) return hits;' +
+    '   const out = [];' +
+    '   const walk = (root) => {' +
+    '     let kids = [];' +
+    '     try { kids = Array.from(root.querySelectorAll("*")); } catch (e) { kids = []; }' +
+    '     for (const el of kids) {' +
+    '       if (!el.shadowRoot) continue;' +
+    '       try { for (const h of Array.from(el.shadowRoot.querySelectorAll(sel))) out.push(h); } catch (e) {}' +
+    '       walk(el.shadowRoot);' +
+    '     }' +
+    '   };' +
+    '   walk(document);' +
+    '   return out;' +
+    ' };' +
     ' const textOf = (el) => (el && el.textContent ? el.textContent : "").replace(/\\s+/g, "");' +
     ' for (const sel of sels) {' +
     '   let el = null;' +
@@ -220,10 +244,36 @@ function locateScript(selectors: string[], action: string) {
   )
 }
 
+/**
+ * 页面「深文本」：document.body.innerText + 所有 shadowRoot 里的可见文本。
+ * 真机（2026-11-09 视频号）：评论管理/数据中心是 wujie 微前端，整个子应用挂在 <wujie-app> 的
+ * shadowRoot 里，body.innerText 永远只有「视频号 · 助手」，登录态与取数都会误判。
+ */
+const DEEP_TEXT_FN =
+  ' const __deepText = () => {' +
+  '   const parts = [];' +
+  '   if (document.body) { const t0 = document.body.innerText || ""; if (t0) parts.push(t0); }' +
+  // ShadowRoot 不可 clone（真机报 NotSupportedError: ShadowRoot nodes are not clonable），
+  // 所以只能逐个元素取叶子文本：跳过 style/script，元素没有子元素才算叶子。
+  '   const collect = (root) => {' +
+  '     let kids = [];' +
+  '     try { kids = Array.from(root.querySelectorAll("*")); } catch (e) { kids = []; }' +
+  '     for (const el of kids) {' +
+  '       const tag = el.tagName || "";' +
+  '       if (tag === "STYLE" || tag === "SCRIPT" || tag === "NOSCRIPT" || tag === "TEMPLATE") continue;' +
+  '       if (!el.querySelector("*")) { const t = (el.textContent || "").trim(); if (t) parts.push(t); }' +
+  '       if (el.shadowRoot) { try { collect(el.shadowRoot); } catch (e) {} }' +
+  '     }' +
+  '   };' +
+  '   collect(document);' +
+  '   return parts.join("\\n");' +
+  ' };'
+
 // 判断登录态的页面探针：URL + cookie + 页面文案 + 二维码元素
 const PROBE_SCRIPT =
   '(() => {' +
-  ' const text = document.body ? document.body.innerText : "";' +
+  DEEP_TEXT_FN +
+  ' const text = __deepText();' +
   ' const href = location.href;' +
   ' const cookies = document.cookie || "";' +
   ' const words = ["扫码登录", "登录后查看", "请先登录", "未登录", "立即登录", "登录/注册", "登录创作服务平台"];' +
@@ -238,7 +288,8 @@ const PROBE_SCRIPT =
 // 作品数据页快照：正文文案 + 标题 + 页面上出现的数字片段（给模型读，不做字段映射）
 const STATS_SCRIPT =
   '(() => {' +
-  ' const text = document.body ? document.body.innerText : "";' +
+  DEEP_TEXT_FN +
+  ' const text = __deepText();' +
   ' const compact = text.replace(/\\n{2,}/g, "\\n").trim();' +
   ' const numbers = (compact.match(/[0-9][0-9.,]*\\s*(万|亿|w|播放|点赞|评论|分享|收藏|粉丝|作品|条)/g) || []).slice(0, 40);' +
   ' return { title: document.title, href: location.href, text: compact, numbers: numbers };' +
@@ -412,14 +463,45 @@ function outcomeScript(hints: string[]) {
 }
 
 // 填文本后的校验片段（看当前聚焦元素的值/文本里有没有刚插入的前几个字符）
+/** 同一路径（忽略 query/hash）：判断导航是否真的落到目标页 */
+function samePath(a: string, b: string): boolean {
+  const pick = (u: string): string => {
+    try {
+      const p = new URL(u)
+      return p.origin + p.pathname.replace(/\/+$/, '')
+    } catch (e) {
+      return ''
+    }
+  }
+  const x = pick(a)
+  const y = pick(b)
+  return !!x && x === y
+}
+
 function verifyScript(text: string) {
   const head = Array.from(text).slice(0, 8).join('')
   return (
     '(() => {' +
-    ' const el = document.activeElement;' +
-    ' if (!el) return false;' +
-    ' const v = (el.value !== undefined && el.value !== null) ? String(el.value) : (el.textContent || "");' +
-    ' return v.indexOf(' + JSON.stringify(head) + ') >= 0;' +
+    ' const head = ' + JSON.stringify(head) + ';' +
+    ' const read = (e) => (!e ? "" : ((e.value !== undefined && e.value !== null) ? String(e.value) : (e.textContent || "")));' +
+    ' const a = document.activeElement;' +
+    ' if (a && read(a).indexOf(head) >= 0) return true;' +
+    // 真机（2026-11-09 视频号回复框）：输入框在 wujie shadowRoot 里，focus 后 document.activeElement
+    // 是宿主元素；而且 textarea 的内容只在 value 里（textContent 为空），深文本也读不到，必须逐个 root 查 value。
+    ' const roots = [document];' +
+    ' const walk = (root) => {' +
+    '   let kids = [];' +
+    '   try { kids = Array.from(root.querySelectorAll("*")); } catch (e) { kids = []; }' +
+    '   for (const el of kids) { if (el.shadowRoot) { roots.push(el.shadowRoot); try { walk(el.shadowRoot); } catch (e) {} } }' +
+    ' };' +
+    ' try { walk(document); } catch (e) {}' +
+    ' for (const root of roots) {' +
+    '   let els = [];' +
+    '   try { els = Array.from(root.querySelectorAll("input, textarea, [contenteditable]")); } catch (e) { els = []; }' +
+    '   for (const el of els) { if (read(el).indexOf(head) >= 0) return true; }' +
+    ' }' +
+    DEEP_TEXT_FN +
+    ' return __deepText().indexOf(head) >= 0;' +
     '})()'
   )
 }
@@ -565,15 +647,17 @@ export class PlatformManager {
       let win: BrowserWindow | null = null
       try {
         win = this.ensureWindow(id, false)
+        if (win.isVisible()) win.hide()
         try {
           await this.navigate(win, driver.dataUrl)
         } catch (e) {
           this.log('[' + id + '] 数据页打不开，回落到首页：' + errText(e))
           await this.navigate(win, driver.homeUrl)
         }
+        if (driver.needsVisibleWindow) win.showInactive()
         await sleep(4000)
-        const probe = await this.attachAndEval<any>(win, PROBE_SCRIPT).catch(() => null)
-        const judged = probe ? this.judgeLogin(driver, probe) : { loggedIn: false }
+        const probe = await this.probeUntilReady(win)
+        const judged = probe ? await this.judgeLoginAsync(id, driver, probe) : { loggedIn: false }
         snapshot.loggedIn = judged.loggedIn
         if (!judged.loggedIn) {
           snapshot.message = '还没有登录 ' + driver.name + '，请先点「扫码登录」'
@@ -597,9 +681,56 @@ export class PlatformManager {
         snapshot.message = '读取 ' + driver.name + ' 数据失败：' + errText(e)
         return snapshot
       } finally {
+        if (driver.needsVisibleWindow && win) win.hide()
         this.closeWindow(win)
       }
     })
+  }
+
+  /**
+   * 读评论（跨「作品」聚合）。真机（2026-11-09 视频号）：评论管理页是「左作品列表 + 右评论」两栏，
+   * 必须先点某条作品，右侧才加载该作品的评论。这里先枚举左侧作品、逐条点开读评论，把条目按 feed 归组，
+   * index 是跨作品连续编号（comments() 返回给用户的编号，replyComment 也按它定位）。
+   */
+  private async scanCommentsAcrossFeeds(
+    win: BrowserWindow,
+    driver: PlatformDriver,
+    opts?: { maxItems?: number }
+  ): Promise<{ items: { index: number; text: string; feed: number }[]; selector: string; feeds: number }> {
+    const maxItems = Math.min(Math.max(Number(opts?.maxItems) || 20, 1), 50)
+    const out: { index: number; text: string; feed: number }[] = []
+    let selector = ''
+    const single = async (feed: number): Promise<void> => {
+      const info = await this.attachAndEval<any>(win, scanCommentsScript(driver)).catch(() => null)
+      if (!info) return
+      if (!selector) selector = String(info.selector || '')
+      const list = Array.isArray(info.items) ? info.items : []
+      for (const it of list) {
+        const text = String(it?.text || '')
+        if (!text) continue
+        out.push({ index: out.length, text, feed })
+        if (out.length >= maxItems) return
+      }
+    }
+    if (!driver.commentFeedItem || !driver.commentFeedItem.length) {
+      await single(0)
+      return { items: out, selector, feeds: 0 }
+    }
+    const fl = await this.attachAndEval<any>(win, feedListScript(driver)).catch(() => null)
+    const count = Math.min(Number(fl?.count) || 0, COMMENT_FEED_MAX)
+    if (!count) {
+      // 没有作品列表（结构可能变了）就退回直接扫，别整个流程报错
+      await single(0)
+      return { items: out, selector, feeds: 0 }
+    }
+    for (let feed = 0; feed < count; feed++) {
+      if (out.length >= maxItems) break
+      const picked = await this.attachAndEval<any>(win, selectFeedScript(driver, feed)).catch(() => null)
+      if (!picked || !picked.ok) continue
+      await sleep(COMMENT_FEED_WAIT_MS)
+      await single(feed)
+    }
+    return { items: out, selector, feeds: count }
   }
 
   /**
@@ -641,32 +772,35 @@ export class PlatformManager {
       let win: BrowserWindow | null = null
       try {
         win = this.ensureWindow(id, false)
+        // 顺序很重要（真机 2026-11-09 视频号）：发表动态页有未提交表单，窗口可见时导航会被
+        // beforeunload 拦住（net::ERR_ABORTED、URL 不变），所以先隐藏窗口完成导航，再显示出来让 SPA 渲染。
+        if (win.isVisible()) win.hide()
         try {
           await this.navigate(win, driver.commentsUrl)
         } catch (e) {
           this.log('[' + id + '] 评论页打不开，回落到首页：' + errText(e))
           await this.navigate(win, driver.homeUrl)
         }
+        if (driver.needsVisibleWindow) win.showInactive()
         await sleep(4000)
-        const probe = await this.attachAndEval<any>(win, PROBE_SCRIPT).catch(() => null)
-        const judged = probe ? this.judgeLogin(driver, probe) : { loggedIn: false }
+        const probe = await this.probeUntilReady(win)
+        const judged = probe ? await this.judgeLoginAsync(id, driver, probe) : { loggedIn: false }
         snapshot.loggedIn = judged.loggedIn
         if (!judged.loggedIn) {
           snapshot.message = '还没有登录 ' + driver.name + '，请先点「扫码登录」'
           snapshot.screenshots.push(...(await this.shotList(win, id, 'comments-login')))
           return snapshot
         }
-        const info = await this.attachAndEval<any>(win, scanCommentsScript(driver)).catch(() => null)
-        if (info) {
-          snapshot.pageTitle = String(info.title || '')
-          snapshot.href = String(info.href || '')
-          snapshot.selector = String(info.selector || '')
-          const list = Array.isArray(info.items) ? info.items : []
-          snapshot.items = list.slice(0, maxItems).map((it: any) => ({
-            index: Number(it?.index) || 0,
-            text: String(it?.text || '')
-          }))
+        const meta = await this.attachAndEval<any>(win, '({ title: document.title || "", href: location.href })').catch(
+          () => null
+        )
+        if (meta) {
+          snapshot.pageTitle = String(meta.title || '')
+          snapshot.href = String(meta.href || '')
         }
+        const scan = await this.scanCommentsAcrossFeeds(win, driver, { maxItems })
+        snapshot.selector = scan.selector
+        snapshot.items = scan.items.map((it) => ({ index: it.index, text: it.text }))
         snapshot.screenshots.push(...(await this.shotList(win, id, 'comments')))
         snapshot.ok = snapshot.items.length > 0
         snapshot.message = snapshot.ok
@@ -678,6 +812,7 @@ export class PlatformManager {
         snapshot.message = '读取 ' + driver.name + ' 评论失败：' + errText(e)
         return snapshot
       } finally {
+        if (driver.needsVisibleWindow && win) win.hide()
         this.closeWindow(win)
       }
     })
@@ -724,6 +859,7 @@ export class PlatformManager {
       let win: BrowserWindow | null = null
       try {
         win = this.ensureWindow(id, false)
+        if (win.isVisible()) win.hide()
         const w = win
         const run = async (name: string, fn: () => Promise<string | undefined>, critical = true) => {
           try {
@@ -743,19 +879,30 @@ export class PlatformManager {
         }
 
         await run('打开评论管理', async () => {
+          let note = ''
           try {
             await this.navigate(w, driver.commentsUrl)
           } catch (e) {
             await this.navigate(w, driver.homeUrl)
-            return '评论页打不开，已回落到 ' + driver.homeUrl + '：' + errText(e)
+            note = '（评论页打不开，已回落到 ' + driver.homeUrl + '：' + errText(e) + '）'
           }
+          if (driver.needsVisibleWindow && !w.isVisible()) w.showInactive()
           await sleep(3000)
-          return '已打开 ' + driver.commentsUrl
+          // 真机（2026-11-09 视频号）：窗口隐藏时导航过去，wujie 子应用常常不挂载，页面只有
+          // 「视频号 · 助手」几个字，登录检查就会误判未登录。窗口显示后若内容还是空的，再导航一次。
+          if (driver.needsVisibleWindow) {
+            const state = await this.attachAndEval<any>(w, PROBE_SCRIPT).catch(() => null)
+            if (!state || String(state.text || '').length < 60) {
+              await this.navigate(w, driver.commentsUrl).catch(() => null)
+              await sleep(2500)
+            }
+          }
+          return '已打开 ' + driver.commentsUrl + note
         })
 
         await run('检查登录状态', async () => {
-          const probe = await this.attachAndEval<any>(w, PROBE_SCRIPT).catch(() => null)
-          const judged = probe ? this.judgeLogin(driver, probe) : { loggedIn: false }
+          const probe = await this.probeUntilReady(w)
+          const judged = probe ? await this.judgeLoginAsync(id, driver, probe) : { loggedIn: false }
           if (!judged.loggedIn) {
             throw new Error('还没有登录 ' + driver.name + '：请先在「发布」页点「扫码登录」完成登录')
           }
@@ -763,11 +910,38 @@ export class PlatformManager {
         })
 
         await run('定位评论并点回复', async () => {
-          const hit = await this.attachAndEval<any>(w, clickReplyScript(driver, { index: input?.index, match }))
+          // 视频号是「左作品 + 右评论」，要先找到这条评论属于哪个作品并点开，再在那条作品里点回复。
+          const scan = await this.scanCommentsAcrossFeeds(w, driver, { maxItems: 50 })
+          if (!scan.items.length) throw new Error('没读到评论列表（页面结构可能变了，或还没登录）')
+          let idx = -1
+          if (match) idx = scan.items.findIndex((it) => it.text.indexOf(match) >= 0)
+          if (idx < 0 && hasIndex) {
+            const want = Number(input?.index)
+            if (want >= 0 && want < scan.items.length) idx = want
+          }
+          if (idx < 0) {
+            throw new Error('没找到要回复的评论（共 ' + scan.items.length + ' 条，可用 index 或 match 再指定）')
+          }
+          const target = scan.items[idx]
+          if (driver.commentFeedItem && driver.commentFeedItem.length) {
+            const picked = await this.attachAndEval<any>(w, selectFeedScript(driver, target.feed))
+            if (!picked || !picked.ok) throw new Error(String(picked?.error || '没找到这条评论所属的作品'))
+            await sleep(COMMENT_FEED_WAIT_MS)
+          }
+          const local = await this.attachAndEval<any>(w, scanCommentsScript(driver)).catch(() => null)
+          const localItems: any[] = Array.isArray(local?.items) ? local!.items : []
+          const localIdx = localItems.findIndex((it) => String(it?.text || '') === target.text)
+          const spec =
+            localIdx >= 0
+              ? { index: localIdx }
+              : { match: Array.from(target.text).slice(0, 16).join('') }
+          const hit = await this.attachAndEval<any>(w, clickReplyScript(driver, spec))
           if (!hit) throw new Error('页面没有返回结果（可能还在加载），请重试')
           if (!hit.ok) throw new Error(String(hit.error || '没找到要回复的评论'))
-          result.target = String(hit.text || '').slice(0, 120)
-          return '命中「' + String(hit.text || '').slice(0, 40) + '…」（按钮 ' + String(hit.selector || '') + '）'
+          result.target = String(hit.text || target.text || '').slice(0, 120)
+          return (
+            '命中「' + String(result.target).slice(0, 40) + '…」（按钮 ' + String(hit.selector || '') + '）'
+          )
         })
 
         await sleep(1500)
@@ -778,7 +952,8 @@ export class PlatformManager {
 
         await run('点击发送', async () => {
           const clickAction = 'el.scrollIntoView({ block: "center" }); el.click();'
-          const found = await this.evalPage<any>(w, locateScript(driver.commentSendButton, clickAction))
+          // 必须走 attachAndEval：evalPage 只是 sendCommand，没 attach 会抛「No target available」
+          const found = await this.attachAndEval<any>(w, locateScript(driver.commentSendButton, clickAction))
           if (!found || !found.ok) {
             throw new Error(
               '选择器未命中：没找到发送按钮（' + id + '），候选 ' + driver.commentSendButton.join(' | ')
@@ -811,6 +986,7 @@ export class PlatformManager {
         this.emit(id, 'comment-reply', result.message)
         return result
       } finally {
+        if (driver.needsVisibleWindow && win) win.hide()
         this.closeWindow(win)
       }
     })
@@ -1033,7 +1209,12 @@ export class PlatformManager {
         failures.push(errText(e))
         last = null
       }
-      if (last && last.ready && last.href && last.href !== 'about:blank') return
+      if (last && last.ready && last.href && last.href !== 'about:blank') {
+        // 真机（2026-11-09 视频号）：发表动态页有未提交表单时，导航会被 beforeunload 拦下并结算成
+        // ERR_ABORTED，但旧页面仍然 ready，不校验就会把「没跳过去」当成「打开了」。
+        const aborted = failures.some((m) => /ERR_ABORTED|aborted/i.test(m))
+        if (!aborted || samePath(last.href, url)) return
+      }
       await sleep(400)
     }
     const detail = failures.length
@@ -1137,11 +1318,23 @@ export class PlatformManager {
    * 0.1.10 及以前最后一句是「默认已登录」，页面还没渲染完（body 为空）时会把未登录误报成已登录，
    * 用户界面显示「已登录」、真去发布才发现是登录页。
    */
-  private judgeLogin(driver: PlatformDriver, probe: any): { loggedIn: boolean; nickname?: string } {
+  private judgeLogin(
+    driver: PlatformDriver,
+    probe: any,
+    sessionCookieNames?: string[]
+  ): { loggedIn: boolean; nickname?: string } {
     const href = String(probe?.href || '')
     if (/login|passport|signin/i.test(href)) return { loggedIn: false }
     if (probe?.qr || probe?.loginWord) return { loggedIn: false }
     const text = String(probe?.text || '')
+    const nickname0 = String(probe?.nickname || '')
+    // 有 httpOnly 会话 cookie 的平台（抖音）以分区 cookie 为准：页面文案里「上传视频/作品发布」这类
+    // 营销词在登录墙上也会出现（2026-11-09 真机误判），cookie 里没有 sessionid 就一定没登录。
+    if (driver.loggedInCookies && driver.loggedInCookies.length && sessionCookieNames) {
+      const hit = driver.loggedInCookies.some((name) => sessionCookieNames.indexOf(name) >= 0)
+      if (!hit) return { loggedIn: false }
+      return { loggedIn: true, nickname: nickname0 }
+    }
     const nickname = String(probe?.nickname || '')
     const cues = driver.loggedInCues || []
     if (cues.some((cue) => text.indexOf(cue) >= 0)) return { loggedIn: true, nickname }
@@ -1153,6 +1346,31 @@ export class PlatformManager {
     if (nickname) return { loggedIn: true, nickname }
     // 页面几乎是空的 = 还没渲染出来，这不算已登录
     return { loggedIn: false }
+  }
+
+  /** 读某个平台分区里的 cookie 名（含 httpOnly）——页面里的 document.cookie 看不到 httpOnly 的 sessionid */
+  private async sessionCookieNames(platform: string): Promise<string[]> {
+    try {
+      const ses = session.fromPartition(this.partition(platform))
+      const list = await ses.cookies.get({})
+      return list.map((c) => c.name)
+    } catch (e) {
+      this.log('[' + platform + '] 读取分区 cookie 失败：' + errText(e))
+      return []
+    }
+  }
+
+  /** judgeLogin 的异步版：需要区分登录墙/真登录的平台先取分区 cookie 再判定 */
+  private async judgeLoginAsync(
+    platform: string,
+    driver: PlatformDriver,
+    probe: any
+  ): Promise<{ loggedIn: boolean; nickname?: string }> {
+    const names =
+      driver.loggedInCookies && driver.loggedInCookies.length
+        ? await this.sessionCookieNames(platform)
+        : undefined
+    return this.judgeLogin(driver, probe, names)
   }
 
   /** 查一次并写缓存；页面无响应/检查失败这类不确定结果不缓存，下次还重查 */
@@ -1170,6 +1388,8 @@ export class PlatformManager {
     let win: BrowserWindow | null = null
     try {
       win = this.ensureWindow(platform, false)
+      // 视频号隐藏窗口不渲染（body 只有「视频号 · 助手」），查登录态时必须先显示窗口，否则永远判未登录
+      if (driver.needsVisibleWindow) win.showInactive()
       await this.navigate(win, driver.homeUrl)
       // 页面文案要等渲染出来：空白页既没有登录标志也没有登录线索，早读会误判（0.1.11）
       let probe: any = null
@@ -1192,7 +1412,7 @@ export class PlatformManager {
           error: '页面没有响应，未能检查登录态，请稍后点「刷新登录状态」重试'
         }
       }
-      const judged = this.judgeLogin(driver, probe)
+      const judged = await this.judgeLoginAsync(platform, driver, probe)
       if (judged.loggedIn) {
         this.emit(platform, 'status', '已登录' + (judged.nickname ? '（' + judged.nickname + '）' : ''))
         return { platform, name: driver.name, loggedIn: true, nickname: judged.nickname || undefined, checkedAt }
@@ -1210,6 +1430,7 @@ export class PlatformManager {
       this.log('[' + platform + '] 登录态检查失败：' + msg)
       return { platform, name: driver.name, loggedIn: false, checkedAt, error: '登录态检查失败：' + msg }
     } finally {
+      if (driver.needsVisibleWindow && win) win.hide()
       this.closeWindow(win)
     }
   }
@@ -1235,7 +1456,7 @@ export class PlatformManager {
           this.attachAndEval<any>(win, PROBE_SCRIPT).catch(() => null)
         )
         if (win.isDestroyed()) break
-        if (probe && this.judgeLogin(driver, probe).loggedIn) {
+        if (probe && (await this.judgeLoginAsync(platform, driver, probe)).loggedIn) {
           this.log('[' + platform + '] 登录成功')
           this.emit(platform, 'login', '登录成功')
           this.closeWindow(win)
@@ -1653,7 +1874,7 @@ export class PlatformManager {
       await run('检查登录状态', async () => {
         // SPA 后台渲染慢：真机小红书刚 navigate 完还是空白页，早判会误报「未登录」
         const probe = await this.probeUntilReady(w)
-        const judged = probe ? this.judgeLogin(driver, probe) : { loggedIn: false }
+        const judged = probe ? await this.judgeLoginAsync(platform, driver, probe) : { loggedIn: false }
         if (!judged.loggedIn) {
           throw new Error('还没有登录 ' + driver.name + '：请在「发布」页点「扫码登录」完成登录后再发布')
         }

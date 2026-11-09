@@ -433,3 +433,10 @@ ode scripts/coord.mjs done T-40 --agent codex --note ...，并回一条 msg 给 
 - 2026-11-09T08:26:16.094Z | dsh-lead | DONE | T-58 T-58 P32 平台评论回复（读评论+回复）+ 0.1.16 发布 —— 完成
 - 2026-11-09T11:27:44.081Z | dsh-lead | ADD | T-59 P34 抖音/小红书真机发布校准 + 0.1.17
 - 2026-11-09T11:27:55.335Z | dsh-lead | CLAIM | T-59 P34 抖音/小红书真机发布校准 + 0.1.17
+- 2026-11-09T11:58:36.112Z | dsh-lead | SAVE | T-59 0.1.17 已发布安装；抖音/小红书真机发布成功；P26 定时真机端到端成功
+- 2026-11-09T11:58:36.277Z | dsh-lead | DONE | T-59 P34 抖音/小红书真机发布校准 + 0.1.17 —— 完成
+- 2026-11-09T16:11:01.436Z | dsh-lead | ADD | T-60 P35 评论真机校准（视频号读+回复）+ 0.1.18
+- 2026-11-09T16:11:01.840Z | dsh-lead | CLAIM | T-60 P35 评论真机校准（视频号读+回复）+ 0.1.18
+- 2026-11-09T16:11:27.740Z | dsh-lead | SAVE | T-60 视频号读评论+回复真机跑通（shadowRoot/作品列表/字段化/verifyScript value/attachAndEval 修复）；抖音登录态失效待扫码；小红书网页版无评论入口；verify GREEN；正在打 0.1.18
+- 2026-11-09T16:51:39.595Z | coord-check | STALLED | T-60 40min 无心跳（原 dsh-lead）
+- 2026-11-09T16:51:58.863Z | dsh-lead | TAKEOVER | T-60 from dsh-lead (P35 评论真机校准（视频号读+回复）+ 0.1.18)

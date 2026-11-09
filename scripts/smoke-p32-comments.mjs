@@ -104,6 +104,11 @@ function makeDom({ items = [], sel = '.comment-item', sendHint = '', replyBoxes 
       }
       return out
     },
+    // platform-drivers 的 rootPrefix 会用 document.querySelector(宿主选择器) 找 shadow 宿主
+    querySelector(s) {
+      const hit = this.querySelectorAll(s)
+      return hit.length ? hit[0] : null
+    },
     activeElement: null
   }
   const window = { getComputedStyle: () => ({ display: 'block', visibility: 'visible', opacity: '1' }) }
