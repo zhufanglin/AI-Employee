@@ -1,7 +1,7 @@
 {
   "project": "中科元晟 AI员工 0.4.29 完全复刻",
   "version": 1,
-  "updatedAt": "2026-11-09T19:10:28.759Z",
+  "updatedAt": "2026-11-09T20:01:02.447Z",
   "phase": "P10（先能用三件事）派工完成，看板 29/33",
   "phaseGoal": "用户要求先能用、定价后置：T-31 桌面端出图出片 / T-32 员工多步干活 / T-33 成本护栏 已派 Codex；dsh-lead 推主线（生产可用性收口 + 复核），T-11 渠道仍 blocked(env)。",
   "owners": {
@@ -3359,14 +3359,25 @@
     },
     {
       "id": "T-61",
-      "title": "",
-      "status": "todo",
-      "owner": null,
+      "title": "P35 视频号发布真机校准（语法错误/shadow 按钮/successUrlHints）+ 0.1.19",
+      "status": "done",
+      "owner": "dsh-lead",
       "scope": [],
       "accept": "",
       "blockedBy": [],
       "createdAt": "2026-11-09T19:10:28.757Z",
-      "history": []
+      "history": [
+        {
+          "at": "2026-11-09T20:01:02.447Z",
+          "by": "dsh-lead",
+          "what": "done: 视频号发布真机 10 步全绿；post/list 复核到作品（视频(15)，2026-11-10 02:51）；0.1.19 已发布安装；verify GREEN；git e4b5dab"
+        }
+      ],
+      "finishedAt": "2026-11-09T20:01:02.445Z",
+      "result": "视频号发布真机 10 步全绿；post/list 复核到作品（视频(15)，2026-11-10 02:51）；0.1.19 已发布安装；verify GREEN；git e4b5dab",
+      "lease": {
+        "reason": null
+      }
     }
   ],
   "primary": "dsh-lead",

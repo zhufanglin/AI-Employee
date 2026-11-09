@@ -442,3 +442,5 @@ ode scripts/coord.mjs done T-40 --agent codex --note ...，并回一条 msg 给 
 - 2026-11-09T16:51:58.863Z | dsh-lead | TAKEOVER | T-60 from dsh-lead (P35 评论真机校准（视频号读+回复）+ 0.1.18)
 - 2026-11-09T17:13:32.930Z | dsh-lead | DONE | T-60 P35 评论真机校准（视频号读+回复）+ 0.1.18 —— 视频号评论读+回复真机跑通（shadowDOM/作品列表/字段化/回复确认），verify GREEN，0.1.18 已发布并静默安装校验；抖音登录失效待扫码、小红书网页版无评论入口
 - 2026-11-09T19:10:28.771Z | dsh-lead | ADD | T-61 
+- 2026-11-09T20:01:02.271Z | dsh-lead | ADD | T-62 T-61
+- 2026-11-09T20:01:02.453Z | dsh-lead | DONE | T-61  —— 视频号发布真机 10 步全绿；post/list 复核到作品（视频(15)，2026-11-10 02:51）；0.1.19 已发布安装；verify GREEN；git e4b5dab
