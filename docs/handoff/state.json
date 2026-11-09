@@ -1,7 +1,7 @@
 {
   "project": "中科元晟 AI员工 0.4.29 完全复刻",
   "version": 1,
-  "updatedAt": "2026-11-09T16:51:58.848Z",
+  "updatedAt": "2026-11-09T19:10:28.759Z",
   "phase": "P10（先能用三件事）派工完成，看板 29/33",
   "phaseGoal": "用户要求先能用、定价后置：T-31 桌面端出图出片 / T-32 员工多步干活 / T-33 成本护栏 已派 Codex；dsh-lead 推主线（生产可用性收口 + 复核），T-11 渠道仍 blocked(env)。",
   "owners": {
@@ -3309,7 +3309,7 @@
     {
       "id": "T-60",
       "title": "P35 评论真机校准（视频号读+回复）+ 0.1.18",
-      "status": "doing",
+      "status": "done",
       "owner": "dsh-lead",
       "scope": [],
       "accept": "",
@@ -3335,6 +3335,11 @@
           "at": "2026-11-09T16:51:58.847Z",
           "by": "dsh-lead",
           "what": "takeover from dsh-lead"
+        },
+        {
+          "at": "2026-11-09T17:13:32.920Z",
+          "by": "dsh-lead",
+          "what": "done: 视频号评论读+回复真机跑通（shadowDOM/作品列表/字段化/回复确认），verify GREEN，0.1.18 已发布并静默安装校验；抖音登录失效待扫码、小红书网页版无评论入口"
         }
       ],
       "lease": {
@@ -3348,7 +3353,20 @@
           "16:11 视频号读评论+回复真机跑通（shadowRoot/作品列表/字段化/verifyScript value/attachAndEval 修复）；抖音登录态失效待扫码；小红书网页版无评论入口；verify GREEN；正在打 0.1.18"
         ],
         "files": []
-      }
+      },
+      "finishedAt": "2026-11-09T17:13:32.905Z",
+      "result": "视频号评论读+回复真机跑通（shadowDOM/作品列表/字段化/回复确认），verify GREEN，0.1.18 已发布并静默安装校验；抖音登录失效待扫码、小红书网页版无评论入口"
+    },
+    {
+      "id": "T-61",
+      "title": "",
+      "status": "todo",
+      "owner": null,
+      "scope": [],
+      "accept": "",
+      "blockedBy": [],
+      "createdAt": "2026-11-09T19:10:28.757Z",
+      "history": []
     }
   ],
   "primary": "dsh-lead",

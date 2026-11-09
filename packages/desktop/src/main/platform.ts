@@ -298,11 +298,50 @@ const STATS_SCRIPT =
 // 上传进度 / 素材预览探针
 const UPLOAD_STATE_SCRIPT =
   '(() => {' +
-  ' const text = document.body ? document.body.innerText : "";' +
+  // 真机（2026-11-09 视频号）：发表动态整页在 <wujie-app> 的 shadowRoot 里，素材预览 video/img、
+  // 上传进度、编辑器都在 shadow 内，document.querySelector 全落空 ⇒ 上传永远判不完成。
+  // 边界（踩过）：逐层递归 walk(shadowRoot) 在这类微前端页面会跑不完（页面脚本 20 秒超时，恒 null），
+  // 改成「根集合广度收集 + visited 去重 + 数量上限」的迭代写法。
+  ' const __roots = (() => {' +
+  '   const out = [document];' +
+  '   const seen = new Set(out);' +
+  '   for (let i = 0; i < out.length && out.length < 60; i++) {' +
+  '     const root = out[i];' +
+  '     let kids = [];' +
+  '     try { kids = Array.from(root.querySelectorAll("*")); } catch (e) { kids = []; }' +
+  '     for (const el of kids) {' +
+  '       const sr = el.shadowRoot;' +
+  '       if (sr && !seen.has(sr)) { seen.add(sr); out.push(sr); }' +
+  '     }' +
+  '   }' +
+  '   return out;' +
+  ' })();' +
+  ' const __all = (sel) => {' +
+  '   const hits = [];' +
+  '   for (const root of __roots) {' +
+  '     try { for (const el of Array.from(root.querySelectorAll(sel))) hits.push(el); } catch (e) {}' +
+  '   }' +
+  '   return hits;' +
+  ' };' +
+  ' const __text = () => {' +
+  '   const parts = [];' +
+  '   for (const root of __roots) {' +
+  '     try {' +
+  '       const host = root.host;' +
+  '       const body = root.body;' +
+  '       parts.push(host ? (root.textContent || "") : body ? (body.innerText || body.textContent || "") : (root.textContent || ""));' +
+  '     } catch (e) {}' +
+  '   }' +
+  '   return parts.join("\\n");' +
+  ' };' +
+  ' const text = __text();' +
   ' const words = ["上传中", "正在上传", "处理中", "转码中", "视频上传中"];' +
-  ' const uploading = words.some((w) => text.indexOf(w) >= 0) || !!document.querySelector("[class*=\\"progress\\"], [class*=\\"uploading\\"], .progress-bar");' +
+  ' const uploading = words.some((w) => text.indexOf(w) >= 0) || __all("[class*=\\"progress\\"], [class*=\\"uploading\\"], .progress-bar").some((el) => {' +
+  '   const r = el.getBoundingClientRect();' +
+  '   return r.width > 0 && r.height > 0;' +
+  ' });' +
   ' let media = false;' +
-  ' for (const el of document.querySelectorAll("video, img")) {' +
+  ' for (const el of __all("video, img")) {' +
   '   const src = el.currentSrc || el.src || "";' +
   '   const r = el.getBoundingClientRect();' +
   '   if (r.width >= 80 && r.height >= 40 && (src.indexOf("blob:") === 0 || src.indexOf("data:") === 0 || src.indexOf("http") === 0)) {' +
@@ -311,20 +350,20 @@ const UPLOAD_STATE_SCRIPT =
   '   }' +
   ' }' +
   ' const href = location.href;' +
-  ' const editor = Array.from(document.querySelectorAll("[contenteditable], .zone-container, .ql-editor, textarea")).some((el) => {' +
+  ' const editor = __all("[contenteditable], .zone-container, .ql-editor, textarea").some((el) => {' +
   '   const r = el.getBoundingClientRect();' +
   '   return r.width >= 120 && r.height >= 20;' +
   ' });' +
   // 真机教训（2026-11-09 小红书）：不能靠 URL 判断是否进编辑器——小红书的 homeUrl 本身就是
   // /publish/publish，一进页就为真，导致「上传素材」在上传页上假报就绪。改用编辑器专有标记。
-  ' const editorMarks = ["input[placeholder*=\\"标题\\"]", ".zone-container", ".ProseMirror", ".ql-editor", "xhs-publish-btn"];' +
+  ' const editorMarks = [".zone-container", ".ProseMirror", ".ql-editor", "xhs-publish-btn", "#post-title"];' +
   ' const postEditor = editorMarks.some((sel) => {' +
-  '   try { return Array.from(document.querySelectorAll(sel)).some((el) => {' +
+  '   try { return __all(sel).some((el) => {' +
   '     const r = el.getBoundingClientRect();' +
   '     return r.width >= 60 && r.height >= 16;' +
   '   }); } catch (e) { return false; }' +
   ' });' +
-  ' return { uploading: uploading, media: media, href: href, editor: editor, postEditor: postEditor };' +
+  ' return { uploading: uploading, media: media, href: href, editor: editor, postEditor: postEditor, roots: __roots.length };' +
   '})()'
 
 // 发布按钮优先按 <button> 精确文本点。
@@ -363,6 +402,49 @@ const SUBMIT_TARGET_SCRIPT =
   ' if (!(r.width > 0 && r.height > 0)) return { ok: false, reason: "尺寸为 0" };' +
   ' return { ok: true, x: Math.round(r.left + r.width / 2), y: Math.round(r.top + r.height / 2), text: norm(el).slice(0, 10), vw: window.innerWidth, vh: window.innerHeight };' +
   '})()'
+
+// 真机（2026-11-10 视频号）：发表页整页在 <wujie-app> 的 shadowRoot 里，document.querySelectorAll 找
+// 不到「发表」按钮 ⇒ 走 shadow-aware 版本（根集合含 document 与各层 shadowRoot，对普通页面等价）。
+// 用模板字符串写页面脚本，避免单引号拼接里的转义陷阱（真机踩过：转义丢失导致页面语法错误、恒 null）。
+const SUBMIT_TARGET_SHADOW_SCRIPT = `
+(() => {
+  const roots = (() => {
+    const out = [document]; const seen = new Set(out);
+    for (let i = 0; i < out.length && out.length < 60; i++) {
+      let kids = [];
+      try { kids = Array.from(out[i].querySelectorAll("*")); } catch (e) { kids = []; }
+      for (const el of kids) { const sr = el.shadowRoot; if (sr && !seen.has(sr)) { seen.add(sr); out.push(sr); } }
+    }
+    return out;
+  })();
+  const all = (sel) => {
+    const hits = [];
+    for (const root of roots) {
+      try { for (const el of Array.from(root.querySelectorAll(sel))) hits.push(el); } catch (e) {}
+    }
+    return hits;
+  };
+  const visible = (el) => {
+    const r = el.getBoundingClientRect();
+    if (!(r.width > 0 && r.height > 0)) return false;
+    const st = window.getComputedStyle(el);
+    return st.visibility !== "hidden" && st.display !== "none" && st.opacity !== "0";
+  };
+  const norm = (el) => String(el.textContent || "").replace(/\\s+/g, "");
+  const words = ["发表", "发布"];
+  const candidateSel = "button, [role=\\"button\\"], .weui-desktop-btn, a[class*=\\"btn\\"], div[class*=\\"btn\\"]";
+  const btns = all(candidateSel).filter(visible);
+  const hits = btns.filter((el) => words.indexOf(norm(el)) >= 0);
+  if (!hits.length) return { ok: false, reason: "no-text-hit", scanned: btns.length, roots: roots.length };
+  const primary = hits.filter((el) => /primary/i.test(String(el.className || "")));
+  const pool = primary.length ? primary : hits;
+  const el = pool[pool.length - 1];
+  el.scrollIntoView({ block: "center" });
+  const r = el.getBoundingClientRect();
+  if (!(r.width > 0 && r.height > 0)) return { ok: false, reason: "尺寸为 0" };
+  return { ok: true, x: Math.round(r.left + r.width / 2), y: Math.round(r.top + r.height / 2), text: norm(el).slice(0, 10), vw: window.innerWidth, vh: window.innerHeight };
+})()
+`
 
 // 自定义元素（封闭 shadowRoot，textContent 搜不到按钮文字）取元素矩形，交给按比例的真实鼠标点击。
 // 真机（2026-11-09 小红书）：发布按钮是 <xhs-publish-btn submit-text="发布" save-text="暂存离开">，
@@ -510,6 +592,8 @@ function verifyScript(text: string) {
 export class PlatformManager {
   private readonly deps: PlatformManagerDeps
   private readonly locks = new Map<string, Promise<unknown>>()
+  /** 正在整段 hold debugger 的 webContents id（发布流程用），见 holdDebugger 注释 */
+  private readonly debugHeld = new Set<number>()
   /** 最近一次登录态检查结果，避免每次进页面都开窗口重查 */
   private readonly statusCache = new Map<string, { at: number; status: PlatformStatus }>()
   /** 常驻的隐藏窗口（每个平台一个）：窗口和渲染进程都留着，命中就不用再付一次冷启动 */
@@ -1233,10 +1317,35 @@ export class PlatformManager {
 
   private async detach(win: BrowserWindow) {
     try {
-      if (!win.isDestroyed() && win.webContents.debugger.isAttached()) win.webContents.debugger.detach()
+      if (win.isDestroyed()) return
+      // 发布流程整段会 holdDebugger（见 holdDebugger 注释），期间的 detach 一律跳过。
+      if (this.debugHeld.has(win.webContents.id)) return
+      if (win.webContents.debugger.isAttached()) win.webContents.debugger.detach()
     } catch {
       // detach 失败不影响结果
     }
+  }
+
+  /**
+   * 整段流程独占 debugger，期间 attach/detach 变成 no-op。
+   *
+   * 真机教训（2026-11-10 视频号）：用 DOM.setFileInputFiles 塞完文件后，只要中间 detach 过，
+   * 之后所有页面取值（Runtime.evaluate 以及内部同样走 DevTools 的 executeJavaScript）都会
+   * 整段挂住 —— 每次 20 秒超时、恒 null，而同一时刻从外部 CDP 连上去求值只要 3~5ms，
+   * 说明页面本身没事，是本次调试会话被弄坏了。改成发布全程只 attach 一次、收尾再 detach。
+   */
+  private holdDebugger(win: BrowserWindow) {
+    try {
+      this.debugHeld.add(win.webContents.id)
+    } catch {
+      // 窗口已销毁，忽略
+    }
+  }
+
+  private async releaseDebugger(win: BrowserWindow | null) {
+    if (!win || win.isDestroyed()) return
+    this.debugHeld.delete(win.webContents.id)
+    await this.detach(win)
   }
 
   private async evalPage<T = unknown>(win: BrowserWindow, expression: string): Promise<T> {
@@ -1570,7 +1679,14 @@ export class PlatformManager {
         }
       }
       if (!matches.length) {
-        throw new Error('选择器未命中：未找到素材上传 input（' + platform + '），候选 ' + driver.fileInput.join(' | '))
+        // 真机（2026-11-09 视频号）：整个发表表单挂在 <wujie-app> 的 shadowRoot 里，
+        // CDP 的 DOM.querySelectorAll 不进 shadow 树 ⇒ 改成在页面里找元素拿 objectId 再塞文件。
+        const deep = await this.deepFileInput(win, driver.fileInput, want)
+        if (!deep) {
+          throw new Error('选择器未命中：未找到素材上传 input（' + platform + '），候选 ' + driver.fileInput.join(' | '))
+        }
+        await dbg.sendCommand('DOM.setFileInputFiles', { files, nodeId: deep.nodeId })
+        return deep.selector + (deep.accept ? '（accept=' + deep.accept.slice(0, 40) + '，shadow DOM）' : '（shadow DOM）')
       }
       const prefer = matches.filter((m) => m.accept.toLowerCase().indexOf(want) >= 0)
       const usable = matches.filter((m) => m.accept.toLowerCase().indexOf(other) < 0)
@@ -1579,6 +1695,75 @@ export class PlatformManager {
       return pick.selector + (pick.accept ? '（accept=' + pick.accept.slice(0, 40) + '）' : '')
     } finally {
       await this.detach(win)
+    }
+  }
+
+  /**
+   * 在 document + 所有 shadowRoot 里找上传 input，返回 CDP objectId（给 DOM.setFileInputFiles 用）。
+   *
+   * 真机（2026-11-09 视频号）：发表动态整页在 <wujie-app> 的 shadowRoot 里，
+   * DOM.getDocument({pierce:true}) 拿到的 rootId 上 querySelectorAll 不会进 shadow 树，
+   * 所以候选全部落空。CDP 的 setFileInputFiles 支持直接传 objectId，绕开节点树。
+   */
+  private async deepFileInput(
+    win: BrowserWindow,
+    selectors: string[],
+    want: 'video' | 'image'
+  ): Promise<{ nodeId: number; selector: string; accept: string } | null> {
+    const expr =
+      '(() => {' +
+      ' const sels = ' + JSON.stringify(selectors) + ';' +
+      ' const all = (sel) => {' +
+      '   let hits = [];' +
+      '   try { hits = Array.from(document.querySelectorAll(sel)); } catch (e) { hits = []; }' +
+      '   const walk = (root) => {' +
+      '     let kids = [];' +
+      '     try { kids = Array.from(root.querySelectorAll("*")); } catch (e) { kids = []; }' +
+      '     for (const el of kids) {' +
+      '       if (!el.shadowRoot) continue;' +
+      '       try { for (const h of Array.from(el.shadowRoot.querySelectorAll(sel))) hits.push(h); } catch (e) {}' +
+      '       walk(el.shadowRoot);' +
+      '     }' +
+      '   };' +
+      '   walk(document);' +
+      '   return hits;' +
+      ' };' +
+      ' for (const sel of sels) {' +
+      '   const hits = all(sel).filter((el) => el && el.tagName === "INPUT");' +
+      '   if (!hits.length) continue;' +
+      '   const want = ' + JSON.stringify(want) + ';' +
+      '   const other = want === "image" ? "video" : "image";' +
+      '   const prefer = hits.filter((el) => String(el.accept || "").toLowerCase().indexOf(want) >= 0);' +
+      '   const usable = hits.filter((el) => String(el.accept || "").toLowerCase().indexOf(other) < 0);' +
+      '   const pick = (prefer.length ? prefer : usable.length ? usable : hits)[0];' +
+      '   return pick;' +
+      ' }' +
+      ' return null;' +
+      '})()'
+    // 注意：这里不 attach/detach —— 调用方 uploadFiles 已经 attach 了，
+    // 在这里 detach 会让调用方后续的 setFileInputFiles 报 "No target available"。
+    try {
+      const res: any = await win.webContents.debugger.sendCommand('Runtime.evaluate', {
+        expression: expr,
+        returnByValue: false
+      })
+      const objectId = res?.result?.objectId
+      if (!objectId) return null
+      // setFileInputFiles 的 objectId 必须能解析成 DOM Node：先开 DOM 域再 requestNode。
+      await win.webContents.debugger.sendCommand('DOM.enable')
+      const desc: any = await win.webContents.debugger.sendCommand('Runtime.callFunctionOn', {
+        objectId,
+        functionDeclaration: 'function () { return String(this.accept || "") }',
+        returnByValue: true
+      })
+      const accept = String(desc?.result?.value || '')
+      const node: any = await win.webContents.debugger.sendCommand('DOM.requestNode', { objectId })
+      const nodeId = Number(node?.nodeId || 0)
+      if (!nodeId) return null
+      return { nodeId, selector: 'input[type="file"]（shadow DOM）', accept }
+    } catch (e) {
+      this.log('[upload] shadow 查找上传 input 失败：' + errText(e))
+      return null
     }
   }
 
@@ -1629,10 +1814,27 @@ export class PlatformManager {
   }
 
   private async waitUploadDone(win: BrowserWindow, platform: string): Promise<string> {
+    // 排障辅助：上传完成后仍判不出来时，把页面状态落 run.log（保留最近一次状态）
+    let lastState: any = null
     const started = Date.now()
     let sawActivity = false
+    let poll = 0
     while (Date.now() - started < UPLOAD_TIMEOUT_MS) {
-      const state = await this.attachAndEval<any>(win, UPLOAD_STATE_SCRIPT).catch(() => null)
+      // 真机（2026-11-10 视频号）：CDP Debugger 的 Runtime.evaluate 在文件塞进去之后会整段挂住
+      // （实测每次 20 秒超时、恒 null，而同一页面用 executeJavaScript 正常），改用 executeJavaScript。
+      let state: any = null
+      try {
+        state = await Promise.race([
+          win.webContents.executeJavaScript(UPLOAD_STATE_SCRIPT, true).catch(() => null),
+          sleep(EVAL_TIMEOUT_MS).then(() => null)
+        ])
+      } catch {
+        state = null
+      }
+      poll++
+      // 真机排障：打包版控制台看不到，必须落 run.log；只在开头几轮打，避免刷屏
+      if (poll <= 3 || poll % 10 === 0) this.log('[upload] #' + poll + ' ' + JSON.stringify(state))
+      if (state) lastState = state
       if (state) {
         if (state.uploading) sawActivity = true
         // 抖音图文：图片被接受后会跳到 /content/post 并渲染出编辑器，这是比「素材预览」更准的就绪信号
@@ -1643,7 +1845,7 @@ export class PlatformManager {
       await sleep(UPLOAD_POLL_MS)
     }
     throw new Error(
-      '等待素材上传完成超时（' + Math.round(UPLOAD_TIMEOUT_MS / 1000) + ' 秒）：' + platform + '，请查看截图确认上传控件是否命中'
+      '等待素材上传完成超时（' + Math.round(UPLOAD_TIMEOUT_MS / 1000) + ' 秒）：' + platform + '，请查看截图确认上传控件是否命中' + (lastState ? '。最后一次页面状态：' + JSON.stringify(lastState) : '')
     )
   }
 
@@ -1732,7 +1934,9 @@ export class PlatformManager {
       last = await this.attachAndEval<any>(win, outcomeScript(driver.successHint)).catch(() => null)
       if (last && last.hint) return '命中成功提示「' + last.hint + '」，页面地址 ' + last.href
       const href = String((last && last.href) || '')
-      if (/\/content\/manage|publish-success/i.test(href)) return '已跳转到作品管理页：' + href
+      // 平台各自的「作品管理/列表」地址：抖音 /content/manage、视频号 /platform/post/list
+      const urlHints = driver.successUrlHints && driver.successUrlHints.length ? driver.successUrlHints : ['/content/manage', 'publish-success']
+      if (urlHints.some((h) => href.indexOf(h) >= 0)) return '已跳转到作品管理页：' + href
       await sleep(PUBLISH_RESULT_POLL_MS)
     }
     throw new Error(
@@ -1770,7 +1974,13 @@ export class PlatformManager {
     try {
       const clickAction = 'el.scrollIntoView({ block: "center" }); el.click();'
       // 首选：真实鼠标点 <button>（el.click() 对抖音 React 按钮无效，只会让日志显示「已点击」）
-      const target = await this.evalPage<any>(win, SUBMIT_TARGET_SCRIPT).catch(() => null)
+      let target = await this.evalPage<any>(win, SUBMIT_TARGET_SHADOW_SCRIPT).catch(() => null)
+      // 真机（2026-11-10 视频号）：普通页面与 shadow 页面统一走 shadow-aware 版本；
+      // 万一它没命中（例如 candidateSel 覆盖不全），退回只扫 document 的老脚本。
+      if (!target || !target.ok) {
+        this.log('[click] shadow 版未命中 ' + JSON.stringify(target || null))
+        target = await this.evalPage<any>(win, SUBMIT_TARGET_SCRIPT).catch(() => null)
+      }
       if (target && target.ok) {
         const probe = await this.evalPage<any>(win, CLICK_PROBE_INSTALL_SCRIPT).catch(() => null)
         await this.mouseClickAt(win, target.x, target.y)
@@ -1862,6 +2072,16 @@ export class PlatformManager {
           return false
         }
       }
+
+      // 视频号这类页面只在窗口可见时才挂载 SPA（隐藏时 body 只有「视频号 · 助手」），
+      // 否则上传控件/描述框全取不到。
+      if (driver.needsVisibleWindow) {
+        w.showInactive()
+        await sleep(600)
+      }
+
+      // 整段独占 debugger：setFileInputFiles 之后一旦 detach 过，本会话的页面取值会全部挂住。
+      this.holdDebugger(w)
 
       await run('打开创作后台', async () => {
         await this.navigate(w, driver.homeUrl)
@@ -1958,6 +2178,8 @@ export class PlatformManager {
       this.emit(platform, 'publish', result.message)
       return result
     } finally {
+      await this.releaseDebugger(win)
+      if (win && driver.needsVisibleWindow) win.hide()
       this.closeWindow(win)
     }
   }

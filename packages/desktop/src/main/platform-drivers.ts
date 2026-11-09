@@ -19,6 +19,12 @@ export interface PlatformDriver {
   contentInput: string[]
   submitButton: string[]
   successHint: string[]
+  /**
+   * 发布成功后页面会跳到的地址片段（比页面文案更可靠）。
+   * 真机（2026-11-10 视频号）：点「发表」后直接跳 /platform/post/list（作品列表），
+   * 页面上没有「发表成功」字样，只靠 successHint 会一直判失败。
+   */
+  successUrlHints?: string[]
   loggedInCookies?: string[]
   /** 已登录才会出现的页面文案（0.1.11：用来做登录态的正向证据，避免空白页被误判成已登录） */
   loggedInCues: string[]
@@ -125,6 +131,7 @@ export const DRIVERS: Record<PlatformId, PlatformDriver> = {
     contentInput: ['.input-editor', '[contenteditable="true"]', '.weui-desktop-editor', '.post-desc [contenteditable]'],
     submitButton: ['text=发表', '.weui-desktop-btn_primary', 'button[class*="primary"]'],
     successHint: ['发表成功', '发布成功', '发表完成', '已发表'],
+    successUrlHints: ['/platform/post/list'],
     loggedInCues: ['发表动态', '上传视频', '内容管理', '数据中心'],
     dataUrl: 'https://channels.weixin.qq.com/platform/statistics',
     // 真机（2026-11-09）：评论管理真实路由 = /platform/interaction/comment（左侧作品列表 + 右侧评论）

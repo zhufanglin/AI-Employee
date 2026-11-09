@@ -10,6 +10,17 @@ if (-not (Test-Path $node)) { $node = "C:\node.exe" }
 $script:fail = 0
 $script:code = 0
 $script:steps = @()
+# 把 packages\server\.env 注入当前进程（smoke 脚本直接读环境变量，如 DATABASE_URL）
+$envFile = Join-Path $repo "packages\server\.env"
+if (Test-Path $envFile) {
+  foreach ($row in (Get-Content $envFile -Encoding utf8)) {
+    $t = $row.Trim()
+    if (-not $t -or $t.StartsWith("#") -or $t.IndexOf("=") -lt 1) { continue }
+    $k = $t.Substring(0, $t.IndexOf("=")).Trim()
+    $v = $t.Substring($t.IndexOf("=") + 1).Trim().Trim('"')
+    if ($k -and -not [Environment]::GetEnvironmentVariable($k)) { Set-Item -Path ("Env:" + $k) -Value $v }
+  }
+}
 
 function Step([string]$name, [scriptblock]$block) {
   Write-Host ""
