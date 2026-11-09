@@ -1,7 +1,7 @@
 import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron'
 import { basename, join } from 'node:path'
 import { createHash } from 'node:crypto'
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { GatewayManager } from './gateway'
 import { TaskExecutor } from './executor'
 import { initUpdater, updateStatus, checkForUpdates, downloadUpdate, quitAndInstall } from './update'
@@ -390,7 +390,17 @@ function registerIpc() {
   // 平台发布：每个平台一个持久化 partition，用户扫码登录一次即可长期复用。
   platform = new PlatformManager({
     userDataDir: app.getPath('userData'),
-    log: (message: string) => console.log('[platform] ' + message)
+    // 真机校准：隐藏窗口里的日志在打包版控制台看不到，同步落一份文件便于排查卡在哪一步
+    log: (message: string) => {
+      console.log('[platform] ' + message)
+      try {
+        const dir = join(app.getPath('userData'), 'platform-logs')
+        mkdirSync(dir, { recursive: true })
+        appendFileSync(join(dir, 'run.log'), new Date().toISOString() + ' ' + message + '\n')
+      } catch {
+        // 落盘失败不影响主流程
+      }
+    }
   })
   ipcMain.handle('platform:warm', (_e, p: { platform?: string }) => { platform!.warmUp(p?.platform); return { ok: true } })
   ipcMain.handle('platform:status', (_e, p: { platform?: string; force?: boolean }) => platform!.status(p?.platform, { maxAgeMs: p?.force ? 0 : undefined }))

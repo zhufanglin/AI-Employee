@@ -117,6 +117,20 @@ const LOGIN_POLL_MS = 3000
 const UPLOAD_TIMEOUT_MS = 120000
 const UPLOAD_POLL_MS = 2000
 const POST_PUBLISH_WAIT_MS = 5000
+// 点完「发布图文 / 发布视频」tab 后等页面换掉上传器
+const TAB_SWITCH_WAIT_MS = 3000
+const TAB_SWITCH_ATTEMPTS = 20
+const TAB_SWITCH_POLL_MS = 1500
+// 编辑页表单是异步渲染的：等到「上传完成」再立刻填标题/正文会扑空，所以先等元素出现
+const FIELD_WAIT_ATTEMPTS = 14
+const FIELD_WAIT_POLL_MS = 1500
+// 点完发布后轮询结果：只看「5 秒后页面地址变了」会误判成功（抖音点完还停在编辑页），
+// 因此必须等到成功提示或跳转到作品管理页才算发出去
+// 抖音点发布后有一段「发文助手检测中」，检测没跑完时点发布会被静默忽略（真机：30 秒后仍停在编辑页、
+// 页面无任何报错，几分钟后再点就成功了）⇒ 窗口放长，并且在等待期间补点几次
+const PUBLISH_RESULT_TIMEOUT_MS = 120000
+const PUBLISH_RESULT_POLL_MS = 2000
+const PUBLISH_RETRY_CLICK_MS = 25000
 /** 单次页面取值（CDP eval）最长等待，避免 webContents 卡死时整条链路挂住 */
 const EVAL_TIMEOUT_MS = 20000
 /** navigate 轮询里每次页面取值的上限：页面未 commit 时 executeJavaScript 会挂着不返回 */
@@ -245,8 +259,98 @@ const UPLOAD_STATE_SCRIPT =
   '     if (cls.indexOf("qrcode") < 0 && cls.indexOf("avatar") < 0 && cls.indexOf("logo") < 0) { media = true; break; }' +
   '   }' +
   ' }' +
-  ' return { uploading: uploading, media: media };' +
+  ' const href = location.href;' +
+  ' const editor = Array.from(document.querySelectorAll("[contenteditable], .zone-container, .ql-editor, textarea")).some((el) => {' +
+  '   const r = el.getBoundingClientRect();' +
+  '   return r.width >= 120 && r.height >= 20;' +
+  ' });' +
+  // 真机教训（2026-11-09 小红书）：不能靠 URL 判断是否进编辑器——小红书的 homeUrl 本身就是
+  // /publish/publish，一进页就为真，导致「上传素材」在上传页上假报就绪。改用编辑器专有标记。
+  ' const editorMarks = ["input[placeholder*=\\"标题\\"]", ".zone-container", ".ProseMirror", ".ql-editor", "xhs-publish-btn"];' +
+  ' const postEditor = editorMarks.some((sel) => {' +
+  '   try { return Array.from(document.querySelectorAll(sel)).some((el) => {' +
+  '     const r = el.getBoundingClientRect();' +
+  '     return r.width >= 60 && r.height >= 16;' +
+  '   }); } catch (e) { return false; }' +
+  ' });' +
+  ' return { uploading: uploading, media: media, href: href, editor: editor, postEditor: postEditor };' +
   '})()'
+
+// 发布按钮优先按 <button> 精确文本点。
+// 真机教训（2026-11-09 抖音）：表单里 div/span 的 textContent 也会正好是「发布」，
+// locateScript 的 text= 取「最后一个命中」，点到外层 div 上 —— 日志显示已点击，页面根本没发出去。
+const SUBMIT_BUTTON_SCRIPT =
+  '(() => {' +
+  VISIBLE_FN +
+  ' const words = ["发布", "发表"];' +
+  ' const norm = (el) => (el.textContent || "").replace(/\\s+/g, "");' +
+  ' const btns = Array.from(document.querySelectorAll("button, [role=\\"button\\"]")).filter(__visible);' +
+  ' const hits = btns.filter((el) => words.indexOf(norm(el)) >= 0);' +
+  ' if (!hits.length) return { ok: false };' +
+  ' const primary = hits.filter((el) => /primary/i.test(String(el.className || "")));' +
+  ' const pool = primary.length ? primary : hits;' +
+  ' const el = pool[pool.length - 1];' +
+  ' el.scrollIntoView({ block: "center" }); el.click();' +
+  ' return { ok: true, text: norm(el).slice(0, 10) };' +
+  '})()'
+
+// 取发布按钮的视口坐标，交给 CDP Input.dispatchMouseEvent 做真实鼠标点击。
+// 真机教训（2026-11-09 抖音）：el.click() 对 React 表单按钮不生效——日志显示已点击，页面一动不动。
+const SUBMIT_TARGET_SCRIPT =
+  '(() => {' +
+  VISIBLE_FN +
+  ' const words = ["发布", "发表"];' +
+  ' const norm = (el) => (el.textContent || "").replace(/\\s+/g, "");' +
+  ' const btns = Array.from(document.querySelectorAll("button, [role=\\"button\\"]")).filter(__visible);' +
+  ' const hits = btns.filter((el) => words.indexOf(norm(el)) >= 0);' +
+  ' if (!hits.length) return { ok: false };' +
+  ' const primary = hits.filter((el) => /primary/i.test(String(el.className || "")));' +
+  ' const pool = primary.length ? primary : hits;' +
+  ' const el = pool[pool.length - 1];' +
+  ' el.scrollIntoView({ block: "center" });' +
+  ' const r = el.getBoundingClientRect();' +
+  ' if (!(r.width > 0 && r.height > 0)) return { ok: false, reason: "尺寸为 0" };' +
+  ' return { ok: true, x: Math.round(r.left + r.width / 2), y: Math.round(r.top + r.height / 2), text: norm(el).slice(0, 10), vw: window.innerWidth, vh: window.innerHeight };' +
+  '})()'
+
+// 自定义元素（封闭 shadowRoot，textContent 搜不到按钮文字）取元素矩形，交给按比例的真实鼠标点击。
+// 真机（2026-11-09 小红书）：发布按钮是 <xhs-publish-btn submit-text="发布" save-text="暂存离开">，
+// 文字在 closed shadow DOM 里，el.textContent 是空串 —— 文本兜底会误点「定时发布」。
+function submitRectScript(selectors: string[]): string {
+  return (
+    '(() => {' +
+    VISIBLE_FN +
+    ' const sels = ' + JSON.stringify(selectors) + ';' +
+    ' for (const sel of sels) {' +
+    '   let nodes = [];' +
+    '   try { nodes = Array.from(document.querySelectorAll(sel)); } catch (e) { nodes = []; }' +
+    '   for (const el of nodes) {' +
+    '     if (!__visible(el)) continue;' +
+    '     el.scrollIntoView({ block: "center" });' +
+    '     const r = el.getBoundingClientRect();' +
+    '     if (!(r.width > 40 && r.height > 20)) continue;' +
+    '     return { ok: true, selector: sel, left: Math.round(r.left), top: Math.round(r.top), width: Math.round(r.width), height: Math.round(r.height) };' +
+    '   }' +
+    ' }' +
+    ' return { ok: false };' +
+    '})()'
+  )
+}
+
+// 点击诊断：点之前装监听、点之后读回来，用来区分「没点中」「点中了但页面拒绝」
+const CLICK_PROBE_INSTALL_SCRIPT =
+  '(() => {' +
+  ' window.__fcmClickLog = [];' +
+  ' ["pointerdown", "mousedown", "mouseup", "click"].forEach((t) => {' +
+  '   window.addEventListener(t, (e) => { const el = e.target || {};' +
+  '     const txt = String((el.textContent || "")).replace(/\\s+/g, "").slice(0, 12);' +
+  '     window.__fcmClickLog.push(t + ":" + String(el.tagName || "?") + ":" + txt);' +
+  '   }, true);' +
+  ' });' +
+  ' return { ok: true, dpr: window.devicePixelRatio, vw: window.innerWidth, vh: window.innerHeight };' +
+  '})()'
+
+const CLICK_PROBE_READ_SCRIPT = '(() => ({ log: (window.__fcmClickLog || []).slice(-8) }))()'
 
 // 发布按钮兜底：遍历 button/div/span 文本包含「发布/发表」的可见可点元素，点最后一个
 const FALLBACK_SUBMIT_SCRIPT =
@@ -524,6 +628,14 @@ export class PlatformManager {
       snapshot.message = errText(e)
       return snapshot
     }
+    if (driver.commentsSupported === false) {
+      // 真机核实（2026-11-09）：抖音/小红书创作后台网页版没有「评论管理」页，
+      // 硬开失效 URL 只会在空白页上扫到 0 条，容易让用户误以为是没登录或没评论。
+      snapshot.name = driver.name
+      snapshot.message =
+        driver.name + ' 创作后台网页版没有「评论管理」入口（2026-11-09 真机核实），暂不支持在本机读取评论；手机 App 里的评论无法通过浏览器自动化读取'
+      return snapshot
+    }
     return this.runExclusive(id, async () => {
       snapshot.name = driver.name
       let win: BrowserWindow | null = null
@@ -595,6 +707,11 @@ export class PlatformManager {
     }
     if (Array.from(text).length > COMMENT_TEXT_MAX) {
       result.message = '回复内容太长（' + Array.from(text).length + ' 字），最多 ' + COMMENT_TEXT_MAX + ' 字'
+      return result
+    }
+    if (driver.commentsSupported === false) {
+      result.message =
+        driver.name + ' 创作后台网页版没有「评论管理」入口（2026-11-09 真机核实），暂不支持在这里回复评论'
       return result
     }
     const hasIndex = Number.isFinite(Number(input?.index))
@@ -882,9 +999,27 @@ export class PlatformManager {
     win.loadURL(url).catch((e: unknown) => {
       failures.push(errText(e))
     })
-    const deadline = Date.now() + timeoutMs
+    const startedAt = Date.now()
+    const deadline = startedAt + timeoutMs
     let last: { ready: boolean; href: string; bodyLen: number } | null = null
+    // 真机教训（2026-11-09 小红书）：webContents.loadURL 有时一直卡在「请求已发出、文档没提交」
+    // （location.href 已经是目标地址，但 document 还是 about:blank），30 秒后超时。
+    // 同一个窗口改用 CDP Page.navigate 重发一次就能正常加载，所以超时就兜底重发。
+    let fallbackUsed = false
     while (Date.now() < deadline) {
+      if (!fallbackUsed && Date.now() - startedAt > Math.min(6000, Math.floor(timeoutMs / 3))) {
+        fallbackUsed = true
+        try {
+          await this.attach(win)
+          await win.webContents.debugger.sendCommand('Page.enable')
+          await win.webContents.debugger.sendCommand('Page.navigate', { url })
+          this.log('[navigate] loadURL 迟迟没有提交，改用 CDP Page.navigate 重新发起：' + url)
+        } catch (e) {
+          this.log('[navigate] CDP 兜底导航失败：' + errText(e))
+        } finally {
+          await this.detach(win)
+        }
+      }
       if (win.isDestroyed()) throw new Error('窗口被关闭了，请重新点击「打开后台」：' + url)
       try {
         // 页面还没 commit 时 executeJavaScript 会一直挂着（不是抛错），所以每次取值再套 2 秒上限，
@@ -964,13 +1099,30 @@ export class PlatformManager {
   private async shot(win: BrowserWindow, platform: string, step: string): Promise<string | null> {
     try {
       if (!win || win.isDestroyed()) return null
-      const image = await win.webContents.capturePage()
-      if (!image || image.isEmpty()) return null
+      let buf: Buffer | null = null
+      try {
+        const image = await win.webContents.capturePage()
+        if (image && !image.isEmpty()) buf = image.toPNG()
+      } catch {
+        // capturePage 在隐藏窗口上偶发失败，走下面的 CDP 兜底
+      }
+      if (!buf) {
+        // 真机教训：窗口 hide() 之后 capturePage() 常常返回空图（拿不到帧），
+        // 截图全空等于没有诊断信息。改用 CDP Page.captureScreenshot 强制截一帧。
+        try {
+          await this.attach(win)
+          const r: any = await win.webContents.debugger.sendCommand('Page.captureScreenshot', { format: 'png' })
+          if (r && r.data) buf = Buffer.from(String(r.data), 'base64')
+        } catch {
+          // 兜底也失败就返回 null
+        }
+      }
+      if (!buf) return null
       const dir = join(this.deps.userDataDir, 'platform-logs')
       mkdirSync(dir, { recursive: true })
       const ts = nowIso().replace(/[:.]/g, '-')
       const file = join(dir, platform + '-' + ts + '-' + safeName(step) + '.png')
-      writeFileSync(file, image.toPNG())
+      writeFileSync(file, buf)
       return file
     } catch (e) {
       this.log('截图失败：' + errText(e))
@@ -1160,8 +1312,15 @@ export class PlatformManager {
     return files
   }
 
-  /** CDP 定位 input[type=file] 并塞文件；返回命中的选择器 */
-  private async uploadFiles(win: BrowserWindow, platform: string, files: string[]): Promise<string> {
+  /**
+   * CDP 定位 input[type=file] 并塞文件；返回命中的选择器。
+   *
+   * 真机教训（2026-11-09 抖音图文）：上传页同时挂着两个 file input，
+   * 第一个 accept 是 video/* 第二个才是 image/*。按 fileInput 候选顺序取第一个可见的，
+   * 会把 jpg 塞进视频上传器 —— 抖音弹「不支持的文件格式」，页面停在发布视频 tab。
+   * 所以这里先按 accept 过滤出与素材类型匹配的 input，匹配不到再退回原候选顺序。
+   */
+  private async uploadFiles(win: BrowserWindow, platform: string, files: string[], type: 'video' | 'image'): Promise<string> {
     const driver = this.driver(platform)
     await this.attach(win)
     try {
@@ -1169,20 +1328,80 @@ export class PlatformManager {
       const doc: any = await dbg.sendCommand('DOM.getDocument', { depth: -1, pierce: true })
       const rootId = doc?.root?.nodeId
       if (!rootId) throw new Error('选择器未命中：无法读取页面 DOM（' + platform + '）')
+      const want = type === 'image' ? 'image' : 'video'
+      const other = type === 'image' ? 'video' : 'image'
+      const matches: { selector: string; idx: number; nodeId: number; accept: string }[] = []
       for (const selector of driver.fileInput) {
         try {
-          const q: any = await dbg.sendCommand('DOM.querySelector', { nodeId: rootId, selector })
-          if (!q?.nodeId) continue
-          const desc: any = await dbg.sendCommand('DOM.describeNode', { nodeId: q.nodeId })
-          const nodeName = String(desc?.node?.nodeName || '').toUpperCase()
-          if (nodeName !== 'INPUT') continue
-          await dbg.sendCommand('DOM.setFileInputFiles', { files, nodeId: q.nodeId })
-          return selector
+          const q: any = await dbg.sendCommand('DOM.querySelectorAll', { nodeId: rootId, selector })
+          const ids: number[] = (q?.nodeIds || []).filter((n: number) => n > 0)
+          for (let i = 0; i < ids.length; i++) {
+            const desc: any = await dbg.sendCommand('DOM.describeNode', { nodeId: ids[i] })
+            if (String(desc?.node?.nodeName || '').toUpperCase() !== 'INPUT') continue
+            const attrs: string[] = desc?.node?.attributes || []
+            let accept = ''
+            for (let a = 0; a + 1 < attrs.length; a += 2) if (attrs[a] === 'accept') accept = String(attrs[a + 1] || '')
+            matches.push({ selector, idx: i, nodeId: ids[i], accept })
+          }
+          if (matches.length) break
         } catch {
           // 某个候选的 CSS 非法或节点失效，继续试下一个
         }
       }
-      throw new Error('选择器未命中：未找到素材上传 input（' + platform + '），候选 ' + driver.fileInput.join(' | '))
+      if (!matches.length) {
+        throw new Error('选择器未命中：未找到素材上传 input（' + platform + '），候选 ' + driver.fileInput.join(' | '))
+      }
+      const prefer = matches.filter((m) => m.accept.toLowerCase().indexOf(want) >= 0)
+      const usable = matches.filter((m) => m.accept.toLowerCase().indexOf(other) < 0)
+      const pick = (prefer.length ? prefer : usable.length ? usable : matches)[0]
+      await dbg.sendCommand('DOM.setFileInputFiles', { files, nodeId: pick.nodeId })
+      return pick.selector + (pick.accept ? '（accept=' + pick.accept.slice(0, 40) + '）' : '')
+    } finally {
+      await this.detach(win)
+    }
+  }
+
+  /**
+   * 切到「发布图文 / 发布视频」tab。
+   *
+   * 真机教训（2026-11-09 抖音）：创作后台上传页默认停在「发布视频」，
+   * 直接把 jpg 塞进去会被视频上传器拒绝（toast「不支持的文件格式」），
+   * 页面永远不出现图文编辑器，标题/正文选择器全部落空。
+   */
+  private async switchTab(
+    win: BrowserWindow,
+    platform: string,
+    type: 'video' | 'image',
+    driver: PlatformDriver
+  ): Promise<string> {
+    const selectors = type === 'image' ? driver.imageTab : driver.videoTab
+    if (!selectors.length) return '无需切换'
+    const action = 'el.scrollIntoView({ block: "center" }); el.click();'
+    await this.attach(win)
+    try {
+      // 真机教训：创作后台首屏先渲染「加载中，请稍候...」，tab 是异步冒出来的。
+      // 只试一次会稳定失败（3 秒时页面还在 loading），所以这里轮询等 tab 出现。
+      let found: any = null
+      for (let i = 0; i < TAB_SWITCH_ATTEMPTS; i++) {
+        found = await this.evalPage<any>(win, locateScript(selectors, action)).catch(() => null)
+        if (found && found.ok) break
+        await sleep(TAB_SWITCH_POLL_MS)
+      }
+      if (!found || !found.ok) {
+        throw new Error(
+          '选择器未命中：未找到' +
+            (type === 'image' ? '图文' : '视频') +
+            '发布 tab（' +
+            platform +
+            '），候选 ' +
+            selectors.join(' | ') +
+            '，已等待 ' +
+            Math.round((TAB_SWITCH_ATTEMPTS * TAB_SWITCH_POLL_MS) / 1000) +
+            ' 秒'
+        )
+      }
+      await sleep(TAB_SWITCH_WAIT_MS)
+      return '已点击 ' + found.selector
     } finally {
       await this.detach(win)
     }
@@ -1195,6 +1414,8 @@ export class PlatformManager {
       const state = await this.attachAndEval<any>(win, UPLOAD_STATE_SCRIPT).catch(() => null)
       if (state) {
         if (state.uploading) sawActivity = true
+        // 抖音图文：图片被接受后会跳到 /content/post 并渲染出编辑器，这是比「素材预览」更准的就绪信号
+        if ((state.postEditor || state.editor) && !state.uploading) return '编辑器已就绪（' + (state.postEditor ? '已跳转到发布编辑页' : '检测到编辑区') + '）'
         if (state.media && !state.uploading) return '检测到素材预览，上传完成'
         if (sawActivity && !state.uploading) return '上传进度已消失，按完成处理'
       }
@@ -1225,6 +1446,32 @@ export class PlatformManager {
       } catch {
         // 隐藏窗口 focus 失败不致命
       }
+      // 真机教训（2026-11-09 抖音图文）：上传完成会立刻跳到 /content/post，但表单（标题/正文）
+      // 是 React 异步渲染的，1~3 秒后才出现。这里先轮询等元素出现，避免刚跳页就报「选择器未命中」。
+      let appeared = false
+      for (let i = 0; i < FIELD_WAIT_ATTEMPTS; i++) {
+        const probe = await this.evalPage<any>(win, locateScript(selectors, 'el.setAttribute("data-fcm-ready", "1");')).catch(
+          () => null
+        )
+        if (probe && probe.ok) {
+          appeared = true
+          break
+        }
+        if (i < FIELD_WAIT_ATTEMPTS - 1) await sleep(FIELD_WAIT_POLL_MS)
+      }
+      if (!appeared) {
+        throw new Error(
+          '选择器未命中：' +
+            role +
+            '输入框（' +
+            platform +
+            '），候选 ' +
+            selectors.join(' | ') +
+            '，已等待 ' +
+            Math.round((FIELD_WAIT_ATTEMPTS * FIELD_WAIT_POLL_MS) / 1000) +
+            ' 秒'
+        )
+      }
       const found = await this.evalPage<any>(win, locateScript(selectors, focusAction))
       if (!found || !found.ok) {
         throw new Error('选择器未命中：' + role + '输入框（' + platform + '），候选 ' + selectors.join(' | '))
@@ -1246,12 +1493,95 @@ export class PlatformManager {
     }
   }
 
+  /** 轮询发布结果：成功提示或跳转到作品管理页才算发出去；等待期间每隔一段时间补点一次发布 */
+  private async waitPublishOutcome(
+    win: BrowserWindow,
+    driver: PlatformDriver,
+    retryClick?: () => Promise<void>
+  ): Promise<string> {
+    const started = Date.now()
+    let last: any = null
+    let lastRetry = Date.now()
+    while (Date.now() - started < PUBLISH_RESULT_TIMEOUT_MS) {
+      if (retryClick && Date.now() - lastRetry >= PUBLISH_RETRY_CLICK_MS) {
+        lastRetry = Date.now()
+        await retryClick().catch(() => undefined)
+        await sleep(PUBLISH_RESULT_POLL_MS)
+      }
+      last = await this.attachAndEval<any>(win, outcomeScript(driver.successHint)).catch(() => null)
+      if (last && last.hint) return '命中成功提示「' + last.hint + '」，页面地址 ' + last.href
+      const href = String((last && last.href) || '')
+      if (/\/content\/manage|publish-success/i.test(href)) return '已跳转到作品管理页：' + href
+      await sleep(PUBLISH_RESULT_POLL_MS)
+    }
+    throw new Error(
+      '发布结果未确认：' +
+        Math.round(PUBLISH_RESULT_TIMEOUT_MS / 1000) +
+        ' 秒内未检测到成功提示或跳转到作品管理页（页面地址 ' +
+        String((last && last.href) || '未知') +
+        '），请查看截图人工确认'
+    )
+  }
+
+  /** 真实鼠标点击：CDP Input.dispatchMouseEvent（React 按钮只认真实指针事件） */
+  private async mouseClickAt(win: BrowserWindow, x: number, y: number): Promise<void> {
+    // 走 Electron 自己的输入通道（sendInputEvent）：窗口是隐藏的，CDP Input 域在这种情况下
+    // 不一定把事件派进渲染进程（真机复现：同一坐标外部 CDP 客户端能点成功，进程内就是没反应）
+    // 隐藏窗口里合成的输入事件能派到元素上（诊断日志能看到 click），但抖音的 React 提交不生效；
+    // 真机对比：同一坐标由外部 CDP 点击成功 ⇒ 差异在窗口可见性，点击前先 showInactive
+    const wasVisible = win.isVisible()
+    if (!wasVisible) {
+      win.showInactive()
+      await sleep(400)
+    }
+    win.webContents.sendInputEvent({ type: 'mouseMove', x, y })
+    await sleep(120)
+    win.webContents.sendInputEvent({ type: 'mouseDown', x, y, button: 'left', clickCount: 1 })
+    await sleep(120)
+    win.webContents.sendInputEvent({ type: 'mouseUp', x, y, button: 'left', clickCount: 1 })
+    await sleep(800)
+    if (!wasVisible && !win.isDestroyed()) win.hide()
+  }
+
   private async clickSubmit(win: BrowserWindow, platform: string): Promise<string> {
     const driver = this.driver(platform)
     await this.attach(win)
     try {
       const clickAction = 'el.scrollIntoView({ block: "center" }); el.click();'
-      const found = await this.evalPage<any>(win, locateScript(driver.submitButton, clickAction))
+      // 首选：真实鼠标点 <button>（el.click() 对抖音 React 按钮无效，只会让日志显示「已点击」）
+      const target = await this.evalPage<any>(win, SUBMIT_TARGET_SCRIPT).catch(() => null)
+      if (target && target.ok) {
+        const probe = await this.evalPage<any>(win, CLICK_PROBE_INSTALL_SCRIPT).catch(() => null)
+        await this.mouseClickAt(win, target.x, target.y)
+        await sleep(1500)
+        const trace = await this.evalPage<any>(win, CLICK_PROBE_READ_SCRIPT).catch(() => null)
+        const reached = !!(trace && trace.log && trace.log.length)
+        const tip = reached ? '；已确认点击事件送达页面' : '；页面没收到鼠标事件'
+        this.log('[click] ' + (reached ? '点击送达 ' : '点击未送达 ') + JSON.stringify((trace && trace.log) || []))
+        void probe
+        return '真实鼠标点击「' + target.text + '」（' + target.x + ',' + target.y + '）' + tip
+      }
+      const cssOnly = driver.submitButton.filter((s) => s.indexOf('text=') !== 0)
+      // 次选：自定义元素（小红书 xhs-publish-btn 的 shadowRoot 封闭，textContent 为空串）。
+      // 按元素矩形内的比例坐标做真实鼠标点击，比例由 driver.submitPoint 给出（真机：x≈0.6, y≈0.5）。
+      if (cssOnly.length) {
+        const box = await this.evalPage<any>(win, submitRectScript(cssOnly)).catch(() => null)
+        if (box && box.ok) {
+          const ratio = driver.submitPoint || { x: 0.5, y: 0.5 }
+          const px = Math.round(box.left + box.width * ratio.x)
+          const py = Math.round(box.top + box.height * ratio.y)
+          await this.mouseClickAt(win, px, py)
+          await sleep(1500)
+          const trace2 = await this.evalPage<any>(win, CLICK_PROBE_READ_SCRIPT).catch(() => null)
+          const reached2 = !!(trace2 && trace2.log && trace2.log.length)
+          this.log('[click] 自定义元素 ' + JSON.stringify((trace2 && trace2.log) || []))
+          return (
+            '元素点击「' + box.selector + '」比例(' + ratio.x + ',' + ratio.y + ') → (' + px + ',' + py + ')' +
+            (reached2 ? '；已确认点击事件送达页面' : '；页面没收到鼠标事件')
+          )
+        }
+      }
+      const found = cssOnly.length ? await this.evalPage<any>(win, locateScript(cssOnly, clickAction)) : null
       if (found && found.ok) return found.selector
       const fallback = await this.evalPage<any>(win, FALLBACK_SUBMIT_SCRIPT)
       if (fallback && fallback.ok) return '文本兜底：' + (fallback.text || '发布')
@@ -1261,6 +1591,19 @@ export class PlatformManager {
     } finally {
       await this.detach(win)
     }
+  }
+
+  /** 等页面渲染出内容再判登录态：空白页既没登录线索也没二维码，直接判会误报未登录 */
+  private async probeUntilReady(win: BrowserWindow): Promise<any> {
+    let probe: any = null
+    for (let i = 0; i < 8; i++) {
+      await sleep(i === 0 ? 1200 : 1000)
+      probe = await this.attachAndEval<any>(win, PROBE_SCRIPT).catch(() => null)
+      if (!probe) continue
+      if (probe.loginWord || probe.qr) return probe
+      if (String(probe.text || '').length > 120) return probe
+    }
+    return probe
   }
 
   private async doPublish(
@@ -1279,9 +1622,12 @@ export class PlatformManager {
       win = this.ensureWindow(platform, false)
       const w = win
 
+      this.log('[publish] 开始 ' + platform + ' type=' + input.type + ' 标题=' + title)
       const run = async (name: string, fn: () => Promise<string | undefined>, critical = true) => {
+        this.log('[publish] → ' + name)
         try {
           const detail = await fn()
+          this.log('[publish] ✓ ' + name + (detail ? '：' + detail : ''))
           result.steps.push({ step: name, ok: true, detail })
           result.screenshots.push((await this.shot(w, platform, name)) || '')
           this.emit(platform, 'publish', name + '：成功' + (detail ? '（' + detail + '）' : ''))
@@ -1305,7 +1651,8 @@ export class PlatformManager {
       // 未登录时后台会停在扫码登录页，后面每一步都会以「选择器未命中」失败，
       // 用户看到的是一堆看不懂的选择器错误。这里先判一次登录态，给出能直接照做的中文提示。
       await run('检查登录状态', async () => {
-        const probe = await this.attachAndEval<any>(w, PROBE_SCRIPT).catch(() => null)
+        // SPA 后台渲染慢：真机小红书刚 navigate 完还是空白页，早判会误报「未登录」
+        const probe = await this.probeUntilReady(w)
         const judged = probe ? this.judgeLogin(driver, probe) : { loggedIn: false }
         if (!judged.loggedIn) {
           throw new Error('还没有登录 ' + driver.name + '：请在「发布」页点「扫码登录」完成登录后再发布')
@@ -1313,8 +1660,12 @@ export class PlatformManager {
         return '已登录' + (judged.nickname ? '（' + judged.nickname + '）' : '')
       })
 
+      const mediaType: 'video' | 'image' = input.type === 'image' ? 'image' : 'video'
+
+      await run('切换到发布方式', async () => this.switchTab(w, platform, mediaType, driver))
+
       await run('上传素材', async () => {
-        const selector = await this.uploadFiles(w, platform, files)
+        const selector = await this.uploadFiles(w, platform, files, mediaType)
         const detail = await this.waitUploadDone(w, platform)
         return '上传 input 命中 ' + selector + '；' + detail
       })
@@ -1342,23 +1693,33 @@ export class PlatformManager {
         false
       )
 
+      await run(
+        '收起联想下拉',
+        async () => {
+          // 真机（小红书）：正文里带 #话题 时联想下拉会浮在页面上，先按 Esc 收掉再点发布
+          w.webContents.sendInputEvent({ type: 'keyDown', keyCode: 'Escape' })
+          await sleep(80)
+          w.webContents.sendInputEvent({ type: 'keyUp', keyCode: 'Escape' })
+          await sleep(400)
+          return '已按 Esc'
+        },
+        false
+      )
+
       await run('点击发布', async () => {
         const hit = await this.clickSubmit(w, platform)
         return '已点击发布按钮：' + hit
       })
 
       await run('等待发布结果', async () => {
-        await sleep(POST_PUBLISH_WAIT_MS)
-        const outcome = await this.attachAndEval<any>(w, outcomeScript(driver.successHint))
+        const detail = await this.waitPublishOutcome(w, driver, async () => {
+          result.steps.push({ step: '补点发布（检测中时首次点击可能被忽略）', ok: true })
+          await this.clickSubmit(w, platform)
+        })
+        const outcome = await this.attachAndEval<any>(w, outcomeScript(driver.successHint)).catch(() => null)
         const url = String((outcome && (outcome.link || outcome.href)) || '')
         if (url && url !== driver.homeUrl) result.url = url
-        const details: string[] = []
-        if (outcome?.hint) details.push('命中成功提示「' + outcome.hint + '」')
-        if (result.url) details.push('页面地址 ' + result.url)
-        if (!details.length) {
-          throw new Error('发布结果未确认：5 秒内未检测到成功提示或页面跳转，请查看截图人工确认')
-        }
-        return details.join('；')
+        return detail
       })
 
       result.ok = true

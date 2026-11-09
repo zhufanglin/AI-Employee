@@ -26,6 +26,12 @@ export interface PlatformDriver {
   dataUrl: string
   /** 评论管理页（P32：读评论/回评论用，打不开就回落到 homeUrl） */
   commentsUrl: string
+  /**
+   * 该平台是否有网页版「评论管理」入口。
+   * 真机核实（2026-11-09）：抖音、小红书创作后台网页版都没有评论管理页（侧边栏/内容管理里只有作品与数据），
+   * 置 false 让界面直接给明确提示，不要拿失效 URL 去空白页上扫 0 条评论。
+   */
+  commentsSupported?: boolean
   /** 评论条目容器候选（P32：读评论列表用，按可信度从高到低） */
   commentItems: string[]
   /** 评论条目里的「回复」按钮候选（P32：按条目范围匹配，也支持 text=回复） */
@@ -34,6 +40,16 @@ export interface PlatformDriver {
   commentReplyInput: string[]
   /** 发送回复按钮候选（P32） */
   commentSendButton: string[]
+  /** 图文 tab 候选（真机：抖音上传页默认停在「发布视频」，jpg 会被视频上传器拒掉，必须先切这个 tab） */
+  imageTab: string[]
+  /** 视频 tab 候选（只有切过图文 tab 才需要切回来） */
+  videoTab: string[]
+  /**
+   * 发布按钮在命中元素矩形内的点击比例（0~1）。
+   * 真机（2026-11-09 小红书）：发布按钮是 <xhs-publish-btn submit-text="发布" save-text="暂存离开">，
+   * 文字在封闭 shadowRoot 里搜不到，元素本身占满底部一条，必须按比例点右侧「发布」。
+   */
+  submitPoint?: { x: number; y: number }
 }
 
 export const DRIVERS: Record<PlatformId, PlatformDriver> = {
@@ -42,14 +58,17 @@ export const DRIVERS: Record<PlatformId, PlatformDriver> = {
     homeUrl: 'https://creator.douyin.com/creator-micro/content/upload',
     loginUrlHint: 'https://creator.douyin.com/',
     fileInput: ['input[type="file"]', '.upload-btn-input', 'input[accept*="video"]', 'input[accept*="image"]'],
-    titleInput: ['.semi-input', 'input[placeholder*="标题"]', 'input[placeholder*="作品标题"]', '.title-input input'],
-    contentInput: ['.zone-container', '[contenteditable="true"]', '.editor-kit-container [contenteditable]'],
+    titleInput: ['input[placeholder*="添加作品标题"]', '.semi-input', 'input[placeholder*="标题"]', 'input[placeholder*="作品标题"]', '.title-input input'],
+    contentInput: ['.zone-container[contenteditable="true"]', '.editor-kit-container[contenteditable="true"]', '.zone-container', '[contenteditable="true"]'],
     submitButton: ['text=发布', '.content-confirm-container button', 'button[type="submit"]'],
     successHint: ['发布成功', '作品发布成功', '发布完成', '已发布'],
     loggedInCookies: ['sessionid', 'sessionid_ss', 'sid_tt', 'passport_csrf_token'],
     loggedInCues: ['发布作品', '上传视频', '作品管理', '创作灵感', '数据概览'],
-    dataUrl: 'https://creator.douyin.com/creator-micro/data/content',
+    dataUrl: 'https://creator.douyin.com/creator-micro/data-center/operation',
     commentsUrl: 'https://creator.douyin.com/creator-micro/interaction/comment',
+    commentsSupported: false,
+    imageTab: ['text=发布图文'],
+    videoTab: ['text=发布视频'],
     commentItems: ['.comment-item', '[class*="comment-item"]', '[class*="CommentItem"]', '[class*="comment-list"] [class*="item"]'],
     commentReplyButton: ['text=回复', '[class*="reply"]', 'button[class*="reply"]', '.comment-reply-btn'],
     commentReplyInput: ['textarea[placeholder*="回复"]', '[contenteditable="true"]', 'textarea', '.comment-input textarea'],
@@ -62,11 +81,16 @@ export const DRIVERS: Record<PlatformId, PlatformDriver> = {
     fileInput: ['input[type="file"]', '.upload-input', 'input[accept*="video"]', 'input[accept*="image"]'],
     titleInput: ['input[placeholder*="标题"]', '.d-text', 'input[placeholder*="填写标题"]', '.title-input input'],
     contentInput: ['.ql-editor', '[contenteditable="true"]', '.editor-content', '.publish-editor [contenteditable]'],
-    submitButton: ['text=发布', '.publishBtn', 'button[class*="publish"]'],
+    submitButton: ['xhs-publish-btn[submit-text]', '.publishBtn', 'button[class*="publish"]'],
+    submitPoint: { x: 0.6, y: 0.5 },
     successHint: ['发布成功', '笔记发布成功', '发布完成', '已发布'],
     loggedInCues: ['发布笔记', '上传图文', '笔记管理', '数据看板'],
-    dataUrl: 'https://creator.xiaohongshu.com/new/statistics/data',
+    // 真机（2026-11-09）：/new/statistics/data 已 404，数据看板真实路由是 /statistics/data-analysis
+    dataUrl: 'https://creator.xiaohongshu.com/statistics/data-analysis',
     commentsUrl: 'https://creator.xiaohongshu.com/new/interaction',
+    commentsSupported: false,
+    imageTab: ['text=上传图文', 'text=图文'],
+    videoTab: ['text=上传视频', 'text=视频'],
     commentItems: ['.comment-item', '[class*="comment-item"]', '[class*="CommentItem"]', '[class*="comment"] [class*="item"]'],
     commentReplyButton: ['text=回复', '[class*="reply"]', 'button[class*="reply"]', '.reply-btn'],
     commentReplyInput: ['textarea[placeholder*="回复"]', '[contenteditable="true"]', 'textarea', '[class*="reply"] textarea'],
@@ -84,6 +108,8 @@ export const DRIVERS: Record<PlatformId, PlatformDriver> = {
     loggedInCues: ['发表动态', '上传视频', '内容管理', '数据中心'],
     dataUrl: 'https://channels.weixin.qq.com/platform/statistics',
     commentsUrl: 'https://channels.weixin.qq.com/platform/interaction/comment',
+    imageTab: ['text=图片', 'text=图文'],
+    videoTab: ['text=视频'],
     commentItems: ['.comment-item', '[class*="comment-item"]', '[class*="CommentItem"]', '[class*="comment_list"] [class*="item"]'],
     commentReplyButton: ['text=回复', '[class*="reply"]', 'button[class*="reply"]', '.weui-desktop-link_primary'],
     commentReplyInput: ['textarea[placeholder*="回复"]', '[contenteditable="true"]', 'textarea', '.weui-desktop-form__textarea'],

@@ -83,7 +83,13 @@ for (const id of ids) {
     check('DRIVERS ' + id + '.' + key + ' 至少 3 个候选', Array.isArray(arr) && arr.length >= 3, arr && arr.length)
     check('DRIVERS ' + id + '.' + key + ' 候选均为非空字符串', Array.isArray(arr) && arr.every((s) => typeof s === 'string' && s.trim().length > 0))
   }
-  check('DRIVERS ' + id + ' 发布按钮含文本候选', d.submitButton.some((s) => s.indexOf('text=') === 0), d.submitButton)
+  // 小红书真机（2026-11-09）：发布按钮是 <xhs-publish-btn submit-text="发布">，文字在封闭 shadowRoot 里，
+  // textContent 搜不到，因此允许用自定义元素选择器 + submitPoint 比例点击代替 text= 候选。
+  check(
+    'DRIVERS ' + id + ' 发布按钮含文本候选或用元素比例点击',
+    d.submitButton.some((s) => s.indexOf('text=') === 0) || (!!d.submitPoint && d.submitButton.length > 0),
+    { submitButton: d.submitButton, submitPoint: d.submitPoint || null }
+  )
 }
 check('抖音登录 cookie 含 sessionid', Array.isArray(DRIVERS.douyin.loggedInCookies) && DRIVERS.douyin.loggedInCookies.indexOf('sessionid') >= 0, DRIVERS.douyin.loggedInCookies)
 

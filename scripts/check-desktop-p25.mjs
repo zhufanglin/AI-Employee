@@ -70,8 +70,9 @@ check(has('drivers 声明 dataUrl', driversSrc, 'dataUrl'))
 for (const id of ['douyin', 'xiaohongshu', 'shipinhao']) {
   check(re('drivers ' + id + ' 配了 dataUrl', driversSrc, new RegExp('dataUrl:\\s*\'https://[^\']+\'')))
 }
-check(has('drivers 抖音数据页', driversSrc, '/creator-micro/data/content'))
-check(has('drivers 小红书数据页', driversSrc, '/new/statistics/data'))
+// 真机校准（2026-11-09，P34）：旧路由已失效，改为实测可用路由
+check(has('drivers 抖音数据页', driversSrc, '/creator-micro/data-center/operation'))
+check(has('drivers 小红书数据页', driversSrc, '/statistics/data-analysis'))
 check(has('drivers 视频号数据页', driversSrc, '/platform/statistics'))
 
 // 3. 登录态误报修正
