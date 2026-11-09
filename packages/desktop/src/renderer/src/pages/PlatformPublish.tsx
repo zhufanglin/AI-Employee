@@ -24,8 +24,19 @@ function withTimeout<T>(p: Promise<T>, ms: number, message: string): Promise<T> 
   })
 }
 
+/**
+ * 登录态检查要开隐藏窗口+等页面渲染，一次十几秒。
+ * 页面切走再回来不该又等一遍 —— 渲染层用模块级缓存先顶上，主进程 platform.status 也有 5 分钟缓存。
+ */
+const RENDERER_CACHE_MS = 5 * 60 * 1000
+let statusMemo: { at: number; items: PlatformStatus[] } | null = null
+function rememberStatus(items: PlatformStatus[]) {
+  statusMemo = { at: Date.now(), items }
+  return items
+}
+
 export default function PlatformPublish() {
-  const [statuses, setStatuses] = useState<PlatformStatus[]>([])
+  const [statuses, setStatuses] = useState<PlatformStatus[]>(statusMemo?.items || [])
   const [loading, setLoading] = useState(false)
   const [busy, setBusy] = useState('')
   const [error, setError] = useState('')
@@ -40,12 +51,16 @@ export default function PlatformPublish() {
   const [tags, setTags] = useState('')
   const [mediaPaths, setMediaPaths] = useState<string[]>([])
 
-  async function refresh() {
+  async function refresh(force = false) {
+    if (!force && statusMemo && Date.now() - statusMemo.at < RENDERER_CACHE_MS) {
+      setStatuses(statusMemo.items)
+      return
+    }
     setLoading(true)
     setError('')
     try {
-      const items = await window.fcm.platform.status({})
-      setStatuses(items || [])
+      const items = await window.fcm.platform.status(force ? { force: true } : {})
+      setStatuses(rememberStatus(items || []))
     } catch (e: any) {
       setError(String(e?.message || e))
     } finally {
@@ -69,7 +84,7 @@ export default function PlatformPublish() {
       setStatuses((prev) => {
         const next = prev.filter((s) => s.platform !== st.platform)
         next.push(st)
-        return next
+        return rememberStatus(next)
       })
     } catch (e: any) {
       setError(String(e?.message || e))
@@ -83,7 +98,7 @@ export default function PlatformPublish() {
     setError('')
     try {
       await window.fcm.platform.logout({ platform: id })
-      await refresh()
+      await refresh(true)
     } catch (e: any) {
       setError(String(e?.message || e))
     } finally {
@@ -163,7 +178,7 @@ export default function PlatformPublish() {
             在你自己的电脑上打开创作后台自动发布（抖音 / 小红书 / 视频号）。首次使用需点「扫码登录」，登录态保存在本机。
           </p>
         </div>
-        <button className="ghost" onClick={() => void refresh()} disabled={loading}>{loading ? '检查中…' : '刷新登录状态'}</button>
+        <button className="ghost" onClick={() => void refresh(true)} disabled={loading}>{loading ? '检查中…（约 10 秒）' : '刷新登录状态'}</button>
       </div>
 
       {error && <p className="error">{error}</p>}
@@ -179,6 +194,7 @@ export default function PlatformPublish() {
               </div>
               <p className="muted small">{p.tip}</p>
               {st?.error && <p className="hint">{st.error}</p>}
+              {st?.checkedAt && <p className="hint">检查时间：{new Date(st.checkedAt).toLocaleTimeString()}</p>}
               <div className="platform-card-actions">
                 <button className="ghost" disabled={busy === 'login:' + p.id} onClick={() => void login(p.id)}>
                   {busy === 'login:' + p.id ? '请在弹窗中扫码…' : '扫码登录'}

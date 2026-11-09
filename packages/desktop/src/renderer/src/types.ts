@@ -45,7 +45,7 @@ export type FcmApi = {
   }
   // 平台发布（本机 RPA，见 docs/handoff/P24-平台发布RPA-契约.md）
   platform: {
-    status: (p?: { platform?: string }) => Promise<PlatformStatus[]>
+    status: (p?: { platform?: string; force?: boolean }) => Promise<PlatformStatus[]>
     login: (p: { platform: string }) => Promise<PlatformStatus>
     logout: (p: { platform: string }) => Promise<{ ok: boolean }>
     publish: (p: PlatformPublishInput) => Promise<PlatformPublishResult>

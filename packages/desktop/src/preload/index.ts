@@ -58,7 +58,7 @@ const api = {
   },
   // 平台发布（本机 RPA）：抖音 / 小红书 / 视频号 创作后台自动上传发布。
   platform: {
-    status: (p?: { platform?: string }) => ipcRenderer.invoke('platform:status', p || {}),
+    status: (p?: { platform?: string; force?: boolean }) => ipcRenderer.invoke('platform:status', p || {}),
     login: (p: { platform: string }) => ipcRenderer.invoke('platform:login', p),
     logout: (p: { platform: string }) => ipcRenderer.invoke('platform:logout', p),
     publish: (p: any) => ipcRenderer.invoke('platform:publish', p),

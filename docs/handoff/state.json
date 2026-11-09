@@ -1,7 +1,7 @@
 {
   "project": "中科元晟 AI员工 0.4.29 完全复刻",
   "version": 1,
-  "updatedAt": "2026-11-08T21:14:41.403Z",
+  "updatedAt": "2026-11-09T04:38:08.673Z",
   "phase": "P10（先能用三件事）派工完成，看板 29/33",
   "phaseGoal": "用户要求先能用、定价后置：T-31 桌面端出图出片 / T-32 员工多步干活 / T-33 成本护栏 已派 Codex；dsh-lead 推主线（生产可用性收口 + 复核），T-11 渠道仍 blocked(env)。",
   "owners": {
@@ -3122,7 +3122,7 @@
     {
       "id": "T-55",
       "title": "T-55 发布前置登录态预检 + 0.1.13",
-      "status": "doing",
+      "status": "done",
       "owner": "dsh-lead",
       "scope": [],
       "accept": "",
@@ -3133,11 +3133,58 @@
           "at": "2026-11-08T21:14:41.403Z",
           "by": "dsh-lead",
           "what": "claim"
+        },
+        {
+          "at": "2026-11-08T21:53:20.925Z",
+          "by": "dsh-lead",
+          "what": "save: checkpoint"
+        },
+        {
+          "at": "2026-11-08T21:53:21.084Z",
+          "by": "dsh-lead",
+          "what": "done: 0.1.13 上线：发布前先判登录态，未登录提示「请在「发布」页点「扫码登录」完成登录后再发布」；真机复测确认；全量 verify GREEN"
         }
       ],
       "lease": {
         "at": "2026-11-08T21:14:41.400Z",
-        "heartbeat": "2026-11-08T21:14:41.403Z",
+        "heartbeat": "2026-11-08T21:53:20.916Z",
+        "reason": null
+      },
+      "checkpoint": {
+        "progress": [
+          {
+            "text": "platform.ts 登录预检 + 74 项检查 + 0.1.13 打包发布安装 + 真机复测 + verify GREEN",
+            "done": false
+          }
+        ],
+        "notes": [],
+        "files": []
+      },
+      "finishedAt": "2026-11-08T21:53:21.083Z",
+      "result": "0.1.13 上线：发布前先判登录态，未登录提示「请在「发布」页点「扫码登录」完成登录后再发布」；真机复测确认；全量 verify GREEN"
+    },
+    {
+      "id": "T-56",
+      "title": "P28 登录态检查缓存（切页不重查）",
+      "status": "doing",
+      "owner": "dsh-lead",
+      "scope": [
+        "packages/desktop/src/main/platform.ts",
+        "packages/desktop/src/renderer/src/pages/PlatformPublish.tsx"
+      ],
+      "accept": "check-desktop-p24 81 项全绿 + 0.1.14 安装包已发布",
+      "blockedBy": [],
+      "createdAt": "2026-11-09T04:37:52.297Z",
+      "history": [
+        {
+          "at": "2026-11-09T04:38:08.673Z",
+          "by": "dsh-lead",
+          "what": "claim"
+        }
+      ],
+      "lease": {
+        "at": "2026-11-09T04:38:08.654Z",
+        "heartbeat": "2026-11-09T04:38:08.673Z",
         "reason": null
       }
     }

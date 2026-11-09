@@ -392,7 +392,7 @@ function registerIpc() {
     userDataDir: app.getPath('userData'),
     log: (message: string) => console.log('[platform] ' + message)
   })
-  ipcMain.handle('platform:status', (_e, p: { platform?: string }) => platform!.status(p?.platform))
+  ipcMain.handle('platform:status', (_e, p: { platform?: string; force?: boolean }) => platform!.status(p?.platform, { maxAgeMs: p?.force ? 0 : undefined }))
   ipcMain.handle('platform:login', (_e, p: { platform: string }) => platform!.login(p.platform))
   ipcMain.handle('platform:logout', async (_e, p: { platform: string }) => { await platform!.logout(p.platform); return { ok: true } })
   ipcMain.handle('platform:publish', (_e, input: any) => platform!.publish(input))

@@ -110,6 +110,15 @@ check('untilClosed 由 closed 事件解 null', !!platformSrc && platformSrc.incl
 check('navigate 每次取值有 2 秒上限', !!platformSrc && platformSrc.includes('const NAV_EVAL_WAIT_MS') && /Promise.race\(\[[\s\S]{0,120}NAV_EVAL_WAIT_MS/.test(platformSrc))
 check('打开后台超时不再弹报错', !!platformSrc && platformSrc.includes('const OPEN_DEBUG_TIMEOUT_MS') && platformSrc.includes('已打开窗口，页面还在加载'))
 
+// 0.1.14 修：用户实测「等完刷新登录状态、切页面回来又要重新检查，还得继续等」
+check('platform.ts 登录态结果有缓存窗口', !!platformSrc && platformSrc.includes('export const STATUS_CACHE_MS') && platformSrc.includes('this.statusCache'))
+check('status 支持强制重查（刷新按钮）', !!platformSrc && platformSrc.includes('opts: { maxAgeMs?: number }') && !!main && main.includes('maxAgeMs: p?.force ? 0 : undefined'))
+check('不确定的检查结果不进缓存', !!platformSrc && platformSrc.includes('uncertain') && platformSrc.includes('/没有响应|检查失败/'))
+check('退出登录会清掉缓存', !!platformSrc && platformSrc.includes('this.statusCache.delete(platform)'))
+check('渲染层切页复用登录态（不再重查十几秒）', !!pageSrc && pageSrc.includes('RENDERER_CACHE_MS') && pageSrc.includes('rememberStatus'))
+check('刷新按钮走强制重查', !!pageSrc && pageSrc.includes('void refresh(true)') && pageSrc.includes('{ force: true }'))
+check('preload/types 透出 force 参数', !!preload && preload.includes('force?: boolean') && !!types && types.includes('force?: boolean'))
+
 // 4. 执行器与能力目录
 for (const name of ['platform_publish', 'platform_status', 'platform_stats']) {
   check('worker 白名单含 ' + name, !!worker && worker.includes("'" + name + "'"))

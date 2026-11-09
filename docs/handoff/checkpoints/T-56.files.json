@@ -1,0 +1,12 @@
+[
+  {
+    "p": "packages/desktop/src/main/platform.ts",
+    "size": 44428,
+    "mtime": 1794197090202
+  },
+  {
+    "p": "packages/desktop/src/renderer/src/pages/PlatformPublish.tsx",
+    "size": 10619,
+    "mtime": 1794197126464
+  }
+]

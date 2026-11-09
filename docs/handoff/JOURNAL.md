@@ -419,3 +419,7 @@ ode scripts/coord.mjs done T-40 --agent codex --note ...，并回一条 msg 给 
 - 2026-11-08T21:09:10.099Z | dsh-lead | DONE | T-54 T-54 P26 定时发布（客户端本地队列 + 到点自动发 + 桌面页） —— P26 完成：客户端本地发布队列（状态机/持久化/崩溃恢复/串行/迟到标记），0.1.12 已发布 https://updates.fcmediaagent.com/desktop/latest/ 并静默安装，全量 verify GREEN，git 7ae4d11 已推送
 - 2026-11-08T21:14:41.097Z | dsh-lead | ADD | T-55 T-55 发布前置登录态预检 + 0.1.13
 - 2026-11-08T21:14:41.599Z | dsh-lead | CLAIM | T-55 T-55 发布前置登录态预检 + 0.1.13
+- 2026-11-08T21:53:20.931Z | dsh-lead | SAVE | T-55 (checkpoint)
+- 2026-11-08T21:53:21.302Z | dsh-lead | DONE | T-55 T-55 发布前置登录态预检 + 0.1.13 —— 0.1.13 上线：发布前先判登录态，未登录提示「请在「发布」页点「扫码登录」完成登录后再发布」；真机复测确认；全量 verify GREEN
+- 2026-11-09T04:37:52.310Z | dsh-lead | ADD | T-56 P28 登录态检查缓存（切页不重查）
+- 2026-11-09T04:38:08.696Z | dsh-lead | CLAIM | T-56 P28 登录态检查缓存（切页不重查）

@@ -82,6 +82,9 @@ const NAV_EVAL_WAIT_MS = 2000
 /** 「打开后台」最多等多久，超时也不报错（窗口已经开着，用户能自己看） */
 const OPEN_DEBUG_TIMEOUT_MS = 20000
 
+/** 登录态缓存时长：切换页面回来不该重跑一次十几秒的检查（用户实测反馈：等完刷新再切页又得等） */
+export const STATUS_CACHE_MS = 5 * 60 * 1000
+
 /**
  * 平台站点会屏蔽 Electron 默认 UA（默认 UA 里带 "Electron/38.8.6"）：
  * 小红书创作者中心直接 ERR_FAILED / ERR_TIMED_OUT 打不开，视频号会跳到 login.html。
@@ -272,6 +275,8 @@ export class PlatformManager {
   private readonly deps: PlatformManagerDeps
   private readonly locks = new Map<string, Promise<unknown>>()
   private readonly debugWindows = new Map<string, BrowserWindow>()
+  /** 最近一次登录态检查结果，避免每次进页面都开窗口重查 */
+  private readonly statusCache = new Map<string, { at: number; status: PlatformStatus }>()
 
   constructor(deps: PlatformManagerDeps) {
     this.deps = deps
@@ -279,13 +284,22 @@ export class PlatformManager {
 
   // ---------- 对外 API ----------
 
-  /** 逐个平台打开隐藏窗口检查登录态；platform 留空则检查全部 */
-  async status(platform?: string): Promise<PlatformStatus[]> {
+  /**
+   * 逐个平台检查登录态；platform 留空则检查全部。
+   * maxAgeMs > 0 时优先复用缓存（默认 STATUS_CACHE_MS），传 0 强制重查。
+   */
+  async status(platform?: string, opts: { maxAgeMs?: number } = {}): Promise<PlatformStatus[]> {
     const ids = platform ? [platform] : PLATFORMS.map((p) => p.id as string)
+    const maxAge = opts.maxAgeMs === undefined ? STATUS_CACHE_MS : opts.maxAgeMs
     const out: PlatformStatus[] = []
     for (const id of ids) {
       if (!(DRIVERS as Record<string, PlatformDriver>)[id]) {
         out.push({ platform: id, name: id, loggedIn: false, checkedAt: nowIso(), error: '未知平台：' + id })
+        continue
+      }
+      const cached = this.statusCache.get(id)
+      if (cached && maxAge > 0 && Date.now() - cached.at <= maxAge) {
+        out.push(cached.status)
         continue
       }
       out.push(await this.runExclusive(id, () => this.checkStatus(id)))
@@ -309,6 +323,7 @@ export class PlatformManager {
       }
       const ses = session.fromPartition(this.partitionOf(platform))
       await ses.clearStorageData()
+      this.statusCache.delete(platform)
       this.log('[' + platform + '] 已清空登录态')
       this.emit(platform, 'logout', '已清空登录态')
     })
@@ -662,7 +677,16 @@ export class PlatformManager {
     return { loggedIn: false }
   }
 
+  /** 查一次并写缓存；页面无响应/检查失败这类不确定结果不缓存，下次还重查 */
   private async checkStatus(platform: string): Promise<PlatformStatus> {
+    const st = await this.checkStatusFresh(platform)
+    const uncertain = !st.loggedIn && !!st.error && /没有响应|检查失败/.test(st.error)
+    if (uncertain) this.statusCache.delete(platform)
+    else this.statusCache.set(platform, { at: Date.now(), status: st })
+    return st
+  }
+
+  private async checkStatusFresh(platform: string): Promise<PlatformStatus> {
     const driver = this.driver(platform)
     const checkedAt = nowIso()
     let win: BrowserWindow | null = null
