@@ -148,6 +148,12 @@ check('导航失败后继续探页面（不再直接报登录态检查失败）'
 check('导航失败时探测轮次加长', !!platformSrc && platformSrc.includes('const rounds = navError ? 15 : 8'))
 check('查登录态不缩短导航超时（避免误判未登录）', !!platformSrc && platformSrc.includes('不要在这里砍超时') && !platformSrc.includes('STATUS_NAV_TIMEOUT_MS'))
 
+// 0.1.22：视频号「发表动态页脏表单」把后续导航全拦掉（comments/stats 打不开评论页/数据页）
+check('评论/数据页导航被脏表单拦住时重建窗口重试', !!platformSrc && platformSrc.includes('private async navigateResilient(') && platformSrc.includes("页面被未提交表单拦住，重建窗口后重试"))
+check('comments 走 navigateResilient', !!platformSrc && /async comments\([\s\S]{0,2200}navigateResilient\(id, win, driver\.commentsUrl\)/.test(platformSrc))
+check('stats 走 navigateResilient', !!platformSrc && /async stats\([\s\S]{0,2200}navigateResilient\(id, win, driver\.dataUrl\)/.test(platformSrc))
+check('replyComment 走 navigateResilient', !!platformSrc && platformSrc.includes('navigateResilient(id, w, driver.commentsUrl)'))
+
 // 4. 执行器与能力目录
 for (const name of ['platform_publish', 'platform_status', 'platform_stats']) {
   check('worker 白名单含 ' + name, !!worker && worker.includes("'" + name + "'"))

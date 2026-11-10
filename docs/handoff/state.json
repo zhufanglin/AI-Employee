@@ -1,7 +1,7 @@
 {
   "project": "中科元晟 AI员工 0.4.29 完全复刻",
   "version": 1,
-  "updatedAt": "2026-11-10T08:09:27.225Z",
+  "updatedAt": "2026-11-10T09:46:40.730Z",
   "phase": "P10（先能用三件事）派工完成，看板 29/33",
   "phaseGoal": "用户要求先能用、定价后置：T-31 桌面端出图出片 / T-32 员工多步干活 / T-33 成本护栏 已派 Codex；dsh-lead 推主线（生产可用性收口 + 复核），T-11 渠道仍 blocked(env)。",
   "owners": {
@@ -3446,6 +3446,28 @@
       ],
       "finishedAt": "2026-11-10T08:09:27.222Z",
       "result": "verify GREEN; 0.1.21 已发布安装（VERSION=0.1.21）；冷启动三轮 status: douyin true / xhs true / shipinhao false(会话过期)"
+    },
+    {
+      "id": "T-64",
+      "title": "P38 视频号评论读通（脏表单拦导航→重建窗口重试）+ 0.1.22",
+      "status": "done",
+      "owner": "dsh-lead",
+      "scope": [
+        "packages/desktop/src/main/platform.ts"
+      ],
+      "lease": {
+        "reason": null
+      },
+      "notes": [],
+      "finishedAt": "2026-11-10T09:46:40.717Z",
+      "result": "视频号评论读通：新增 navigateResilient（脏表单拦导航→销毁重建窗口再导航），comments/stats/replyComment 全接入；安装版 0.1.22 真机 comments ok:true items=1 href=/platform/interaction/comment；verify GREEN；0.1.22 已发布安装",
+      "history": [
+        {
+          "at": "2026-11-10T09:46:40.730Z",
+          "by": "dsh-lead",
+          "what": "done: 视频号评论读通：新增 navigateResilient（脏表单拦导航→销毁重建窗口再导航），comments/stats/replyComment 全接入；安装版 0.1.22 真机 comments ok:true items=1 href=/platform/interaction/comment；verify GREEN；0.1.22 已发布安装"
+        }
+      ]
     }
   ],
   "primary": "dsh-lead",

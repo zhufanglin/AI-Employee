@@ -1,5 +1,5 @@
 ﻿{
-    "at":  "2026-11-10T15:32:32.0632385+08:00",
+    "at":  "2026-11-10T17:09:47.1297038+08:00",
     "ok":  true,
     "failed":  0,
     "steps":  [
@@ -7,31 +7,31 @@
                       "name":  "server tsc",
                       "ok":  true,
                       "exit":  0,
-                      "seconds":  7
+                      "seconds":  62
                   },
                   {
                       "name":  "desktop electron-vite build",
                       "ok":  true,
                       "exit":  0,
-                      "seconds":  5
+                      "seconds":  12
                   },
                   {
                       "name":  "server restart (fresh dist, kill stale :3000)",
                       "ok":  true,
                       "exit":  0,
-                      "seconds":  12
+                      "seconds":  95
                   },
                   {
                       "name":  "unit: 员工工具循环 JSON 容错",
                       "ok":  true,
                       "exit":  0,
-                      "seconds":  0
+                      "seconds":  1
                   },
                   {
                       "name":  "unit: web_extract SSRF 守卫",
                       "ok":  true,
                       "exit":  0,
-                      "seconds":  1
+                      "seconds":  12
                   },
                   {
                       "name":  "smoke: T-11 渠道加解密骨架",
@@ -43,25 +43,25 @@
                       "name":  "smoke: T-11 个人微信入站链路",
                       "ok":  true,
                       "exit":  0,
-                      "seconds":  5
+                      "seconds":  7
                   },
                   {
                       "name":  "smoke: T-11 渠道结果回推",
                       "ok":  true,
                       "exit":  0,
-                      "seconds":  2
+                      "seconds":  4
                   },
                   {
                       "name":  "smoke: T-11 长结果页（全文链接）",
                       "ok":  true,
                       "exit":  0,
-                      "seconds":  0
+                      "seconds":  1
                   },
                   {
                       "name":  "smoke: W2",
                       "ok":  true,
                       "exit":  0,
-                      "seconds":  35
+                      "seconds":  40
                   },
                   {
                       "name":  "smoke: W2 计费隔离",
@@ -97,31 +97,31 @@
                       "name":  "smoke: T-14 管理端扩展",
                       "ok":  true,
                       "exit":  0,
-                      "seconds":  2
+                      "seconds":  3
                   },
                   {
                       "name":  "smoke: T-29 运营后台",
                       "ok":  true,
                       "exit":  0,
-                      "seconds":  0
+                      "seconds":  1
                   },
                   {
                       "name":  "smoke: T-19 员工执行器",
                       "ok":  true,
                       "exit":  0,
-                      "seconds":  1
+                      "seconds":  2
                   },
                   {
                       "name":  "smoke: T-30 媒体编排",
                       "ok":  true,
                       "exit":  0,
-                      "seconds":  1
+                      "seconds":  2
                   },
                   {
                       "name":  "smoke: T-33 媒体成本护栏（模拟上游）",
                       "ok":  true,
                       "exit":  0,
-                      "seconds":  2
+                      "seconds":  3
                   },
                   {
                       "name":  "smoke: 媒体任务取消与退款",
@@ -133,13 +133,13 @@
                       "name":  "smoke: T-32 员工多步执行（模拟模型和媒体）",
                       "ok":  true,
                       "exit":  0,
-                      "seconds":  1
+                      "seconds":  2
                   },
                   {
                       "name":  "smoke: T-28 本地能力层",
                       "ok":  true,
                       "exit":  0,
-                      "seconds":  47
+                      "seconds":  46
                   }
               ]
 }

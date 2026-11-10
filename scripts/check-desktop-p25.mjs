@@ -58,7 +58,7 @@ const check = (ok) => { if (ok) pass++; else fail++ }
 check(has('platform.ts 定义 PlatformStatsSnapshot', platformSrc, 'export interface PlatformStatsSnapshot'))
 check(has('platform.ts 有 STATS_SCRIPT 快照脚本', platformSrc, 'const STATS_SCRIPT'))
 check(re('platform.ts 导出 async stats(platform, opts)', platformSrc, /async stats\(platform: string, opts\?: \{ maxChars\?: number \}\)/))
-check(has('stats 先打作品数据页 driver.dataUrl', platformSrc, 'await this.navigate(win, driver.dataUrl)'))
+check(has('stats 先打作品数据页 driver.dataUrl', platformSrc, 'driver.dataUrl') && /navigate(Resilient)?\((id, )?win, driver\.dataUrl\)/.test(platformSrc))
 check(has('stats 打不开时回落首页', platformSrc, 'await this.navigate(win, driver.homeUrl)'))
 check(has('stats 未登录时返回中文提示而不是空数据', platformSrc, '请先点「扫码登录」'))
 check(has('stats 截图落到 platform-logs（shotList）', platformSrc, 'private async shotList('))

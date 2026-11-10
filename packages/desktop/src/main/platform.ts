@@ -756,10 +756,10 @@ export class PlatformManager {
         win = this.ensureWindow(id, false)
         this.safeHide(win)
         try {
-          await this.navigate(win, driver.dataUrl)
+          win = await this.navigateResilient(id, win, driver.dataUrl)
         } catch (e) {
           this.log('[' + id + '] 数据页打不开，回落到首页：' + errText(e))
-          await this.navigate(win, driver.homeUrl)
+          win = await this.navigateResilient(id, win, driver.homeUrl)
         }
         this.safeShowInactive(win)
         await sleep(4000)
@@ -883,10 +883,10 @@ export class PlatformManager {
         // beforeunload 拦住（net::ERR_ABORTED、URL 不变），所以先隐藏窗口完成导航，再显示出来让 SPA 渲染。
         this.safeHide(win)
         try {
-          await this.navigate(win, driver.commentsUrl)
+          win = await this.navigateResilient(id, win, driver.commentsUrl)
         } catch (e) {
           this.log('[' + id + '] 评论页打不开，回落到首页：' + errText(e))
-          await this.navigate(win, driver.homeUrl)
+          win = await this.navigateResilient(id, win, driver.homeUrl)
         }
         this.safeShowInactive(win)
         await sleep(4000)
@@ -988,7 +988,7 @@ export class PlatformManager {
         await run('打开评论管理', async () => {
           let note = ''
           try {
-            await this.navigate(w, driver.commentsUrl)
+            await this.navigateResilient(id, w, driver.commentsUrl)
           } catch (e) {
             await this.navigate(w, driver.homeUrl)
             note = '（评论页打不开，已回落到 ' + driver.homeUrl + '：' + errText(e) + '）'
@@ -1275,6 +1275,34 @@ export class PlatformManager {
       if (win && !win.isDestroyed()) win.destroy()
     } catch {
       // 忽略
+    }
+  }
+
+  /**
+   * 导航到目标页；如果被「未提交表单」的 beforeunload 拦住（视频号发表动态页就是这样：
+   * 窗口停在 post/create 有脏表单，之后再导航评论页/数据页一律 ERR_ABORTED、URL 不变），
+   * 直接销毁这个窗口、重建一个干净的再导航。登录态在持久分区里，重建只是多一次页面加载。
+   */
+  private async navigateResilient(platform: string, win: BrowserWindow | null, url: string): Promise<BrowserWindow> {
+    let target: BrowserWindow = win && !win.isDestroyed() ? win : this.ensureWindow(platform, false)
+    try {
+      await this.navigate(target, url)
+      return target
+    } catch (e) {
+      let href = ''
+      try {
+        href = target.webContents.getURL()
+      } catch {
+        href = ''
+      }
+      // 已经停在目标页就不必重建（只是等 DOM 超时）
+      if (href && samePath(href, url)) return target
+      this.log('[' + platform + '] 页面被未提交表单拦住，重建窗口后重试：' + errText(e))
+      this.destroyWindow(target)
+      target = this.ensureWindow(platform, false)
+      this.safeHide(target)
+      await this.navigate(target, url)
+      return target
     }
   }
 
