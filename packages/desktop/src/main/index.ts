@@ -8,6 +8,7 @@ import { initUpdater, updateStatus, checkForUpdates, downloadUpdate, quitAndInst
 import { PlatformManager } from './platform'
 import { registerFileOps } from './file-ops'
 import { registerCronOps } from './cron-ops'
+import { registerStrategyOps } from './strategy-ops'
 import { PublishQueue, defaultQueuePath, registerPublishQueue } from './publish-queue'
 
 const DEFAULT_API_BASE = process.env.FCM_API_BASE || 'https://ai.fcmediaagent.com/api'
@@ -488,6 +489,8 @@ function registerIpc() {
   registerFileOps(ipcMain, { root: workspaceRoot })
   // 员工定时任务（P27）：客户端直接调服务端 cron 接口，列表/新建/删除。
   registerCronOps(ipcMain, { api })
+  // 战略与人设（P42）：老板填一份战略长文 + 一张人设表，员工接活时按岗位读取。
+  registerStrategyOps(ipcMain, { api })
 
   // 定时发布（P26）：发布内容必须存在本机（平台按 IP/设备风控，且服务端定时表不存内容），
   // 队列落在 <userData>/publish-queue.json，到点由主进程触发 platform.publish。

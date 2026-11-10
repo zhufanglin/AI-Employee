@@ -1,6 +1,7 @@
 ---
 name: boss-comment-opportunity
 description: 批量分析抖音、小红书、视频号等平台评论，识别询价、求方案、比较产品、明确痛点、老板或决策人身份以及高意向商机，并输出优先级、回复建议和私信承接动作。用于评论CSV、复制文本或平台导出数据。
+needs: [strategy.sections:产品体系, 服务客户人群, 内容策略, persona]
 ---
 
 # 评论区商机识别官

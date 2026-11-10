@@ -1,6 +1,6 @@
 {
   "name": "fcmediaagent-desktop",
-  "version": "0.1.22",
+  "version": "0.1.23",
   "private": true,
   "description": "中科元晟 AI 员工 桌面端（复刻）",
   "main": "./out/main/index.js",

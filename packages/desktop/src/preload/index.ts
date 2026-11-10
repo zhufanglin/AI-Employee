@@ -88,6 +88,24 @@ const api = {
     create: (input: { employeeSlug: string; cronExpr: string; timezone?: string }) => ipcRenderer.invoke('cron:create', input),
     remove: (p: { cronId: string }) => ipcRenderer.invoke('cron:delete', p)
   },
+  // 战略与人设（P42）：老板填一份战略长文 + 一张人设表，员工接活时按岗位读取。
+  strategy: {
+    get: () => ipcRenderer.invoke('strategy:get'),
+    save: (input: { content: string; versionType?: string; trigger?: string; summary?: string }) =>
+      ipcRenderer.invoke('strategy:save', input),
+    iterations: () => ipcRenderer.invoke('strategy:iterations'),
+    listPersonas: () => ipcRenderer.invoke('persona:list'),
+    savePersona: (input: {
+      name: string
+      positioning?: string
+      plan?: string
+      accountId?: string
+      followers?: string
+      homepage?: string
+      effectiveAt?: string
+    }) => ipcRenderer.invoke('persona:save', input),
+    removePersona: (p: { id: string }) => ipcRenderer.invoke('persona:remove', p)
+  },
   // 定时发布（P26）：本地队列，到点由主进程自动调用平台发布。
   queue: {
     list: () => ipcRenderer.invoke('queue:list'),

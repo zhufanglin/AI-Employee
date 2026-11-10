@@ -1,6 +1,7 @@
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { PackageService } from "./package.service";
+import { StrategyService, parseNeeds } from "../strategy/strategy.service";
 import { randomUUID } from "node:crypto";
 
 /** 任务状态机：queued -> running -> succeeded/failed/needs_input/awaiting_approval */
@@ -45,6 +46,7 @@ export class EmployeeService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly packages: PackageService,
+    private readonly strategy: StrategyService,
   ) {}
 
   // ---------- 目录 ----------
@@ -336,10 +338,31 @@ export class EmployeeService {
       ? await this.prisma.aiEmployee.findMany({ where: { id: { in: employeeIds } }, select: { id: true, skillMd: true } })
       : [];
     const skillByEmp = new Map(skills.map((s) => [s.id, s.skillMd ?? null]));
-    const items = (await this.attachArtifacts(rows)).map((task: any) => ({
-      ...task,
-      employeeSkillMd: skillByEmp.get(task.employeeId) ?? null,
-    }));
+    // P42：随任务下发该员工声明的 needs 与战略/人设文本（按 userId → User.phone 归属）
+    const owner = await (this.prisma as any).user.findUnique({ where: { id: userId }, select: { phone: true } });
+    const phone = owner?.phone ? String(owner.phone) : "";
+    const payloadByEmp = new Map<string, { employeeNeeds: string[]; strategyText: string; personaText: string; strategyVersion: string; strategyUpdatedAt: string | null }>();
+    await Promise.all(
+      Array.from(skillByEmp.entries()).map(async ([employeeId, skillMd]) => {
+        const employeeNeeds = parseNeeds(skillMd);
+        const resolved = phone
+          ? await this.strategy.resolveForEmployee(userId, phone, employeeNeeds)
+          : { strategyText: "", personaText: "", strategyVersion: "", strategyUpdatedAt: null };
+        payloadByEmp.set(employeeId, { employeeNeeds, ...resolved });
+      }),
+    );
+    const items = (await this.attachArtifacts(rows)).map((task: any) => {
+      const payload = payloadByEmp.get(task.employeeId);
+      return {
+        ...task,
+        employeeSkillMd: skillByEmp.get(task.employeeId) ?? null,
+        employeeNeeds: payload?.employeeNeeds ?? [],
+        strategyText: payload?.strategyText ?? "",
+        personaText: payload?.personaText ?? "",
+        strategyVersion: payload?.strategyVersion ?? "",
+        strategyUpdatedAt: payload?.strategyUpdatedAt ?? null,
+      };
+    });
     return { items, count: items.length };
   }
 

@@ -1,6 +1,7 @@
 ---
 name: boss-export-sales-agent
 description: 为工厂、外贸公司和B2B企业研究海外市场、定义理想客户、寻找和验证潜在企业客户、判断匹配度，并生成英文邮件、LinkedIn和WhatsApp开发内容及跟进序列。用于海外客户开发、经销商招募、进口商名单、外贸市场进入和客户表评分。
+needs: [strategy.sections:产品体系, 服务客户人群, 竞争与优势, 销售与转化]
 ---
 
 # AI外贸开发客户员工

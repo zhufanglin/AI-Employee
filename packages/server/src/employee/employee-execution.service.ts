@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { EmployeeService } from "./employee.service";
+import { StrategyService, parseNeeds } from "../strategy/strategy.service";
 import { randomUUID } from "node:crypto";
 
 @Injectable()
@@ -8,6 +9,7 @@ export class EmployeeExecutionService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly employees: EmployeeService,
+    private readonly strategy: StrategyService,
   ) {}
 
   private timeoutMs() {
@@ -50,7 +52,31 @@ export class EmployeeExecutionService {
     const employeeIds = Array.from(new Set(rows.map(row => row.employeeId).filter(Boolean)));
     const skills = employeeIds.length ? await this.prisma.aiEmployee.findMany({ where: { id: { in: employeeIds } }, select: { id: true, skillMd: true } }) : [];
     const byEmployee = new Map(skills.map(employee => [employee.id, employee.skillMd ?? null]));
-    const items = rows.map(row => ({ ...row, employeeSkillMd: byEmployee.get(row.employeeId) ?? null }));
+    // P42：云端 claim 按 userId 拉取，这里补 User.phone 后再按员工 needs 注入战略/人设
+    const owner = await (this.prisma as any).user.findUnique({ where: { id: userId }, select: { phone: true } });
+    const phone = owner?.phone ? String(owner.phone) : "";
+    const payloadByEmp = new Map<string, { employeeNeeds: string[]; strategyText: string; personaText: string; strategyVersion: string; strategyUpdatedAt: string | null }>();
+    await Promise.all(
+      Array.from(byEmployee.entries()).map(async ([employeeId, skillMd]) => {
+        const employeeNeeds = parseNeeds(skillMd);
+        const resolved = phone
+          ? await this.strategy.resolveForEmployee(userId, phone, employeeNeeds)
+          : { strategyText: "", personaText: "", strategyVersion: "", strategyUpdatedAt: null };
+        payloadByEmp.set(employeeId, { employeeNeeds, ...resolved });
+      }),
+    );
+    const items = rows.map(row => {
+      const payload = payloadByEmp.get(row.employeeId);
+      return {
+        ...row,
+        employeeSkillMd: byEmployee.get(row.employeeId) ?? null,
+        employeeNeeds: payload?.employeeNeeds ?? [],
+        strategyText: payload?.strategyText ?? "",
+        personaText: payload?.personaText ?? "",
+        strategyVersion: payload?.strategyVersion ?? "",
+        strategyUpdatedAt: payload?.strategyUpdatedAt ?? null,
+      };
+    });
     return { items, count: items.length };
   }
 

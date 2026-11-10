@@ -1,6 +1,7 @@
 ---
 name: boss-wechat-publisher
 description: 把老板观点、口述要点、文档或素材整理成微信公众号文章：标题、摘要、结构、正文、可直接粘贴的 HTML 排版、封面文案与配图建议，并给出发布检查表。用于公众号写作、排版与发布前检查。
+needs: [strategy.sections:产品体系, 服务客户人群, 内容策略, persona]
 ---
 
 # 公众号自动运营发布官

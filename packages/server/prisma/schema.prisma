@@ -836,3 +836,47 @@ model AgentMemory {
   @@index([userId, kind])
 }
 
+/// P42：战略文档索引（正文落 workspace/<phone>/企业战略.md，这里只存指针与版本）
+model StrategyDoc {
+  id        String   @id @default(cuid())
+  phone     String   @unique
+  version   String   @default("V1.0")
+  filePath  String
+  updatedBy String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+/// P42：战略迭代记录（原版「战略表」13 字段取核心 8 个）
+model StrategyIteration {
+  id          String   @id @default(cuid())
+  phone       String
+  versionNo   String
+  versionType String   @default("微调")
+  iteratedAt  DateTime
+  trigger     String
+  sections    String?
+  summary     String
+  author      String?
+  docUrl      String?
+  createdAt   DateTime @default(now())
+
+  @@index([phone, versionNo])
+}
+
+/// P42：人设规划表（一账号一行，原版 8 字段）
+model PersonaProfile {
+  id          String   @id @default(cuid())
+  phone       String
+  name        String
+  positioning String?  @db.Text
+  plan        String   @db.Text
+  accountId   String?
+  followers   String?
+  homepage    String?
+  effectiveAt DateTime
+  createdAt   DateTime @default(now())
+
+  @@index([phone, name])
+}
+

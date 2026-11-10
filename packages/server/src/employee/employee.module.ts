@@ -1,4 +1,5 @@
 import { Module } from "@nestjs/common";
+import { StrategyModule } from "../strategy/strategy.module";
 import { EmployeeController, EmployeeTaskController, EmployeeCronController, WorkbenchController } from "./employee.controller";
 import { EmployeeExecutionController } from "./employee-execution.controller";
 import {
@@ -16,6 +17,7 @@ import { EmployeeService } from "./employee.service";
 import { EmployeeExecutionService } from "./employee-execution.service";
 
 @Module({
+  imports: [StrategyModule],
   controllers: [
     EmployeeController,
     EmployeeTaskController,

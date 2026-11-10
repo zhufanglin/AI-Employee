@@ -131,7 +131,11 @@ export class TaskExecutor {
     if (!emp) throw new Error('员工未安装或不在我的员工列表中，无法执行')
     const model = await this.pickModel(emp)
     const skill = str((task as any).employeeSkillMd) || str(emp?.skillMd)
-    const out = await runToolLoop({ api: this.deps.api, model, messages: this.buildMessages(task, emp), skill, signal, maxSteps: Number(process.env.FCM_EXECUTOR_MAX_STEPS || 8), timeoutMs: Number(process.env.FCM_EXECUTOR_TASK_TIMEOUT_MS || 900000) })
+    // P42：战略/人设由服务端按岗位 needs 切片后随任务下发
+    const strategy = str((task as any).strategyText)
+    const persona = str((task as any).personaText)
+    const needs = Array.isArray((task as any).employeeNeeds) ? ((task as any).employeeNeeds as string[]) : []
+    const out = await runToolLoop({ api: this.deps.api, model, messages: this.buildMessages(task, emp), skill, strategy, persona, needs, strategyMeta: { version: str((task as any).strategyVersion), updatedAt: str((task as any).strategyUpdatedAt) }, signal, maxSteps: Number(process.env.FCM_EXECUTOR_MAX_STEPS || 8), timeoutMs: Number(process.env.FCM_EXECUTOR_TASK_TIMEOUT_MS || 900000) })
     const content: string = out.content
     const dir = join(app.getPath('userData'), 'employee-output')
     mkdirSync(dir, { recursive: true })

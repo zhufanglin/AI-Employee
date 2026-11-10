@@ -24,6 +24,7 @@ import { AdminModule } from "./admin/admin.module";
 import { CapabilityModule } from "./capabilities/capability.module";
 import { WorkspaceModule } from "./workspace/workspace.module";
 import { MemoryModule } from "./memory/memory.module";
+import { StrategyModule } from "./strategy/strategy.module";
 
 @Module({
   imports: [
@@ -45,6 +46,7 @@ import { MemoryModule } from "./memory/memory.module";
     CapabilityModule,
     WorkspaceModule,
     MemoryModule,
+    StrategyModule,
   ],
   controllers: [HealthController],
   providers: [

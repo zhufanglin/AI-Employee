@@ -78,6 +78,15 @@ export type FcmApi = {
     create: (input: { employeeSlug: string; cronExpr: string; timezone?: string }) => Promise<CronOpResult<{ cronId: string; nextRunAt: string | null }>>
     remove: (p: { cronId: string }) => Promise<CronOpResult<{ deleted: boolean }>>
   }
+  // 战略与人设（P42，见 docs/handoff/P42-原版战略表人设表-逆向.md）
+  strategy: {
+    get: () => Promise<CronOpResult<StrategyDocView>>
+    save: (input: StrategySaveInput) => Promise<CronOpResult<{ version: string; updatedAt: string }>>
+    iterations: () => Promise<CronOpResult<{ items: StrategyIterationItem[] }>>
+    listPersonas: () => Promise<CronOpResult<{ items: PersonaItem[] }>>
+    savePersona: (input: PersonaSaveInput) => Promise<CronOpResult<{ item: PersonaItem }>>
+    removePersona: (p: { id: string }) => Promise<CronOpResult<{ ok: boolean }>>
+  }
   // 定时发布（P26，见 docs/handoff/P26-定时发布.md）
   queue: {
     list: () => Promise<CronOpResult<{ items: ScheduledPublishJob[] }>>
@@ -99,6 +108,55 @@ export type FilePathData = { ok: true; path: string }
 export type FileOkData = { ok: true; error?: string }
 // cron-ops.ts 的统一包裹：{ ok, data?, error? }
 export type CronOpResult<T> = { ok: boolean; data?: T; error?: string }
+
+// 战略与人设（P42）：GET /api/strategy 的返回，正文是整篇 markdown。
+export type StrategyDocView = {
+  version: string
+  updatedAt: string
+  updatedBy?: string
+  content: string
+}
+
+// 战略迭代记录（对应原版「战略表」的核心字段）。
+export type StrategyIterationItem = {
+  versionNo: string
+  versionType: string
+  iteratedAt: string
+  trigger: string
+  sections?: string
+  summary: string
+  author?: string
+  docUrl?: string
+}
+
+export type StrategySaveInput = {
+  content: string
+  versionType?: string
+  trigger?: string
+  summary?: string
+}
+
+// 账号人设（对应原版「人设规划表」8 字段；一账号一行）。
+export type PersonaItem = {
+  id: string
+  name: string
+  positioning?: string
+  plan?: string
+  accountId?: string
+  followers?: string
+  homepage?: string
+  effectiveAt?: string
+}
+
+export type PersonaSaveInput = {
+  name: string
+  positioning?: string
+  plan?: string
+  accountId?: string
+  followers?: string
+  homepage?: string
+  effectiveAt?: string
+}
 
 export type PlatformId = 'douyin' | 'xiaohongshu' | 'shipinhao'
 

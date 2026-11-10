@@ -5,6 +5,7 @@ import Settings from './Settings'
 import Gateway from './Gateway'
 import EmployeeOffice from './EmployeeOffice'
 import Memory from './Memory'
+import Strategy from './Strategy'
 import PlatformPublish from './PlatformPublish'
 import Workspace from './Workspace'
 import Scheduled from './Scheduled'
@@ -20,6 +21,7 @@ type Tab =
   | 'image'
   | 'video'
   | 'memory'
+  | 'strategy'
   | 'platform'
   | 'files'
   | 'scheduled'
@@ -75,6 +77,7 @@ export default function Shell({ user, config, onLogout }: { user: any; config: a
             )}
           </div>
           <button className={tab === 'memory' ? 'on' : ''} onClick={() => setTab('memory')}>🧠 记忆</button>
+          <button className={tab === 'strategy' ? 'on' : ''} onClick={() => setTab('strategy')}>🧭 战略与人设</button>
           <button className={tab === 'platform' ? 'on' : ''} onClick={() => setTab('platform')}>📤 平台发布</button>
           <button className={tab === 'files' ? 'on' : ''} onClick={() => setTab('files')}>📁 文件</button>
           <button className={tab === 'scheduled' ? 'on' : ''} onClick={() => setTab('scheduled')}>⏰ 定时任务</button>
@@ -103,6 +106,7 @@ export default function Shell({ user, config, onLogout }: { user: any; config: a
         <div hidden={tab !== 'image'}><MediaCreation mode="image" onBalance={setBalance} /></div>
         <div hidden={tab !== 'video'}><MediaCreation mode="video" onBalance={setBalance} /></div>
         {tab === 'memory' && <Memory />}
+        {tab === 'strategy' && <Strategy />}
         {tab === 'platform' && <PlatformPublish />}
         {tab === 'files' && <Workspace />}
         {tab === 'scheduled' && <Scheduled />}

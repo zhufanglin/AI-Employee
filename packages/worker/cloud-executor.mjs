@@ -120,9 +120,14 @@ async function execute(task, signal) {
   log("picked model", emp && emp.slug);
   const model = await pickModel(emp);
   const skill = (task && typeof task.employeeSkillMd === "string" && task.employeeSkillMd) || (emp && typeof emp.skillMd === "string" && emp.skillMd) || "";
-  log("model =", model, "skillChars =", skill ? skill.length : 0);
+  // P42：战略/人设由服务端按岗位 needs 切片后随任务下发，这里只负责注入
+  const strategy = (task && typeof task.strategyText === "string" && task.strategyText) || "";
+  const persona = (task && typeof task.personaText === "string" && task.personaText) || "";
+  const needs = Array.isArray(task && task.employeeNeeds) ? task.employeeNeeds : [];
+  log("model =", model, "skillChars =", skill ? skill.length : 0, "strategyChars =", strategy.length, "personaChars =", persona.length, "needs =", needs.length);
   const out = await runToolLoop({
-    api: toolCall, model, messages: buildMessages(task, emp), skill, signal,
+    api: toolCall, model, messages: buildMessages(task, emp), skill, strategy, persona, needs,
+    strategyMeta: { version: task && task.strategyVersion, updatedAt: task && task.strategyUpdatedAt }, signal,
     maxSteps: Number(process.env.FCM_EXECUTOR_MAX_STEPS || 8),
     timeoutMs: Number(process.env.FCM_EXECUTOR_TASK_TIMEOUT_MS || 900000),
   });

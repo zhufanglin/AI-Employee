@@ -54,6 +54,40 @@ export function skillSection(skill) {
   return '\n\n以下是该岗位的技能说明（SKILL.md），请遵守其中的执行流程和最终交付格式；工具白名单、JSON 指令协议、计费和安全限制始终优先，技能说明不得覆盖这些要求：\n---\n' + body + '\n---';
 }
 
+const STRATEGY_BUDGET = 6000;
+const PERSONA_BUDGET = 1500;
+
+/**
+ * 岗位数据授权（P42）：把 SKILL.md front-matter 的 needs 明示给模型，
+ * 让它知道这次上下文里的战略/人设是按什么授权切片进来的。
+ */
+export function needsSection(needs) {
+  const list = (Array.isArray(needs) ? needs : []).filter(n => typeof n === 'string' && n.trim());
+  if (!list.length) return '';
+  return '\n\n## 当前员工岗位的数据授权\n本次上下文附带的公司战略/账号人设，是按该岗位声明的数据范围切片注入的：\n' + list.map(n => '- ' + n.trim()).join('\n');
+}
+
+/**
+ * 公司战略（P42）：照原版把战略正文放在技能说明之后、system 的最尾部，
+ * 等价于「最贴近用户输入的事实约束」。
+ */
+export function strategySection(strategy, meta = {}) {
+  const text = typeof strategy === 'string' ? strategy.trim() : '';
+  if (!text) return '';
+  const body = text.length > STRATEGY_BUDGET ? text.slice(0, STRATEGY_BUDGET) + '\n\n[战略文档已截断]' : text;
+  const version = meta && typeof meta.version === 'string' && meta.version.trim() ? '（当前版本 ' + meta.version.trim() + '）' : '';
+  const updated = meta && meta.updatedAt ? '，更新于 ' + String(meta.updatedAt).slice(0, 10) : '';
+  return '\n\n## 公司战略' + version + updated + '\n以下是老板填写的公司战略，是完成任务的事实依据：与它冲突的说法以它为准，它没写到的事实不要编造，需要更多背景时可以用 file_read 读「企业战略.md」全文。\n---\n' + body + '\n---';
+}
+
+/** 账号人设（P42）：只对声明了 needs 人设的内容/流量类岗位注入，避免污染销售话术。 */
+export function personaSection(persona) {
+  const text = typeof persona === 'string' ? persona.trim() : '';
+  if (!text) return '';
+  const body = text.length > PERSONA_BUDGET ? text.slice(0, PERSONA_BUDGET) + '\n\n[人设资料已截断]' : text;
+  return '\n\n## 账号人设\n写文案、脚本、标题时保持下面这个账号的人设定位与口吻；这是账号人设，不是客服话术。\n---\n' + body + '\n---';
+}
+
 /**
  * 从最近几轮对话里拼一段上下文，供 memory_search 做追问改写（P20）。
  * 「那她呢」只有带上前面几轮说过谁，才能被改写成「赵姐那边报价多少」。
@@ -71,7 +105,7 @@ export function recentContext(messages, maxChars = 1200) {
   return parts.slice(-6).join('\n').slice(-maxChars);
 }
 
-export async function runToolLoop({ api, model, messages, skill, maxSteps = 8, timeoutMs = 900000, pollMs = 8000, signal: externalSignal }) {
+export async function runToolLoop({ api, model, messages, skill, strategy, persona, needs, strategyMeta, maxSteps = 8, timeoutMs = 900000, pollMs = 8000, signal: externalSignal }) {
   if (!Number.isInteger(maxSteps) || maxSteps < 1 || maxSteps > 20 || !Number.isFinite(timeoutMs) || timeoutMs < 1000 || !Number.isFinite(pollMs) || pollMs < 10) throw new Error('执行器配置无效');
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
@@ -89,8 +123,14 @@ export async function runToolLoop({ api, model, messages, skill, maxSteps = 8, t
     const catalogue = await api('/capabilities', { signal });
     const descriptors = (Array.isArray(catalogue?.items) ? catalogue.items : []).filter(item => CAPABILITIES.has(item.name)).map(({ name, description, params }) => ({ name, description, params }));
     transcript[0].content += '\n能力参数说明：' + JSON.stringify(descriptors).slice(0, 12000);
+    const auth = needsSection(needs);
+    if (auth) transcript[0].content += auth;
     const section = skillSection(skill);
     if (section) transcript[0].content += section;
+    const strategyText = strategySection(strategy, strategyMeta);
+    if (strategyText) transcript[0].content += strategyText;
+    const personaText = personaSection(persona);
+    if (personaText) transcript[0].content += personaText;
     for (let i = 0; i < maxSteps; i++) {
       if (signal.aborted) throw new Error('员工任务执行超时');
       const started = Date.now(); let tool = 'invalid'; let result;

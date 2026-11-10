@@ -9,6 +9,7 @@ export const SKILL_CONTENT: Record<string, string> = {
   'boss-ai-team-orchestrator': `---
 name: boss-ai-team-orchestrator
 description: 把老板的经营目标拆分为内容、销售、客服、运营和数据五类AI员工的任务，定义输入、产出、负责人、截止时间、依赖、验收标准和汇总看板，并在客户端支持时调度并行任务。用于一人公司、经营计划、跨职能项目、周目标和AI工作流管理。
+needs: [strategy.sections:企业愿景与使命, 产品体系, 服务客户人群, 团队与资源, 本季度目标]
 ---
 
 # 一人公司AI员工调度官
@@ -82,6 +83,7 @@ description: 把老板的经营目标拆分为内容、销售、客服、运营�
   'boss-blogger-deconstructor': `---
 name: boss-blogger-deconstructor
 description: 深度拆解指定博主或企业账号的定位、人设、目标用户、选题体系、爆款结构、表达风格、更新频率、产品设计、引流路径和变现模式，并转化为可借鉴的原创增长方案。用于抖音、小红书、视频号等账号主页、内容链接、截图、转写稿或数据表分析。
+needs: [strategy.sections:产品体系, 服务客户人群, 内容策略, 竞争与优势, persona]
 ---
 
 # 博主账号深度拆解官
@@ -150,6 +152,7 @@ description: 深度拆解指定博主或企业账号的定位、人设、目标�
   'boss-chat-deal-analyzer': `---
 name: boss-chat-deal-analyzer
 description: 深度分析微信、私信、邮件或销售聊天记录中的客户需求、预算、决策权、时间节点、信任、真实顾虑和成交信号，判断客户话外之意并生成下一句可直接发送的回复。用于单次聊天问诊、成交障碍诊断、异议处理和销售复盘。
+needs: [strategy.sections:产品体系, 服务客户人群, 销售与转化]
 ---
 
 # 客户聊天成交分析官
@@ -223,6 +226,7 @@ description: 深度分析微信、私信、邮件或销售聊天记录中的客�
   'boss-comment-opportunity': `---
 name: boss-comment-opportunity
 description: 批量分析抖音、小红书、视频号等平台评论，识别询价、求方案、比较产品、明确痛点、老板或决策人身份以及高意向商机，并输出优先级、回复建议和私信承接动作。用于评论CSV、复制文本或平台导出数据。
+needs: [strategy.sections:产品体系, 服务客户人群, 内容策略, persona]
 ---
 
 # 评论区商机识别官
@@ -294,6 +298,7 @@ description: 批量分析抖音、小红书、视频号等平台评论，识别�
   'boss-competitor-viral-radar': `---
 name: boss-competitor-viral-radar
 description: 研究同行账号和高互动内容，识别近期爆款，拆解选题、标题、开头、结构、表达、互动、引流和商业转化方式，并生成可借鉴但不抄袭的内容机会。用于竞品监测、账号拆解、爆款复盘、选题库更新或同行URL/数据表分析。
+needs: [strategy.sections:产品体系, 竞争与优势, 内容策略, 服务客户人群, persona]
 ---
 
 # 同行爆款雷达
@@ -356,6 +361,7 @@ description: 研究同行账号和高互动内容，识别近期爆款，拆解�
   'boss-daily-lead-topics': `---
 name: boss-daily-lead-topics
 description: 根据企业产品、目标客户、客户问题、销售异议、同行内容和历史表现，每天生成流量型、精准获客型、信任型和成交承接型短视频或图文选题，并给出拍摄优先级、开头钩子、证明材料和行动指令。用于日更选题、内容会、周排期和获客内容规划。
+needs: [strategy.sections:产品体系, 服务客户人群, 内容策略, 本季度目标, persona]
 ---
 
 # 每日精准获客选题官
@@ -424,6 +430,7 @@ description: 根据企业产品、目标客户、客户问题、销售异议、�
   'boss-export-sales-agent': `---
 name: boss-export-sales-agent
 description: 为工厂、外贸公司和B2B企业研究海外市场、定义理想客户、寻找和验证潜在企业客户、判断匹配度，并生成英文邮件、LinkedIn和WhatsApp开发内容及跟进序列。用于海外客户开发、经销商招募、进口商名单、外贸市场进入和客户表评分。
+needs: [strategy.sections:产品体系, 服务客户人群, 竞争与优势, 销售与转化]
 ---
 
 # AI外贸开发客户员工
@@ -491,6 +498,7 @@ description: 为工厂、外贸公司和B2B企业研究海外市场、定义理�
   'boss-geo-auditor': `---
 name: boss-geo-auditor
 description: 诊断品牌、产品或企业在主流生成式AI回答中的可见度和推荐情况，设计高商业价值测试问题，记录品牌与竞品出现、引用和推荐理由，分析内容、实体、证据和第三方信号缺口并给出GEO/AEO改进计划。用于AI搜索可见度、品牌未被推荐或竞品占位分析。
+needs: [strategy.sections:企业愿景与使命, 产品体系, 内容策略, 竞争与优势]
 ---
 
 # GEO商机诊断官
@@ -557,6 +565,7 @@ description: 诊断品牌、产品或企业在主流生成式AI回答中的可�
   'boss-industry-researcher': `---
 name: boss-industry-researcher
 description: 从市场范围、规模、增长、客户需求、产业链、头部公司、竞争格局、商业模式、利润空间、政策风险、进入门槛和机会等维度生成带来源的行业研究报告。用于老板进入新行业前尽调、市场选择、业务扩张、赛道比较和行业机会判断。
+needs: [strategy.sections:企业愿景与使命, 产品体系, 竞争与优势, 本季度目标]
 ---
 
 # 行业深度分析师
@@ -618,6 +627,7 @@ description: 从市场范围、规模、增长、客户需求、产业链、头�
   'boss-investment-researcher': `---
 name: boss-investment-researcher
 description: 分析项目、企业或投资方向的商业模式、客户需求、财务质量、竞争优势、团队、估值逻辑、交易结构、风险和退出路径，同时输出支持与反对观点、关键假设和继续尽调清单。用于项目投资初筛、企业合作、股权投资研究、商业计划审查和投委会材料。
+needs: [strategy.sections:企业愿景与使命, 产品体系, 竞争与优势, 团队与资源]
 ---
 
 # 投资研究咨询官
@@ -687,6 +697,7 @@ description: 分析项目、企业或投资方向的商业模式、客户需求�
   'boss-lead-radar': `---
 name: boss-lead-radar
 description: 为老板按行业、产品、地区和目标客户搜索、整理、验证并评分潜在客户，输出带公开证据、需求信号、匹配度和触达理由的线索清单。用于找客户、建立销售名单、筛选企业客户、评估线索优先级，或处理客户提供的CSV/XLSX线索表。
+needs: [strategy.sections:企业愿景与使命, 产品体系, 服务客户人群, 竞争与优势, 获客渠道]
 ---
 
 # AI获客线索雷达
@@ -756,6 +767,7 @@ description: 为老板按行业、产品、地区和目标客户搜索、整理�
   'boss-private-lead-manager': `---
 name: boss-private-lead-manager
 description: 对微信私域、销售线索和客户表进行清洗、去重、分层、优先级排序和跟进编排，生成今天该联系谁、为什么联系、说什么、何时再跟进以及沉默客户唤醒方案。用于CSV/XLSX客户表、销售日报、私域盘活、客户标签和跟进节奏管理。
+needs: [strategy.sections:产品体系, 服务客户人群, 销售与转化, 私域运营]
 ---
 
 # 私域客户分层跟进官
@@ -824,6 +836,7 @@ description: 对微信私域、销售线索和客户表进行清洗、去重、�
   'boss-sales-followup': `---
 name: boss-sales-followup
 description: 分析客户资料、销售聊天、邮件、会议纪要和客户表导出，判断成交阶段、关键障碍、下一步动作、跟进时间与建议话术。用于销售跟进、沉默客户唤醒、异议处理、管道复盘、下一句话建议，或批量生成今日销售跟进清单。
+needs: [strategy.sections:产品体系, 销售与转化, 私域运营]
 ---
 
 # AI销售跟进销冠
@@ -899,6 +912,7 @@ description: 分析客户资料、销售聊天、邮件、会议纪要和客户�
   'boss-video-auto-editor': `---
 name: boss-video-auto-editor
 description: 处理工作区里的视频素材：体检时长分辨率、出剪辑点位表、按时间码切片、拼接成片、抽封面、压缩转码，并给出标题封面文案与交付清单。用于口播粗剪、长视频拆条、横竖版转换和成片导出。
+needs: [strategy.sections:产品体系, 内容策略]
 ---
 
 # AI短视频自动剪辑师
@@ -947,6 +961,7 @@ description: 处理工作区里的视频素材：体检时长分辨率、出剪�
   'boss-video-lead-script': `---
 name: boss-video-lead-script
 description: 根据老板定位、产品、目标客户和真实痛点，生成观点、案例、热点、故事、避坑和获客类短视频脚本，包含前三秒钩子、口播、镜头、字幕重点、证明素材、标题、封面和线索承接动作。用于老板口播、IP短视频、获客视频和批量脚本创作。
+needs: [strategy.sections:产品体系, 服务客户人群, 内容策略, 本季度目标, persona]
 ---
 
 # 老板短视频获客脚本官
@@ -1020,6 +1035,7 @@ description: 根据老板定位、产品、目标客户和真实痛点，生成�
   'boss-wechat-publisher': `---
 name: boss-wechat-publisher
 description: 把老板观点、口述要点、文档或素材整理成微信公众号文章：标题、摘要、结构、正文、可直接粘贴的 HTML 排版、封面文案与配图建议，并给出发布检查表。用于公众号写作、排版与发布前检查。
+needs: [strategy.sections:产品体系, 服务客户人群, 内容策略, persona]
 ---
 
 # 公众号自动运营发布官
@@ -1067,6 +1083,7 @@ description: 把老板观点、口述要点、文档或素材整理成微信公�
   'boss-xhs-lead-agent': `---
 name: boss-xhs-lead-agent
 description: 围绕小红书搜索获客研究关键词、用户问题、竞品笔记与评论，设计账号定位、搜索型标题、获客笔记、封面文案、评论回复、私信承接与复盘方案；可在本机客户端把已完成的图文笔记发布到小红书。用于小红书内容获客、选题、笔记创作、竞品研究与搜索布局。
+needs: [strategy.sections:产品体系, 服务客户人群, 内容策略, 竞争与优势, persona]
 ---
 
 # 小红书精准获客员工
@@ -1115,4 +1132,4 @@ description: 围绕小红书搜索获客研究关键词、用户问题、竞品�
 `,
 };
 
-export const SKILL_CONTENT_VERSION = '2026-11-10T10:12:57.437Z';
+export const SKILL_CONTENT_VERSION = '2026-11-10T14:48:58.241Z';

@@ -120,6 +120,10 @@ if ($Smoke) {
     & $node "scripts\smoke-t36.mjs"
     $script:code = $LASTEXITCODE
   }
+  Step "smoke: P42 战略与人设" {
+    & $node "scripts\smoke-p42-strategy.mjs"
+    $script:code = $LASTEXITCODE
+  }
   Step "smoke: T-12 支付与后台" {
     & $node "scripts\smoke-t12.mjs"
     $script:code = $LASTEXITCODE

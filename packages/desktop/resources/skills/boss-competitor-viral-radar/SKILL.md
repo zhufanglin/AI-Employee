@@ -1,6 +1,7 @@
 ---
 name: boss-competitor-viral-radar
 description: 研究同行账号和高互动内容，识别近期爆款，拆解选题、标题、开头、结构、表达、互动、引流和商业转化方式，并生成可借鉴但不抄袭的内容机会。用于竞品监测、账号拆解、爆款复盘、选题库更新或同行URL/数据表分析。
+needs: [strategy.sections:产品体系, 竞争与优势, 内容策略, 服务客户人群, persona]
 ---
 
 # 同行爆款雷达
