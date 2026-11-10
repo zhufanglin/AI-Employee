@@ -3468,6 +3468,36 @@
           "what": "done: 视频号评论读通：新增 navigateResilient（脏表单拦导航→销毁重建窗口再导航），comments/stats/replyComment 全接入；安装版 0.1.22 真机 comments ok:true items=1 href=/platform/interaction/comment；verify GREEN；0.1.22 已发布安装"
         }
       ]
+    },
+    {
+      "id": "T-65",
+      "title": "P42 战略表+人设表忠实复刻（工作区企业战略.md + 3 表 + needs 授权注入 + 桌面页）+ 0.1.23",
+      "status": "done",
+      "owner": "dsh-lead",
+      "scope": [
+        "packages/server/src/strategy/**",
+        "packages/server/prisma/schema.prisma",
+        "packages/worker/tool-loop.mjs",
+        "packages/desktop/src/main/strategy-ops.ts",
+        "packages/desktop/src/renderer/src/pages/Strategy.tsx",
+        "packages/desktop/resources/skills/**",
+        "docs/handoff/P42-战略表与人设表.md"
+      ],
+      "notes": [
+        "战略正文落工作区文件，Prisma 只存版本与迭代",
+        "tool-loop 按 needs 切片注入（战略 ≤6000 / 人设 ≤1500）",
+        "17 份 SKILL.md 加 needs，7 个岗位读人设",
+        "生产实测 strategyChars=188 personaChars=126"
+      ],
+      "finishedAt": "2026-11-10T16:48:17.318Z",
+      "result": "P42 已上线：GET/PUT /api/strategy + /api/personas + 桌面「🧭 战略与人设」页；生产员工任务注入生效；verify GREEN；0.1.23 已发布（installer 静默安装异常，改用 win-unpacked/app.asar 覆盖）",
+      "history": [
+        {
+          "at": "2026-11-10T16:48:17.318Z",
+          "by": "dsh-lead",
+          "what": "done: P42 + 0.1.23"
+        }
+      ]
     }
   ],
   "primary": "dsh-lead",

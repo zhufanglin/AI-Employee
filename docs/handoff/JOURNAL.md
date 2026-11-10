@@ -449,3 +449,4 @@ ode scripts/coord.mjs done T-40 --agent codex --note ...，并回一条 msg 给 
 - 2026-11-10T08:08:56.443Z | dsh-lead | CLAIM | T-63 P37 修「点平台发布弹出视频号助手」（0 透明度渲染）+ 抖音冷启动误报「打开页面失败」+ 0.1.21
 - 2026-11-10T08:09:27.232Z | dsh-lead | DONE | T-63 P37 修「点平台发布弹出视频号助手」（0 透明度渲染）+ 抖音冷启动误报「打开页面失败」+ 0.1.21 —— verify GREEN; 0.1.21 已发布安装（VERSION=0.1.21）；冷启动三轮 status: douyin true / xhs true / shipinhao false(会话过期)
 - 2026-11-10T09:46:40.745Z | dsh-lead | DONE | T-64 P38 视频号评论读通（脏表单拦导航→重建窗口重试）+ 0.1.22 —— 视频号评论读通：新增 navigateResilient（脏表单拦导航→销毁重建窗口再导航），comments/stats/replyComment 全接入；安装版 0.1.22 真机 comments ok:true items=1 href=/platform/interaction/comment；verify GREEN；0.1.22 已发布安装
+- 2026-11-10T16:41:51.692Z | dsh-lead | NOTE | 第一步（克隆人+声音克隆）跑通：删掉 media.service.ts:292 对 indextts 的硬禁，按 per_request 10 积分放通；用 3100 实例实测音色克隆成功（task 2120192437192581122，27.18s），lipsync 出 576x1024/26.92s 克隆人口播（task 2120193044850765826）。产物 _work/成片/第一步-*.mp4、说明 _work/成片/第一步说明.md。注意：3000 端口旧进程无权重启，桌面端要用需 dev-down/dev-up。

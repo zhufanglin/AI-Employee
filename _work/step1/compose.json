@@ -1,0 +1,21 @@
+{
+  "id": "cmwawxp8c000p9dskw209szre",
+  "phone": "13928238948",
+  "videoUrl": "openapi/931ebe4b43f69acf361b10a31f2fdd40afa69e6021c2a18a8812e99875da837e.png",
+  "sceneTaskId": null,
+  "sourceAudioUrl": "openapi/64c3ce7a29b67cf3f1409a18178a5ab665d04117def9b88b35f665b19b5a4ab4.mp3",
+  "composeType": "lipsync",
+  "styleId": null,
+  "styleName": null,
+  "title": "第一步-克隆人x克隆音色-27s",
+  "materials": null,
+  "cloneAudioUrl": null,
+  "text": null,
+  "cloneTaskId": null,
+  "musetalkTaskId": "2120194051143979009",
+  "smartClipTaskId": null,
+  "status": "completed",
+  "resultUrl": "/uploads/media/2120194051143979009.mp4",
+  "createdAt": "2026-11-10T16:37:06.684Z",
+  "updatedAt": "2026-11-10T16:40:05.231Z"
+}

@@ -289,7 +289,6 @@ export class MediaService {
     if (body?.inputSeconds != null && body?.seconds != null && Number(body.inputSeconds) !== Number(body.seconds)) throw new BadRequestException("媒体时长参数不一致");
     const inputSeconds = Number(body?.inputSeconds ?? body?.seconds ?? (taskType === "video_gen" ? 5 : taskType === "smart_clip" ? 15 : taskType === "lipsync" ? 10 : 0));
     const nodeInfoList = this.buildNodeInfoList(taskType, { ...body, seconds: inputSeconds });
-    if (taskType === "indextts") throw new BadRequestException("音色合成时长暂无法确认，体验版暂不支持提交");
     if (!Number.isFinite(inputSeconds) || inputSeconds < 0 || (!["image_gen", "indextts"].includes(taskType) && inputSeconds === 0)) throw new BadRequestException("请提供大于零且可确认的媒体时长");
     const estimatedAmount = await this.price(taskType, inputSeconds);
     const limit = (key: string, fallback: number) => {
