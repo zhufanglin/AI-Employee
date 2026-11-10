@@ -1,7 +1,7 @@
 {
   "project": "中科元晟 AI员工 0.4.29 完全复刻",
   "version": 1,
-  "updatedAt": "2026-11-10T08:08:56.244Z",
+  "updatedAt": "2026-11-10T08:09:27.225Z",
   "phase": "P10（先能用三件事）派工完成，看板 29/33",
   "phaseGoal": "用户要求先能用、定价后置：T-31 桌面端出图出片 / T-32 员工多步干活 / T-33 成本护栏 已派 Codex；dsh-lead 推主线（生产可用性收口 + 复核），T-11 渠道仍 blocked(env)。",
   "owners": {
@@ -3411,7 +3411,7 @@
     {
       "id": "T-63",
       "title": "P37 修「点平台发布弹出视频号助手」（0 透明度渲染）+ 抖音冷启动误报「打开页面失败」+ 0.1.21",
-      "status": "doing",
+      "status": "done",
       "owner": "dsh-lead",
       "scope": [
         "packages/desktop/src/main/platform.ts",
@@ -3437,8 +3437,15 @@
           "at": "2026-11-10T08:08:56.243Z",
           "by": "dsh-lead",
           "what": "claim"
+        },
+        {
+          "at": "2026-11-10T08:09:27.225Z",
+          "by": "dsh-lead",
+          "what": "done: verify GREEN; 0.1.21 已发布安装（VERSION=0.1.21）；冷启动三轮 status: douyin true / xhs true / shipinhao false(会话过期)"
         }
-      ]
+      ],
+      "finishedAt": "2026-11-10T08:09:27.222Z",
+      "result": "verify GREEN; 0.1.21 已发布安装（VERSION=0.1.21）；冷启动三轮 status: douyin true / xhs true / shipinhao false(会话过期)"
     }
   ],
   "primary": "dsh-lead",
