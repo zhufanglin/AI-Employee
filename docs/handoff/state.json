@@ -1,7 +1,7 @@
 {
   "project": "中科元晟 AI员工 0.4.29 完全复刻",
   "version": 1,
-  "updatedAt": "2026-11-09T20:01:02.447Z",
+  "updatedAt": "2026-11-10T06:24:02.815Z",
   "phase": "P10（先能用三件事）派工完成，看板 29/33",
   "phaseGoal": "用户要求先能用、定价后置：T-31 桌面端出图出片 / T-32 员工多步干活 / T-33 成本护栏 已派 Codex；dsh-lead 推主线（生产可用性收口 + 复核），T-11 渠道仍 blocked(env)。",
   "owners": {
@@ -3378,6 +3378,35 @@
       "lease": {
         "reason": null
       }
+    },
+    {
+      "id": "T-62",
+      "title": "P36 修 platform:status 报 Object has been destroyed（含抖音 cookie 误判）+ 0.1.20",
+      "status": "done",
+      "owner": "dsh-lead",
+      "scope": [],
+      "accept": "",
+      "blockedBy": [],
+      "createdAt": "2026-11-10T06:24:01.779Z",
+      "history": [
+        {
+          "at": "2026-11-10T06:24:02.457Z",
+          "by": "dsh-lead",
+          "what": "claim"
+        },
+        {
+          "at": "2026-11-10T06:24:02.815Z",
+          "by": "dsh-lead",
+          "what": "done: 守卫 + IPC 兜底 + partitionOf 修复；真机 status 三平台正常（抖音 loggedIn=true、小红书 true、视频号会话过期）；0.1.20 已发布安装校验；verify GREEN；git 4036b33"
+        }
+      ],
+      "lease": {
+        "at": "2026-11-10T06:24:02.456Z",
+        "heartbeat": "2026-11-10T06:24:02.457Z",
+        "reason": null
+      },
+      "finishedAt": "2026-11-10T06:24:02.814Z",
+      "result": "守卫 + IPC 兜底 + partitionOf 修复；真机 status 三平台正常（抖音 loggedIn=true、小红书 true、视频号会话过期）；0.1.20 已发布安装校验；verify GREEN；git 4036b33"
     }
   ],
   "primary": "dsh-lead",

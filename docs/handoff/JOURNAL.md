@@ -444,3 +444,5 @@ ode scripts/coord.mjs done T-40 --agent codex --note ...，并回一条 msg 给 
 - 2026-11-09T19:10:28.771Z | dsh-lead | ADD | T-61 
 - 2026-11-09T20:01:02.271Z | dsh-lead | ADD | T-62 T-61
 - 2026-11-09T20:01:02.453Z | dsh-lead | DONE | T-61  —— 视频号发布真机 10 步全绿；post/list 复核到作品（视频(15)，2026-11-10 02:51）；0.1.19 已发布安装；verify GREEN；git e4b5dab
+- 2026-11-10T06:24:02.612Z | dsh-lead | CLAIM | T-62 P36 修 platform:status 报 Object has been destroyed（含抖音 cookie 误判）+ 0.1.20
+- 2026-11-10T06:24:02.821Z | dsh-lead | DONE | T-62 P36 修 platform:status 报 Object has been destroyed（含抖音 cookie 误判）+ 0.1.20 —— 守卫 + IPC 兜底 + partitionOf 修复；真机 status 三平台正常（抖音 loggedIn=true、小红书 true、视频号会话过期）；0.1.20 已发布安装校验；verify GREEN；git 4036b33
