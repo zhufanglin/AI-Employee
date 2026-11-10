@@ -131,6 +131,12 @@ check('窗口池支持预热（扫码弹窗更快）', !!platformSrc && platform
 check('隐藏窗口不做后台节流', !!platformSrc && platformSrc.includes('backgroundThrottling: false'))
 check('发布页进入时先预热窗口', !!pageSrc && pageSrc.includes('window.fcm.platform.warm?.()'))
 
+// 0.1.20：修「platform:status → TypeError: Object has been destroyed」
+check('窗口显示/隐藏都有销毁守卫', !!platformSrc && platformSrc.includes('private safeShowInactive(') && platformSrc.includes('private safeHide('))
+check('platform:status 单平台异常不冒泡到 IPC', !!platformSrc && platformSrc.includes("this.log('[' + id + '] 登录态检查异常：' + msg)"))
+check('平台 IPC 统一兜底并落盘堆栈', !!main && main.includes('const guardPlatform = (name: string') && main.includes('has been destroyed'))
+check('分区 cookie 读的是 partitionOf（旧代码误写 this.partition）', !!platformSrc && platformSrc.includes('session.fromPartition(this.partitionOf(platform))'))
+
 // 4. 执行器与能力目录
 for (const name of ['platform_publish', 'platform_status', 'platform_stats']) {
   check('worker 白名单含 ' + name, !!worker && worker.includes("'" + name + "'"))

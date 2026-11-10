@@ -621,7 +621,24 @@ export class PlatformManager {
       }
       const cached = this.statusCache.get(id)
       if (cached && maxAge > 0 && Date.now() - cached.at <= maxAge) return cached.status
-      return this.runExclusive(id, () => this.checkStatus(id))
+      // 兜底：查登录态里任何漏出来的异常（最典型是窗口被用户/退出流程销毁后抛的
+      // TypeError: Object has been destroyed）都不许冒泡到 IPC —— 冒出去界面上就是
+      // 「Error invoking remote method 'platform:status': TypeError: Object has been destroyed」。
+      try {
+        return await this.runExclusive(id, () => this.checkStatus(id))
+      } catch (e) {
+        const msg = errText(e)
+        this.log('[' + id + '] 登录态检查异常：' + msg)
+        this.statusCache.delete(id)
+        const driver = (DRIVERS as Record<string, PlatformDriver>)[id]
+        return {
+          platform: id,
+          name: driver ? driver.name : id,
+          loggedIn: false,
+          checkedAt: nowIso(),
+          error: '登录态检查失败：' + msg
+        } as PlatformStatus
+      }
     })
     return Promise.all(jobs)
   }
@@ -670,9 +687,15 @@ export class PlatformManager {
     return this.runExclusive(platform, async () => {
       const driver = this.driver(platform)
       const pooled = this.windows.get(platform)
-      if (pooled && !pooled.isDestroyed() && pooled.isVisible()) {
-        pooled.focus()
-        return
+      if (pooled && !pooled.isDestroyed()) {
+        try {
+          if (pooled.isVisible()) {
+            pooled.focus()
+            return
+          }
+        } catch {
+          // 窗口刚好被销毁，继续走下面的新建流程
+        }
       }
       const win = this.ensureWindow(platform, true)
       try {
@@ -731,14 +754,14 @@ export class PlatformManager {
       let win: BrowserWindow | null = null
       try {
         win = this.ensureWindow(id, false)
-        if (win.isVisible()) win.hide()
+        this.safeHide(win)
         try {
           await this.navigate(win, driver.dataUrl)
         } catch (e) {
           this.log('[' + id + '] 数据页打不开，回落到首页：' + errText(e))
           await this.navigate(win, driver.homeUrl)
         }
-        if (driver.needsVisibleWindow) win.showInactive()
+        this.safeShowInactive(win)
         await sleep(4000)
         const probe = await this.probeUntilReady(win)
         const judged = probe ? await this.judgeLoginAsync(id, driver, probe) : { loggedIn: false }
@@ -765,7 +788,7 @@ export class PlatformManager {
         snapshot.message = '读取 ' + driver.name + ' 数据失败：' + errText(e)
         return snapshot
       } finally {
-        if (driver.needsVisibleWindow && win) win.hide()
+        this.safeHide(win)
         this.closeWindow(win)
       }
     })
@@ -858,14 +881,14 @@ export class PlatformManager {
         win = this.ensureWindow(id, false)
         // 顺序很重要（真机 2026-11-09 视频号）：发表动态页有未提交表单，窗口可见时导航会被
         // beforeunload 拦住（net::ERR_ABORTED、URL 不变），所以先隐藏窗口完成导航，再显示出来让 SPA 渲染。
-        if (win.isVisible()) win.hide()
+        this.safeHide(win)
         try {
           await this.navigate(win, driver.commentsUrl)
         } catch (e) {
           this.log('[' + id + '] 评论页打不开，回落到首页：' + errText(e))
           await this.navigate(win, driver.homeUrl)
         }
-        if (driver.needsVisibleWindow) win.showInactive()
+        this.safeShowInactive(win)
         await sleep(4000)
         const probe = await this.probeUntilReady(win)
         const judged = probe ? await this.judgeLoginAsync(id, driver, probe) : { loggedIn: false }
@@ -896,7 +919,7 @@ export class PlatformManager {
         snapshot.message = '读取 ' + driver.name + ' 评论失败：' + errText(e)
         return snapshot
       } finally {
-        if (driver.needsVisibleWindow && win) win.hide()
+        this.safeHide(win)
         this.closeWindow(win)
       }
     })
@@ -943,7 +966,7 @@ export class PlatformManager {
       let win: BrowserWindow | null = null
       try {
         win = this.ensureWindow(id, false)
-        if (win.isVisible()) win.hide()
+        this.safeHide(win)
         const w = win
         const run = async (name: string, fn: () => Promise<string | undefined>, critical = true) => {
           try {
@@ -970,7 +993,7 @@ export class PlatformManager {
             await this.navigate(w, driver.homeUrl)
             note = '（评论页打不开，已回落到 ' + driver.homeUrl + '：' + errText(e) + '）'
           }
-          if (driver.needsVisibleWindow && !w.isVisible()) w.showInactive()
+          if (driver.needsVisibleWindow) this.safeShowInactive(w)
           await sleep(3000)
           // 真机（2026-11-09 视频号）：窗口隐藏时导航过去，wujie 子应用常常不挂载，页面只有
           // 「视频号 · 助手」几个字，登录检查就会误判未登录。窗口显示后若内容还是空的，再导航一次。
@@ -1070,7 +1093,7 @@ export class PlatformManager {
         this.emit(id, 'comment-reply', result.message)
         return result
       } finally {
-        if (driver.needsVisibleWindow && win) win.hide()
+        this.safeHide(win)
         this.closeWindow(win)
       }
     })
@@ -1196,6 +1219,28 @@ export class PlatformManager {
       if (win && !win.isDestroyed()) win.hide()
     } catch {
       // 窗口可能已被平台页面关掉
+    }
+  }
+
+  /**
+   * 安全显示/隐藏窗口。
+   * Electron 对已销毁的 BrowserWindow 调 showInactive()/hide()/isVisible() 会抛
+   * TypeError: Object has been destroyed；这类调用大量出现在 finally 里，
+   * 一旦抛出就会盖掉正常返回值、冒到 IPC 变成用户看到的红色报错。
+   */
+  private safeShowInactive(win: BrowserWindow | null) {
+    try {
+      if (win && !win.isDestroyed()) win.showInactive()
+    } catch {
+      // 窗口已销毁，忽略
+    }
+  }
+
+  private safeHide(win: BrowserWindow | null) {
+    try {
+      if (win && !win.isDestroyed()) win.hide()
+    } catch {
+      // 窗口已销毁，忽略
     }
   }
 
@@ -1349,6 +1394,9 @@ export class PlatformManager {
   }
 
   private async evalPage<T = unknown>(win: BrowserWindow, expression: string): Promise<T> {
+    // 访问已销毁窗口的 webContents 会抛 TypeError: Object has been destroyed，
+    // 统一换成本项目自己的中文错误，便于上层 .catch 与日志识别。
+    if (!win || win.isDestroyed()) throw new Error('窗口已关闭')
     const res: any = await win.webContents.debugger.sendCommand('Runtime.evaluate', {
       expression,
       returnByValue: true,
@@ -1460,7 +1508,9 @@ export class PlatformManager {
   /** 读某个平台分区里的 cookie 名（含 httpOnly）——页面里的 document.cookie 看不到 httpOnly 的 sessionid */
   private async sessionCookieNames(platform: string): Promise<string[]> {
     try {
-      const ses = session.fromPartition(this.partition(platform))
+      // 曾经误写成 this.partition(...)（没有这个方法）→ 每次都抛 TypeError 被 catch 吞掉，
+      // 分区 cookie 永远读成空数组；配合「cookie 权威」的判定逻辑，抖音会永远显示「未登录」。
+      const ses = session.fromPartition(this.partitionOf(platform))
       const list = await ses.cookies.get({})
       return list.map((c) => c.name)
     } catch (e) {
@@ -1479,6 +1529,9 @@ export class PlatformManager {
       driver.loggedInCookies && driver.loggedInCookies.length
         ? await this.sessionCookieNames(platform)
         : undefined
+    // 读不到 cookie（分区还没起来 / 读失败）时不能当「没有会话 cookie」用，否则会把已登录
+    // 的账号一直判成未登录；这种情况退回页面文案判定。
+    if (names && names.length === 0) return this.judgeLogin(driver, probe, undefined)
     return this.judgeLogin(driver, probe, names)
   }
 
@@ -1539,7 +1592,15 @@ export class PlatformManager {
       this.log('[' + platform + '] 登录态检查失败：' + msg)
       return { platform, name: driver.name, loggedIn: false, checkedAt, error: '登录态检查失败：' + msg }
     } finally {
-      if (driver.needsVisibleWindow && win) win.hide()
+      // 这里的每一句都可能碰上「窗口刚好被销毁」（用户点了 X / 应用正在退出 / 另一个流程
+      // logout 把它 destroy 了），Electron 对已销毁窗口调 hide() 会抛
+      // TypeError: Object has been destroyed。finally 里抛出来的异常会覆盖上面的返回值、
+      // 直接冒到 IPC，所以必须整段吞掉。
+      try {
+        this.safeHide(win)
+      } catch {
+        // 忽略：窗口已销毁
+      }
       this.closeWindow(win)
     }
   }
@@ -1954,9 +2015,10 @@ export class PlatformManager {
     // 不一定把事件派进渲染进程（真机复现：同一坐标外部 CDP 客户端能点成功，进程内就是没反应）
     // 隐藏窗口里合成的输入事件能派到元素上（诊断日志能看到 click），但抖音的 React 提交不生效；
     // 真机对比：同一坐标由外部 CDP 点击成功 ⇒ 差异在窗口可见性，点击前先 showInactive
+    if (!win || win.isDestroyed()) throw new Error('窗口已关闭')
     const wasVisible = win.isVisible()
     if (!wasVisible) {
-      win.showInactive()
+      this.safeShowInactive(win)
       await sleep(400)
     }
     win.webContents.sendInputEvent({ type: 'mouseMove', x, y })
@@ -2076,7 +2138,7 @@ export class PlatformManager {
       // 视频号这类页面只在窗口可见时才挂载 SPA（隐藏时 body 只有「视频号 · 助手」），
       // 否则上传控件/描述框全取不到。
       if (driver.needsVisibleWindow) {
-        w.showInactive()
+        this.safeShowInactive(w)
         await sleep(600)
       }
 
@@ -2179,7 +2241,7 @@ export class PlatformManager {
       return result
     } finally {
       await this.releaseDebugger(win)
-      if (win && driver.needsVisibleWindow) win.hide()
+      if (driver.needsVisibleWindow) this.safeHide(win)
       this.closeWindow(win)
     }
   }

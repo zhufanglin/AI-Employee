@@ -1,6 +1,6 @@
 # 任务看板（自动生成，勿手改）
 
-> 生成时间 2026-11-09T20:01:02.450Z · 单一事实源 `docs/handoff/state.json`
+> 生成时间 2026-11-10T05:06:24.429Z · 单一事实源 `docs/handoff/state.json`
 
 **当前阶段**：P10（先能用三件事）派工完成，看板 29/33 —— 用户要求先能用、定价后置：T-31 桌面端出图出片 / T-32 员工多步干活 / T-33 成本护栏 已派 Codex；dsh-lead 推主线（生产可用性收口 + 复核），T-11 渠道仍 blocked(env)。
 
@@ -66,8 +66,7 @@
 | T-58 | T-58 P32 平台评论回复（读评论+回复）+ 0.1.16 发布 | done | dsh-lead | 11-09 08:26 | - |
 | T-59 | P34 抖音/小红书真机发布校准 + 0.1.17 | done | dsh-lead | 11-09 11:58 | - |
 | T-60 | P35 评论真机校准（视频号读+回复）+ 0.1.18 | done | dsh-lead | 11-09 16:51 | - |
-| T-61 |  | done | dsh-lead | - | - |
-| T-62 | T-61 | todo | - | - | packages/desktop/src/main/platform.ts |
+| T-61 | P35 视频号发布真机校准（语法错误/shadow 按钮/successUrlHints）+ 0.1.19 | done | dsh-lead | - | - |
 
 **未完成任务详情**
 
@@ -76,8 +75,3 @@
 - 验收：至少一条外部 IM 消息走通 网关→agent→计费→回复
 - 写作用域：packages/server/src/channels, packages/desktop/src/main
 - 断点：`docs/handoff/checkpoints/T-11.md`
-
-### T-62 · T-61
-- 状态：todo · （未认领）
-- 验收：-
-- 写作用域：packages/desktop/src/main/platform.ts

@@ -402,15 +402,58 @@ function registerIpc() {
       }
     }
   })
-  ipcMain.handle('platform:warm', (_e, p: { platform?: string }) => { platform!.warmUp(p?.platform); return { ok: true } })
-  ipcMain.handle('platform:status', (_e, p: { platform?: string; force?: boolean }) => platform!.status(p?.platform, { maxAgeMs: p?.force ? 0 : undefined }))
-  ipcMain.handle('platform:login', (_e, p: { platform: string }) => platform!.login(p.platform))
-  ipcMain.handle('platform:logout', async (_e, p: { platform: string }) => { await platform!.logout(p.platform); return { ok: true } })
-  ipcMain.handle('platform:publish', (_e, input: any) => platform!.publish(input))
-  ipcMain.handle('platform:stats', (_e, p: { platform: string; maxChars?: number }) => platform!.stats(p?.platform, { maxChars: p?.maxChars }))
-  ipcMain.handle('platform:comments', (_e, p: { platform: string; maxItems?: number }) => platform!.comments(p?.platform, { maxItems: p?.maxItems }))
-  ipcMain.handle('platform:reply-comment', (_e, p: { platform: string; index?: number; match?: string; text?: string }) => platform!.replyComment(p?.platform, { index: p?.index, match: p?.match, text: p?.text }))
-  ipcMain.handle('platform:open-debug', async (_e, p: { platform: string }) => { await platform!.openDebug(p.platform); return { ok: true } })
+  // 平台类 IPC 统一兜底。Electron 的窗口 / webContents / session 一旦被销毁（用户点了窗口的 X、
+  // 应用正在退出、上一个流程 destroy 了窗口），再被访问就会抛
+  // TypeError: Object has been destroyed —— 原样冒到界面就是用户看到的
+  // 「Error invoking remote method 'platform:status': TypeError: Object has been destroyed」。
+  // 这里记一条带堆栈的日志（下次真发生能直接定位），并把错误换成人话。
+  const guardPlatform = (name: string, fn: () => unknown) => async () => {
+    try {
+      return await fn()
+    } catch (e: any) {
+      const raw = String((e && e.message) || e)
+      try {
+        const dir = join(app.getPath('userData'), 'platform-logs')
+        mkdirSync(dir, { recursive: true })
+        appendFileSync(
+          join(dir, 'run.log'),
+          new Date().toISOString() + ' [ipc] ' + name + ' 失败：' + String((e && e.stack) || raw) + '\n'
+        )
+      } catch {
+        // 落盘失败不影响主流程
+      }
+      if (/Object has been destroyed|has been destroyed|已关闭/.test(raw)) {
+        throw new Error('平台窗口已关闭或渲染进程已退出（' + raw + '），请点「刷新登录状态」重试')
+      }
+      throw new Error(raw)
+    }
+  }
+  ipcMain.handle('platform:warm', (_e, p: { platform?: string }) => guardPlatform('warm', () => {
+    platform!.warmUp(p?.platform)
+    return { ok: true }
+  })())
+  ipcMain.handle('platform:status', (_e, p: { platform?: string; force?: boolean }) => guardPlatform('status', () =>
+    platform!.status(p?.platform, { maxAgeMs: p?.force ? 0 : undefined })
+  )())
+  ipcMain.handle('platform:login', (_e, p: { platform: string }) => guardPlatform('login', () => platform!.login(p.platform))())
+  ipcMain.handle('platform:logout', (_e, p: { platform: string }) => guardPlatform('logout', async () => {
+    await platform!.logout(p.platform)
+    return { ok: true }
+  })())
+  ipcMain.handle('platform:publish', (_e, input: any) => guardPlatform('publish', () => platform!.publish(input))())
+  ipcMain.handle('platform:stats', (_e, p: { platform: string; maxChars?: number }) => guardPlatform('stats', () =>
+    platform!.stats(p?.platform, { maxChars: p?.maxChars })
+  )())
+  ipcMain.handle('platform:comments', (_e, p: { platform: string; maxItems?: number }) => guardPlatform('comments', () =>
+    platform!.comments(p?.platform, { maxItems: p?.maxItems })
+  )())
+  ipcMain.handle('platform:reply-comment', (_e, p: { platform: string; index?: number; match?: string; text?: string }) => guardPlatform('reply-comment', () =>
+    platform!.replyComment(p?.platform, { index: p?.index, match: p?.match, text: p?.text })
+  )())
+  ipcMain.handle('platform:open-debug', (_e, p: { platform: string }) => guardPlatform('open-debug', async () => {
+    await platform!.openDebug(p.platform)
+    return { ok: true }
+  })())
   // P30 接线：把数据快照的整页文本交给服务端纯函数解析成结构化指标（能力失败也是 HTTP 201，看 body.success）
   ipcMain.handle('platform:parse-metrics', async (_e, p: { platform?: string; text?: string }) => {
     try {

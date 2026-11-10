@@ -28,30 +28,30 @@
 
 - [x] 2026-11-05T19:38:49.686Z | from codex | 用户确认后，本地测试账号 REVIEW 预扣已经管理员接口退款20积分，余额60→80且有审计。OSS 诊断：小对象读写删除成功，8KB/256KB/3.4MB 普通 PUT 曾失败，curl 签名PUT也超时；本机大请求一次超时、重试成功，staging 公共GET正常但无OSS密钥，不能确认生产/隔离机上传。一次3.4MB探针对象名未记录，ListObjects 403，可能存在遗留测试对象，详见 docs/handoff/OSS-连接诊断-2026-11-06.md。
 
-- [ ] 2026-11-05T20:44:01.774Z | from codex | 复核 T-36/T-37 发现云执行器 execute 在声明 skill 前使用导致 ReferenceError，云任务领取也未返回 employeeSkillMd；我将创建任务修复并增加云链路回归，请避免并行改 packages/worker 与 packages/server/src/employee。
+- [x] 2026-11-05T20:44:01.774Z | from codex | 复核 T-36/T-37 发现云执行器 execute 在声明 skill 前使用导致 ReferenceError，云任务领取也未返回 employeeSkillMd；我将创建任务修复并增加云链路回归，请避免并行改 packages/worker 与 packages/server/src/employee。
 
-- [ ] 2026-11-05T20:49:40.619Z | from codex | T-39 安全审查复现 web_extract IPv4-mapped IPv6 十六进制绕过：::ffff:7f00:1 与 ::ffff:a9fe:a9fe 均未拦。将修 packages/server/src/capabilities/capabilities/web-extract.ts 与其单测，避免并行修改。
+- [x] 2026-11-05T20:49:40.619Z | from codex | T-39 安全审查复现 web_extract IPv4-mapped IPv6 十六进制绕过：::ffff:7f00:1 与 ::ffff:a9fe:a9fe 均未拦。将修 packages/server/src/capabilities/capabilities/web-extract.ts 与其单测，避免并行修改。
 
-- [ ] 2026-11-05T20:53:39.299Z | from codex | T-39 已完成：修复云 worker skill 声明前使用、云 pull 未带 employeeSkillMd、技能不得覆盖协议，以及 web_extract IPv4-mapped IPv6 十六进制内网绕过。云 worker 注入及接口回归通过，verify -Smoke GREEN；未部署生产，详见 docs/handoff/T39-云端技能复核.md。
+- [x] 2026-11-05T20:53:39.299Z | from codex | T-39 已完成：修复云 worker skill 声明前使用、云 pull 未带 employeeSkillMd、技能不得覆盖协议，以及 web_extract IPv4-mapped IPv6 十六进制内网绕过。云 worker 注入及接口回归通过，verify -Smoke GREEN；未部署生产，详见 docs/handoff/T39-云端技能复核.md。
 
-- [ ] 2026-11-07T05:29:46.091Z | from dsh-lead | 
+- [x] 2026-11-07T05:29:46.091Z | from dsh-lead | 
 
-- [ ] 2026-11-07T07:17:12.922Z | from codex | T-40 已于 05:29 UTC 完成并 done，文件 docs/handoff/F2-缺口分级与取舍.md；94 路由、135 IPC、13 表为按域初筛，待逐项行为验证。上次通知命令参数误用，致未正确送达，现更正。接下来我只读核验三员工链路，避免与你作用域冲突。
+- [x] 2026-11-07T07:17:12.922Z | from codex | T-40 已于 05:29 UTC 完成并 done，文件 docs/handoff/F2-缺口分级与取舍.md；94 路由、135 IPC、13 表为按域初筛，待逐项行为验证。上次通知命令参数误用，致未正确送达，现更正。接下来我只读核验三员工链路，避免与你作用域冲突。
 
-- [ ] 2026-11-07T07:18:18.726Z | from codex | 紧急只读审查发现 P12 工作区隐私风险：main.ts 将 uploads 直接作为匿名 express 静态目录；workspace 默认写 uploads/workspace/<userId>/<uuid>-文件名，并返回 /uploads/workspace/... 链接，持有链接者无需登录即可取用户资料。现有 smoke-p12 仅测 doc_read 的跨用户校验，未测匿名静态路径。请在生产侧优先阻断 /uploads/workspace/，并协调鉴权下载、私有 OSS 和回归；我未触碰你的文件或生产机。
+- [x] 2026-11-07T07:18:18.726Z | from codex | 紧急只读审查发现 P12 工作区隐私风险：main.ts 将 uploads 直接作为匿名 express 静态目录；workspace 默认写 uploads/workspace/<userId>/<uuid>-文件名，并返回 /uploads/workspace/... 链接，持有链接者无需登录即可取用户资料。现有 smoke-p12 仅测 doc_read 的跨用户校验，未测匿名静态路径。请在生产侧优先阻断 /uploads/workspace/，并协调鉴权下载、私有 OSS 和回归；我未触碰你的文件或生产机。
 
-- [ ] 2026-11-07T07:20:53.181Z | from codex | 我已认领 T-42，本地只修改 packages/server/src/main.ts、新增 common/workspace-static-guard.ts 与 scripts/test-workspace-static-guard.mjs 阻断工作区匿名静态访问；请避免并行写这三个文件。鉴权下载、OSS 与生产操作留待协调。
+- [x] 2026-11-07T07:20:53.181Z | from codex | 我已认领 T-42，本地只修改 packages/server/src/main.ts、新增 common/workspace-static-guard.ts 与 scripts/test-workspace-static-guard.mjs 阻断工作区匿名静态访问；请避免并行写这三个文件。鉴权下载、OSS 与生产操作留待协调。
 
-- [ ] 2026-11-07T07:24:04.874Z | from codex | T-42 本地止漏已完成并 verify GREEN：main.ts 增加 workspace 静态匿名访问守卫，HTTP 测试含编码/大小写/反斜杠及公开媒体。注意旧 /uploads/workspace 链接现在不能下载，需实现鉴权下载并更新客户端；OSS 链接/桶 ACL 不受此修复覆盖；尚未生产部署，请协调后续。
+- [x] 2026-11-07T07:24:04.874Z | from codex | T-42 本地止漏已完成并 verify GREEN：main.ts 增加 workspace 静态匿名访问守卫，HTTP 测试含编码/大小写/反斜杠及公开媒体。注意旧 /uploads/workspace 链接现在不能下载，需实现鉴权下载并更新客户端；OSS 链接/桶 ACL 不受此修复覆盖；尚未生产部署，请协调后续。
 
-- [ ] 2026-11-07T07:25:29.361Z | from codex | 我认领 T-43，修改 workspace 服务端及桌面资料库下载相关文件，补鉴权下载；不修改 capabilities 文件或 OSS 配置。请避免同一作用域并行写。
+- [x] 2026-11-07T07:25:29.361Z | from codex | 我认领 T-43，修改 workspace 服务端及桌面资料库下载相关文件，补鉴权下载；不修改 capabilities 文件或 OSS 配置。请避免同一作用域并行写。
 
-- [ ] 2026-11-07T07:28:04.811Z | from codex | T-43 完成：JWT 鉴权 workspace/download、桌面资料库保存，HTTP 测试匿名 401/跨用户拒绝/本人成功，静态阻断及 verify GREEN。未部署；注意 capabilities/file_write 仍可能返回 OSS 或旧静态链接，OSS 桶/历史对象 ACL 未核验，需处理私有存储与员工产物下载链路。
+- [x] 2026-11-07T07:28:04.811Z | from codex | T-43 完成：JWT 鉴权 workspace/download、桌面资料库保存，HTTP 测试匿名 401/跨用户拒绝/本人成功，静态阻断及 verify GREEN。未部署；注意 capabilities/file_write 仍可能返回 OSS 或旧静态链接，OSS 桶/历史对象 ACL 未核验，需处理私有存储与员工产物下载链路。
 
-- [ ] 2026-11-07T07:30:33.104Z | from codex | 我认领 T-44，修改 capabilities/capabilities/files.ts、worker/tool-loop.mjs、worker/cloud-executor.mjs、desktop/main/executor.ts、EmployeeOffice.tsx 及专项测试：私有工作区对象、员工文件产物走鉴权下载；请避免同时写这些文件。OSS ACL 只读查询返回 ResponseError，未改远端配置。
+- [x] 2026-11-07T07:30:33.104Z | from codex | 我认领 T-44，修改 capabilities/capabilities/files.ts、worker/tool-loop.mjs、worker/cloud-executor.mjs、desktop/main/executor.ts、EmployeeOffice.tsx 及专项测试：私有工作区对象、员工文件产物走鉴权下载；请避免同时写这些文件。OSS ACL 只读查询返回 ResponseError，未改远端配置。
 
-- [ ] 2026-11-07T07:32:03.595Z | from codex | T-44 因 file_write 改为不返回公开 URL，需要同步更新 scripts/smoke-p11-tools.mjs 与 scripts/smoke-p12-files.mjs 的旧 URL 断言；请避免并行修改这两项测试。
+- [x] 2026-11-07T07:32:03.595Z | from codex | T-44 因 file_write 改为不返回公开 URL，需要同步更新 scripts/smoke-p11-tools.mjs 与 scripts/smoke-p12-files.mjs 的旧 URL 断言；请避免并行修改这两项测试。
 
-- [ ] 2026-11-07T07:33:13.393Z | from codex | T-44 完成：file_write 不再返回公开地址，新上传 OSS 对象请求 private ACL，员工写出文件登记为 workspace-file 并通过桌面鉴权下载；专项回归、P11/P12 和 verify GREEN。getBucketACL 只读调用返回 ResponseError，未能核验桶/历史对象；OSS 上传失败会退到本地，请生产核实 ACL 和存储持久化。未部署。
+- [x] 2026-11-07T07:33:13.393Z | from codex | T-44 完成：file_write 不再返回公开地址，新上传 OSS 对象请求 private ACL，员工写出文件登记为 workspace-file 并通过桌面鉴权下载；专项回归、P11/P12 和 verify GREEN。getBucketACL 只读调用返回 ResponseError，未能核验桶/历史对象；OSS 上传失败会退到本地，请生产核实 ACL 和存储持久化。未部署。
 
-- [ ] 2026-11-07T07:48:11.775Z | from codex | OSS 只读核验更新：本机直连解析至 VPN fake-IP 并超时；使用本机代理 127.0.0.1:12001 后，通过签名请求 getBucketACL 得到 OSS AccessDenied（非仅网络问题）。当前配置身份无权读取桶 ACL，历史对象与实际公开性仍未知。未修改桶、对象或密钥。请生产侧由桶所属账号核验 ACL/策略并反馈。
+- [x] 2026-11-07T07:48:11.775Z | from codex | OSS 只读核验更新：本机直连解析至 VPN fake-IP 并超时；使用本机代理 127.0.0.1:12001 后，通过签名请求 getBucketACL 得到 OSS AccessDenied（非仅网络问题）。当前配置身份无权读取桶 ACL，历史对象与实际公开性仍未知。未修改桶、对象或密钥。请生产侧由桶所属账号核验 ACL/策略并反馈。
