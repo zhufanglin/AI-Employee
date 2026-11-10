@@ -31,9 +31,10 @@ check('有 toggleTarget 切换逻辑', /function toggleTarget\(id: string\)/.tes
 check('有「全选」按钮', page.includes('全选') && page.includes('setTargets(PLATFORMS.map((p) => p.id))'))
 check('发布前校验至少选一个平台', page.includes("请至少选择一个要发布的平台"))
 check('同一份 payload 复用给每个平台', page.includes('const payload = {') && page.includes('...payload, platform: id'))
-check('逐平台串行发布并累计结果', page.includes('for (const id of targets)') && page.includes('setMultiResults([...acc])'))
+// P40 起：多平台发布前会先过滤掉「不支持图文」的平台，循环变量改名 usable（仍是串行 for 循环 + 累计结果）
+check('逐平台串行发布并累计结果', /for \(const id of (targets|usable)\)/.test(page) && page.includes('setMultiResults([...acc])'))
 check('单个平台失败不中断后续平台', page.includes('acc.push({') && page.includes('screenshots: [],'))
-check('发布进度文案含序号', page.includes("'（' + (acc.length + 1) + '/' + targets.length + '）正在发布到 '"))
+check('发布进度文案含序号', /'（' \+ \(acc\.length \+ 1\) \+ '\/' \+ (targets|usable)\.length \+ '）正在发布到 '/.test(page))
 check('成功一个平台就落结果（崩溃也看得到）', page.includes('setMultiResults([...acc])'))
 check('单平台保持原「发布结果」区块', page.includes('if (acc.length === 1) setResult(acc[0])'))
 check('多平台给出失败汇总', page.includes("' 个平台没发成功：'"))

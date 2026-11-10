@@ -12,6 +12,9 @@ const PHONE = process.env.FCM_PHONE || "";
 const DEVICE_ID = process.env.FCM_DEVICE_ID || "cloud-staging-1";
 const POLL_MS = Number(process.env.FCM_POLL_MS || 8000);
 const REQ_TIMEOUT_MS = Number(process.env.FCM_REQ_TIMEOUT_MS || 180000);
+// 单个工具调用（llm_text 写长文、doc_write 出表格、web_batch 抓 5 个站）常常超过 3 分钟，单独给更长预算；
+// 拉任务/心跳仍用 REQ_TIMEOUT_MS，避免长超时把轮询卡住。
+const TOOL_TIMEOUT_MS = Number(process.env.FCM_TOOL_TIMEOUT_MS || 600000);
 const HEARTBEAT_MS = 30000;
 const MAX_OUTPUT = 200000;
 
@@ -23,10 +26,10 @@ let busy = false;
 const log = (...a) => console.log(new Date().toISOString(), "[worker]", ...a);
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-async function call(path, init = {}, retry = true) {
+async function call(path, init = {}, retry = true, timeoutMs = REQ_TIMEOUT_MS) {
   const headers = { "content-type": "application/json", ...(init.headers || {}) };
   if (token) headers.authorization = "Bearer " + token;
-  const requestTimeout = AbortSignal.timeout(REQ_TIMEOUT_MS);
+  const requestTimeout = AbortSignal.timeout(timeoutMs);
   const signal = init.signal ? AbortSignal.any([init.signal, requestTimeout]) : requestTimeout;
   const res = await fetch(API + path, { ...init, headers, signal });
   const text = await res.text();
@@ -93,6 +96,17 @@ async function pickModel(emp) {
   return arr[0] && arr[0].id;
 }
 
+/** 工具/模型调用专用：超时预算更长，且把底层英文 abort 错误翻成中文。 */
+async function toolCall(path, init = {}) {
+  try {
+    return await call(path, init, true, TOOL_TIMEOUT_MS);
+  } catch (e) {
+    const msg = String((e && e.message) || e);
+    if (/aborted|timeout|TimeoutError/i.test(msg)) throw new Error("调用超时（" + Math.round(TOOL_TIMEOUT_MS / 1000) + " 秒）：" + path + "，请缩小单次产出或分批重试");
+    throw e;
+  }
+}
+
 async function execute(task, signal) {
   await loadEmployees();
   let emp = employees.get(task.employeeId);
@@ -108,7 +122,7 @@ async function execute(task, signal) {
   const skill = (task && typeof task.employeeSkillMd === "string" && task.employeeSkillMd) || (emp && typeof emp.skillMd === "string" && emp.skillMd) || "";
   log("model =", model, "skillChars =", skill ? skill.length : 0);
   const out = await runToolLoop({
-    api: call, model, messages: buildMessages(task, emp), skill, signal,
+    api: toolCall, model, messages: buildMessages(task, emp), skill, signal,
     maxSteps: Number(process.env.FCM_EXECUTOR_MAX_STEPS || 8),
     timeoutMs: Number(process.env.FCM_EXECUTOR_TASK_TIMEOUT_MS || 900000),
   });

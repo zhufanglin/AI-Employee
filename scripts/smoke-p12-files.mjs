@@ -59,9 +59,12 @@ await checkAsync("file_list 列出自有文件并带展示名", async () => {
   expectEq("file_list key 一致", listed.items[0].key, written.key);
 });
 
-await checkAsync("file_list 对空工作区返回 0", async () => {
+// P39 起：新用户工作区首次被访问会自动放一份《企业基础资料.md》模板（ensureWorkspaceSeed），
+// 所以「空工作区」应当只有这一份模板，而不是 0 个文件。
+await checkAsync("新工作区只含企业基础资料模板", async () => {
   const listed = await files.handlers.file_list({ userId: OTHER, params: {} });
-  expectEq("空工作区 total", listed.total, 0);
+  expectEq("新工作区 total", listed.total, 1);
+  expectEq("新工作区 首个文件", listed.items[0].name, "企业基础资料.md");
 });
 
 await checkAsync("file_read 按 name 读取（不要求 key）", async () => {
