@@ -154,6 +154,12 @@ check('comments 走 navigateResilient', !!platformSrc && /async comments\([\s\S]
 check('stats 走 navigateResilient', !!platformSrc && /async stats\([\s\S]{0,2200}navigateResilient\(id, win, driver\.dataUrl\)/.test(platformSrc))
 check('replyComment 走 navigateResilient', !!platformSrc && platformSrc.includes('navigateResilient(id, w, driver.commentsUrl)'))
 
+// P40：视频号图文网页版未适配（切 tab 后仍是视频上传器）→ 标成不支持并在发布前给出中文提示
+check('视频号只声明支持视频发布', !!drivers && /id: 'shipinhao'[\s\S]{0,160}types: \['video'\]/.test(drivers))
+check('发布前校验平台/类型组合', !!platformSrc && platformSrc.includes('if (!platformSupports(platform, wantType))') && platformSrc.includes('视频号网页版的图文上传控件还没适配'))
+check('发布页一键分发放跳过不支持图文的平台', !!pageSrc && pageSrc.includes('const usable = targets.filter((id) => type !== \'image\'') && pageSrc.includes('已跳过不支持图文的平台'))
+check('发布页标明视频号仅视频', !!pageSrc && pageSrc.includes('仅视频（图文未适配）'))
+
 // 4. 执行器与能力目录
 for (const name of ['platform_publish', 'platform_status', 'platform_stats']) {
   check('worker 白名单含 ' + name, !!worker && worker.includes("'" + name + "'"))

@@ -126,13 +126,34 @@ export class ProvidersService {
     });
   }
 
+  /** 把上游的原始错误翻译成给用户看的中文（欠费 / 模型不存在 / 鉴权 / 限流），避免把小作文暴露到界面。 */
+  private upstreamError(target: ResolvedUpstream, status: number, text: string): { message: string; code: string } {
+    const raw = (text || "").slice(0, 200);
+    if (/AccountOverdueError|overdue balance|arrear/i.test(text)) {
+      return {
+        message: `模型服务账户余额不足或已逾期（${target.provider}），请联系管理员充值后再试。原始信息：${raw}`,
+        code: "UPSTREAM_ACCOUNT_OVERDUE",
+      };
+    }
+    if (/InvalidEndpointOrModel|does not exist or you do not have access/i.test(text)) {
+      return { message: `模型未开通或名称不存在（${target.provider} ${status}）：${raw}`, code: "UPSTREAM_MODEL_NOT_FOUND" };
+    }
+    if (status === 401 || /AuthenticationError|invalid api key/i.test(text)) {
+      return { message: `模型服务鉴权失败（${target.provider}），请检查 API Key 配置。原始信息：${raw}`, code: "UPSTREAM_AUTH_FAILED" };
+    }
+    if (status === 429 || /RateLimit|quota exceeded/i.test(text)) {
+      return { message: `模型服务调用频率或配额超限（${target.provider}），请稍后重试。原始信息：${raw}`, code: "UPSTREAM_RATE_LIMITED" };
+    }
+    return { message: `上游模型调用失败: ${status} ${raw}`, code: "UPSTREAM_ERROR" };
+  }
+
   async chat(target: ResolvedUpstream, body: Record<string, any>): Promise<any> {
     const url = `${target.baseUrl}/chat/completions`;
     const res = await this.fetchWithRetry(url, { method: "POST", headers: this.headers(target), body: this.buildBody(target, body, false) });
     if (!res.ok) {
       const text = await res.text().catch(() => "");
       this.logger.error(`upstream ${target.provider} ${res.status}: ${text.slice(0, 500)}`);
-      throw new BadGatewayException({ error: { message: `上游模型调用失败: ${res.status} ${text.slice(0, 200)}`, code: "UPSTREAM_ERROR" } });
+      throw new BadGatewayException({ error: this.upstreamError(target, res.status, text) });
     }
     return res.json();
   }
@@ -143,7 +164,7 @@ export class ProvidersService {
     if (!res.ok) {
       const text = await res.text().catch(() => "");
       this.logger.error(`upstream stream ${target.provider} ${res.status}: ${text.slice(0, 500)}`);
-      throw new BadGatewayException({ error: { message: `上游模型调用失败: ${res.status} ${text.slice(0, 200)}`, code: "UPSTREAM_ERROR" } });
+      throw new BadGatewayException({ error: this.upstreamError(target, res.status, text) });
     }
     return res as unknown as Response;
   }

@@ -23,6 +23,7 @@ import {
   clampTitle,
   clickReplyScript,
   feedListScript,
+  platformSupports,
   replyOutcomeScript,
   scanCommentsScript,
   selectFeedScript,
@@ -2215,6 +2216,17 @@ export class PlatformManager {
   ): Promise<PublishResult> {
     let win: BrowserWindow | null = null
     try {
+      // 平台/类型组合不支持时尽早给出中文提示，不要打开窗口跑完十步才失败
+      const wantType = input.type === 'image' ? 'image' : 'video'
+      if (!platformSupports(platform, wantType)) {
+        throw new Error(
+          driver.name +
+            ' 暂不支持发布' +
+            (wantType === 'image' ? '图文（图片）' : '视频') +
+            '：视频号网页版的图文上传控件还没适配，请改用' +
+            (wantType === 'image' ? '视频发布，或直接在手机端发图文' : '图文发布')
+        )
+      }
       const files = this.validateMedia(input)
       const title = clampTitle(platform, input.title)
       const body = buildContent(input.content, input.tags)

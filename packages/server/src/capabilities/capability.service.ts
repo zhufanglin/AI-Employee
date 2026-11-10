@@ -66,11 +66,22 @@ export class CapabilityService {
       this.logger.log(`capability ${name} ok ${Date.now() - startedAt}ms user=${user.id}`);
       return { success: true, data, error: null };
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
+      const message = this.errorMessage(error);
       const code = String((error as any)?.constructor?.name || (error as any)?.getStatus ? "HttpException" : "Error");
       this.logger.warn(`capability ${name} failed: ${message}`);
       return { success: false, data: null, error: message, error_code: code };
     }
+  }
+
+  /** Nest 的 HttpException 常带结构化 response（如 { error: { message } }），message 本身只是 "Bad Gateway Exception"，这里把真正的说明捞出来。 */
+  private errorMessage(error: unknown): string {
+    const resp = (error as any)?.getResponse?.();
+    if (resp && typeof resp === "object") {
+      const nested = (resp as any).error?.message || (resp as any).message;
+      if (typeof nested === "string" && nested.trim()) return nested;
+      if (Array.isArray(nested) && nested.length) return nested.join("; ");
+    }
+    return error instanceof Error ? error.message : String(error);
   }
 
   async runStrict(user: { id: string; phone?: string | null }, name: string, params: Record<string, any>) {

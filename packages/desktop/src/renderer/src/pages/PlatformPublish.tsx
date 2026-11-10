@@ -8,10 +8,11 @@ import type {
   PlatformStatus
 } from '../types'
 
-const PLATFORMS: { id: string; name: string; tip: string; types: string }[] = [
-  { id: 'douyin', name: '抖音', tip: '创作者中心 · 视频 / 图文', types: '视频、图文' },
-  { id: 'xiaohongshu', name: '小红书', tip: '创作服务平台 · 视频 / 图文笔记', types: '视频、图文' },
-  { id: 'shipinhao', name: '视频号', tip: '视频号助手 · 视频 / 图文', types: '视频、图文' }
+// P40：视频号网页版没有独立的图文上传控件（切 tab 后仍是视频上传器），当前只支持视频
+const PLATFORMS: { id: string; name: string; tip: string; types: string; supportsImage: boolean }[] = [
+  { id: 'douyin', name: '抖音', tip: '创作者中心 · 视频 / 图文', types: '视频、图文', supportsImage: true },
+  { id: 'xiaohongshu', name: '小红书', tip: '创作服务平台 · 视频 / 图文笔记', types: '视频、图文', supportsImage: true },
+  { id: 'shipinhao', name: '视频号', tip: '视频号助手 · 仅视频（图文未适配）', types: '仅视频', supportsImage: false }
 ]
 
 /** 给可能挂住的调用加个上限：主进程会话卡住时也要把按钮恢复可用 */
@@ -233,6 +234,13 @@ export default function PlatformPublish() {
     if (!content.trim()) { setError('正文不能为空'); return }
     if (!mediaPaths.length) { setError('请先选择素材文件'); return }
     if (!targets.length) { setError('请至少选择一个要发布的平台'); return }
+    // P40：把「该平台当前不支持这种类型」的目标先剔掉，避免一键分发里必然失败一项
+    const usable = targets.filter((id) => type !== 'image' || PLATFORMS.some((p) => p.id === id && p.supportsImage))
+    const skipped = targets.filter((id) => usable.indexOf(id) < 0)
+    if (!usable.length) {
+      setError('所选平台不支持发布图文：视频号网页版只能发视频（请在手机端发图文，或改成视频发布）')
+      return
+    }
     setBusy('publish')
     setError('')
     setResult(null)
@@ -245,8 +253,8 @@ export default function PlatformPublish() {
       mediaPaths
     }
     const acc: PlatformPublishResult[] = []
-    for (const id of targets) {
-      setProgress('（' + (acc.length + 1) + '/' + targets.length + '）正在发布到 ' + nameOf(id) + '…')
+    for (const id of usable) {
+      setProgress('（' + (acc.length + 1) + '/' + usable.length + '）正在发布到 ' + nameOf(id) + '…')
       try {
         const r = await window.fcm.platform.publish({ ...payload, platform: id })
         acc.push(r)
@@ -266,6 +274,7 @@ export default function PlatformPublish() {
     else {
       const bad = acc.filter((r) => !r.ok)
       if (bad.length) setError(bad.length + '/' + acc.length + ' 个平台没发成功：' + bad.map((r) => nameOf(r.platform)).join('、'))
+      else if (skipped.length) setError('已跳过不支持图文的平台：' + skipped.map((id) => nameOf(id)).join('、'))
     }
     setBusy('')
   }
@@ -432,6 +441,9 @@ export default function PlatformPublish() {
               <option value="image">图文</option>
             </select>
           </label>
+          {type === 'image' && targets.some((id) => PLATFORMS.some((p) => p.id === id && !p.supportsImage)) && (
+            <p className="hint">视频号网页版暂不支持发图文，勾选里的视频号会自动跳过（请用视频发布，或在手机端发图文）。</p>
+          )}
           <div className="platform-targets">
             <span className="muted small">发布到</span>
             {PLATFORMS.map((p) => {

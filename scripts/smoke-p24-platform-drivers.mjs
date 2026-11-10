@@ -96,7 +96,9 @@ check('抖音登录 cookie 含 sessionid', Array.isArray(DRIVERS.douyin.loggedIn
 // ── PLATFORMS / platformSupports ──
 check('PLATFORMS 三个平台', PLATFORMS.length === 3, PLATFORMS.map((p) => p.id))
 check('PLATFORMS id 与 DRIVERS 对齐', PLATFORMS.every((p) => !!DRIVERS[p.id]) && PLATFORMS.map((p) => p.id).join(',') === ids.join(','))
-check('PLATFORMS 每个平台都支持 video/image', PLATFORMS.every((p) => p.types.indexOf('video') >= 0 && p.types.indexOf('image') >= 0), PLATFORMS.map((p) => p.types))
+check('PLATFORMS 每个平台都支持 video', PLATFORMS.every((p) => p.types.indexOf('video') >= 0), PLATFORMS.map((p) => p.types))
+// P40 真机（2026-11-10）：视频号网页版没有独立的图文上传控件，先只声明 video
+check('视频号只支持 video（图文未适配）', platformSupports('shipinhao', 'video') === true && platformSupports('shipinhao', 'image') === false)
 check('platformSupports 正常', platformSupports('douyin', 'video') === true && platformSupports('douyin', 'image') === true)
 check('platformSupports 未知平台为 false', platformSupports('bilibili', 'video') === false)
 

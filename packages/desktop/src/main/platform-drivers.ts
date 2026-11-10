@@ -161,7 +161,10 @@ export const DRIVERS: Record<PlatformId, PlatformDriver> = {
 export const PLATFORMS: { id: PlatformId; name: string; homeUrl: string; types: MediaType[] }[] = [
   { id: 'douyin', name: '抖音', homeUrl: DRIVERS.douyin.homeUrl, types: ['video', 'image'] },
   { id: 'xiaohongshu', name: '小红书', homeUrl: DRIVERS.xiaohongshu.homeUrl, types: ['video', 'image'] },
-  { id: 'shipinhao', name: '视频号', homeUrl: DRIVERS.shipinhao.homeUrl, types: ['video', 'image'] }
+  // 真机（2026-11-10）：视频号网页版「图文」不是独立的 tab，切 tab 后上传控件仍是视频上传器，
+  // 图片塞不进去 → 发表按钮始终 disabled。在适配图文上传前把 image 标成不支持，让发布直接给出中文提示，
+  // 而不是走完 10 步再报「发布结果未确认」。
+  { id: 'shipinhao', name: '视频号', homeUrl: DRIVERS.shipinhao.homeUrl, types: ['video'] }
 ]
 
 /** 标题字数上限（按字符数 Array.from 计，中文/emoji 各算 1 个） */

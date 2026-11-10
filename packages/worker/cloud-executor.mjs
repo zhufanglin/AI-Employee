@@ -95,7 +95,13 @@ async function pickModel(emp) {
 
 async function execute(task, signal) {
   await loadEmployees();
-  const emp = employees.get(task.employeeId);
+  let emp = employees.get(task.employeeId);
+  // 刚安装的员工可能还没进 60s 缓存：强制刷新一次再判失败（否则「刚装上就派活」必然报未安装）
+  if (!emp) {
+    employeesAt = 0;
+    await loadEmployees();
+    emp = employees.get(task.employeeId);
+  }
   if (!emp) throw new Error("员工未安装或不在我的员工列表中，无法执行");
   log("picked model", emp && emp.slug);
   const model = await pickModel(emp);

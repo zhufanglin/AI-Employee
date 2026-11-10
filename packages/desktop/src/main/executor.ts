@@ -121,7 +121,13 @@ export class TaskExecutor {
 
   private async execute(task: TaskRow, signal: AbortSignal) {
     await this.loadEmployees()
-    const emp = this.employees.get(task.employeeId)
+    let emp = this.employees.get(task.employeeId)
+    // 刚安装的员工可能还没进 60s 缓存：强制刷新一次再判失败
+    if (!emp) {
+      this.employeesAt = 0
+      await this.loadEmployees()
+      emp = this.employees.get(task.employeeId)
+    }
     if (!emp) throw new Error('员工未安装或不在我的员工列表中，无法执行')
     const model = await this.pickModel(emp)
     const skill = str((task as any).employeeSkillMd) || str(emp?.skillMd)

@@ -7,7 +7,7 @@ const BASE = process.env.FCM_API_BASE || "http://127.0.0.1:3000/api";
 const PHONE = process.env.FCM_PHONE || "13900000002";
 const OUT = process.env.FCM_AUDIT_OUT || "/tmp/audit-employees.json";
 const ONLY = (process.env.FCM_AUDIT_ONLY || "").split(",").filter(Boolean);
-const timeoutMs = Number(process.env.FCM_AUDIT_TIMEOUT_MS || 12 * 60 * 1000);
+const timeoutMs = Number(process.env.FCM_AUDIT_TIMEOUT_MS || 30 * 60 * 1000);
 let token = "";
 
 const COMMENTS = "评论1：多少钱一套？我们厂想做短视频但没人。\n评论2：广州能上门吗\n评论3：已关注，求报价\n评论4：这个效果不错\n评论5：我们是做门窗的，抖音号0粉，你们能代运营吗？预算不多";
@@ -76,10 +76,8 @@ async function waitTask(id, label) {
     last = res.body;
     const status = last && last.status;
     if (["succeeded", "failed", "awaiting_approval", "needs_input"].includes(status)) return { task: last, ms: Date.now() - started };
-    if (Date.now() - started > 30000 && ["queued"].includes(status)) {
-      // 队列没人拉就早退，不要干等 12 分钟
-      if (Date.now() - started > 120000) return { task: last, ms: Date.now() - started, stuck: "queued" };
-    }
+    // 云端 worker 单线程串行取任务，排队是常态：不要因为 queued 超时就早退，
+    // 一路等到 timeoutMs 为止（总超时由 FCM_AUDIT_TIMEOUT_MS 控制）。
     await sleep(6000);
   }
   return { task: last, ms: Date.now() - started, stuck: "timeout" };
