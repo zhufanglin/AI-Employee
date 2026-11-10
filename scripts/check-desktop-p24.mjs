@@ -137,6 +137,17 @@ check('platform:status 单平台异常不冒泡到 IPC', !!platformSrc && platfo
 check('平台 IPC 统一兜底并落盘堆栈', !!main && main.includes('const guardPlatform = (name: string') && main.includes('has been destroyed'))
 check('分区 cookie 读的是 partitionOf（旧代码误写 this.partition）', !!platformSrc && platformSrc.includes('session.fromPartition(this.partitionOf(platform))'))
 
+// 0.1.21：修「点平台发布就弹出视频号助手窗口」（status 为了渲染把窗口显示出来了）
+check('登录态检查用 0 透明度显示窗口（不弹窗）', !!platformSrc && platformSrc.includes('private showForRender(') && platformSrc.includes('win.setOpacity(0)'))
+check('登录态检查走 showForRender 而不是直接 showInactive', !!platformSrc && platformSrc.includes('if (driver.needsVisibleWindow) this.showForRender(win)'))
+check('隐藏/复显窗口都会恢复不透明度', !!platformSrc && /hide\(\)\s*\n?\s*win\.setOpacity\(1\)/.test(platformSrc) && platformSrc.includes('existing.setOpacity(1)'))
+check('渲染用窗口文本过短会落日志（排障）', !!platformSrc && platformSrc.includes('页面文本过短'))
+check('页面自身跳转导致的 ERR_ABORTED 不再误判为打不开', !!platformSrc && platformSrc.includes('const movedOn = !!startHref && last.href !== startHref'))
+check('导航超时前做终检（慢冷启动不误报打开失败）', !!platformSrc && platformSrc.includes('超时终检发现页面其实已就绪'))
+check('导航失败后继续探页面（不再直接报登录态检查失败）', !!platformSrc && platformSrc.includes('打开页面未成功，继续尝试读取页面'))
+check('导航失败时探测轮次加长', !!platformSrc && platformSrc.includes('const rounds = navError ? 15 : 8'))
+check('查登录态不缩短导航超时（避免误判未登录）', !!platformSrc && platformSrc.includes('不要在这里砍超时') && !platformSrc.includes('STATUS_NAV_TIMEOUT_MS'))
+
 // 4. 执行器与能力目录
 for (const name of ['platform_publish', 'platform_status', 'platform_stats']) {
   check('worker 白名单含 ' + name, !!worker && worker.includes("'" + name + "'"))

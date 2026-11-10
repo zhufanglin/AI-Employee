@@ -1,7 +1,7 @@
 {
   "project": "中科元晟 AI员工 0.4.29 完全复刻",
   "version": 1,
-  "updatedAt": "2026-11-10T06:24:02.815Z",
+  "updatedAt": "2026-11-10T08:08:56.244Z",
   "phase": "P10（先能用三件事）派工完成，看板 29/33",
   "phaseGoal": "用户要求先能用、定价后置：T-31 桌面端出图出片 / T-32 员工多步干活 / T-33 成本护栏 已派 Codex；dsh-lead 推主线（生产可用性收口 + 复核），T-11 渠道仍 blocked(env)。",
   "owners": {
@@ -3407,6 +3407,38 @@
       },
       "finishedAt": "2026-11-10T06:24:02.814Z",
       "result": "守卫 + IPC 兜底 + partitionOf 修复；真机 status 三平台正常（抖音 loggedIn=true、小红书 true、视频号会话过期）；0.1.20 已发布安装校验；verify GREEN；git 4036b33"
+    },
+    {
+      "id": "T-63",
+      "title": "P37 修「点平台发布弹出视频号助手」（0 透明度渲染）+ 抖音冷启动误报「打开页面失败」+ 0.1.21",
+      "status": "doing",
+      "owner": "dsh-lead",
+      "scope": [
+        "packages/desktop/src/main/platform.ts",
+        "scripts/check-desktop-p24.mjs",
+        "scripts/check-desktop-p25.mjs",
+        "docs/handoff/P37-平台页弹窗与冷启动误报.md"
+      ],
+      "checkpoint": {
+        "at": "2026-11-10T08:08:50.916Z",
+        "notes": [
+          "showForRender(0 透明度)",
+          "ERR_ABORTED movedOn",
+          "navigate 失败继续 probe（15 轮）"
+        ]
+      },
+      "lease": {
+        "at": "2026-11-10T08:08:56.241Z",
+        "heartbeat": "2026-11-10T08:08:56.243Z",
+        "reason": null
+      },
+      "history": [
+        {
+          "at": "2026-11-10T08:08:56.243Z",
+          "by": "dsh-lead",
+          "what": "claim"
+        }
+      ]
     }
   ],
   "primary": "dsh-lead",

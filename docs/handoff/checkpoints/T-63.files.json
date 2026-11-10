@@ -1,0 +1,22 @@
+[
+  {
+    "p": "packages/desktop/src/main/platform.ts",
+    "size": 106680,
+    "mtime": 1794295109622
+  },
+  {
+    "p": "scripts/check-desktop-p24.mjs",
+    "size": 13984,
+    "mtime": 1794295109722
+  },
+  {
+    "p": "scripts/check-desktop-p25.mjs",
+    "size": 7543,
+    "mtime": 1794295807859
+  },
+  {
+    "p": "docs/handoff/P37-平台页弹窗与冷启动误报.md",
+    "size": 4641,
+    "mtime": 1794295315126
+  }
+]

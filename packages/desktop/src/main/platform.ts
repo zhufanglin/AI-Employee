@@ -1197,6 +1197,8 @@ export class PlatformManager {
     if (existing && !existing.isDestroyed()) {
       if (show) {
         try {
+          // 之前可能被 showForRender 调成 0 透明度，真正弹给用户看之前必须恢复不透明
+          existing.setOpacity(1)
           existing.show()
           existing.focus()
         } catch {
@@ -1216,7 +1218,10 @@ export class PlatformManager {
   /** 用完不销毁：隐藏起来留着，下次直接复用（用户手动点 X 关掉时窗口会自己从池里移除） */
   private closeWindow(win: BrowserWindow | null) {
     try {
-      if (win && !win.isDestroyed()) win.hide()
+      if (win && !win.isDestroyed()) {
+        win.hide()
+        win.setOpacity(1)
+      }
     } catch {
       // 窗口可能已被平台页面关掉
     }
@@ -1238,10 +1243,30 @@ export class PlatformManager {
 
   private safeHide(win: BrowserWindow | null) {
     try {
-      if (win && !win.isDestroyed()) win.hide()
+      if (win && !win.isDestroyed()) {
+        win.hide()
+        // 渲染用完的窗口要恢复不透明，否则下次真正弹给用户看时是透明的
+        win.setOpacity(1)
+      }
     } catch {
       // 窗口已销毁，忽略
     }
+  }
+
+  /**
+   * 需要「窗口可见状态」页面才会渲染的平台（视频号的 wujie 子应用就是），
+   * 但又不能真的弹一个窗口到用户面前（用户反馈「点平台发布就弹出视频号助手」）。
+   * 做法：窗口透明度设 0 再 showInactive —— 页面是可见状态、正常渲染，但画面上什么都不显示。
+   * 用完由 safeHide 收起来并恢复不透明度。
+   */
+  private showForRender(win: BrowserWindow | null) {
+    if (!win || win.isDestroyed()) return
+    try {
+      win.setOpacity(0)
+    } catch {
+      // 部分环境不支持透明度，退化成普通显示（功能优先）
+    }
+    this.safeShowInactive(win)
   }
 
   /** 真正销毁窗口（退出登录 / 应用退出时清场） */
@@ -1301,6 +1326,14 @@ export class PlatformManager {
   private async navigate(win: BrowserWindow, url: string, timeoutMs = NAV_TIMEOUT_MS) {
     if (win.isDestroyed()) throw new Error('窗口已关闭，无法打开页面：' + url)
     const failures: string[] = []
+    // 记下导航前停在哪：ERR_ABORTED 既可能是「页面自己跳走（抖音会 302 到首页）」，
+    // 也可能是「视频号脏表单把这次导航拦下来了」。前者地址变了、后者地址没变，以此区分。
+    let startHref = ''
+    try {
+      startHref = win.webContents.getURL()
+    } catch {
+      startHref = ''
+    }
     win.loadURL(url).catch((e: unknown) => {
       failures.push(errText(e))
     })
@@ -1342,9 +1375,26 @@ export class PlatformManager {
         // 真机（2026-11-09 视频号）：发表动态页有未提交表单时，导航会被 beforeunload 拦下并结算成
         // ERR_ABORTED，但旧页面仍然 ready，不校验就会把「没跳过去」当成「打开了」。
         const aborted = failures.some((m) => /ERR_ABORTED|aborted/i.test(m))
-        if (!aborted || samePath(last.href, url)) return
+        // 地址已经和导航前不一样了 ⇒ 这次 ERR_ABORTED 是页面自己跳转（例如抖音 302 回首页），
+        // 页面确实开了，不能当成失败；否则登录态检查会误报「登录态检查失败：打开页面失败」。
+        const movedOn = !!startHref && last.href !== startHref
+        if (!aborted || movedOn || samePath(last.href, url)) return
       }
       await sleep(400)
+    }
+    // 超时前再做一次终检：冷启动/网络慢的时候，页面往往在我们等待窗口结束之后才真正就绪，
+    // 这时直接把 ERR_ABORTED 抛上去，用户看到的就是「登录态检查失败：打开页面失败」（抖音常见）。
+    try {
+      const final = (await Promise.race([
+        this.untilClosed(win, win.webContents.executeJavaScript(READY_SCRIPT)),
+        sleep(3000).then(() => null)
+      ])) as { ready: boolean; href: string; bodyLen: number } | null
+      if (final && final.ready && final.href && final.href !== 'about:blank') {
+        this.log('[navigate] 超时终检发现页面其实已就绪：' + final.href)
+        return
+      }
+    } catch {
+      // 取不到就按失败处理
     }
     const detail = failures.length
       ? failures[failures.length - 1]
@@ -1550,19 +1600,38 @@ export class PlatformManager {
     let win: BrowserWindow | null = null
     try {
       win = this.ensureWindow(platform, false)
-      // 视频号隐藏窗口不渲染（body 只有「视频号 · 助手」），查登录态时必须先显示窗口，否则永远判未登录
-      if (driver.needsVisibleWindow) win.showInactive()
-      await this.navigate(win, driver.homeUrl)
+      // 视频号隐藏窗口不渲染（body 只有「视频号 · 助手」），查登录态时必须先让窗口处于可见状态，
+      // 否则永远判未登录；但不能真弹窗口打扰用户，所以用 0 透明度显示（见 showForRender）
+      if (driver.needsVisibleWindow) this.showForRender(win)
+      // 抖音冷启动真的会超过 30 秒才就绪（首轮 navigate 抛 ERR_ABORTED），以前这里直接抛出去，
+      // 界面就变成「登录态检查失败：打开页面失败」。导航失败不能等于页面不能看，继续探页面：
+      // 探到内容就正常判登录态，探不到才报错。
+      let navError = ''
+      try {
+        // 不要在这里砍超时：实测砍到 12s 时小红书冷启动还没渲染完，probe 读到登录墙会误判「未登录」
+        // （真机 2026-11-10）。宁可第一次查慢一点，也不能把已登录说成未登录。
+        await this.navigate(win, driver.homeUrl)
+      } catch (e) {
+        navError = errText(e)
+        this.log('[' + platform + '] 打开页面未成功，继续尝试读取页面：' + navError)
+      }
       // 页面文案要等渲染出来：空白页既没有登录标志也没有登录线索，早读会误判（0.1.11）
       let probe: any = null
-      // 首页已经预热过，通常 1 秒内就有内容；查满 8 轮（≈7s）还没结果就按「无响应」处理
-      for (let i = 0; i < 8; i++) {
+      // 首页已经预热过，通常 1 秒内就有内容；查满 8 轮（≈7s）还没结果就按「无响应」处理。
+      // 导航失败时页面还在加载，多留几轮（≈13s）。
+      const rounds = navError ? 15 : 8
+      for (let i = 0; i < rounds; i++) {
         await sleep(i === 0 ? 600 : 900)
         probe = await this.attachAndEval<any>(win, PROBE_SCRIPT).catch(() => null)
         if (!probe) continue
         const text = String(probe.text || '')
         if (probe.loginWord || probe.qr) break
         if (text.length > 120) break
+      }
+      if (probe && driver.needsVisibleWindow && String(probe.text || '').length < 200) {
+        // 真机排障用：视频号隐藏窗口只渲染出「视频号 · 助手」，文本极短说明没有真正渲染
+        const t = String(probe.text || '')
+        this.log('[' + platform + '] 页面文本过短（' + t.length + ' 字）：' + t.slice(0, 40).replace(/\s+/g, ' '))
       }
       if (!probe) {
         this.emit(platform, 'status', '页面无响应')
@@ -1578,6 +1647,17 @@ export class PlatformManager {
       if (judged.loggedIn) {
         this.emit(platform, 'status', '已登录' + (judged.nickname ? '（' + judged.nickname + '）' : ''))
         return { platform, name: driver.name, loggedIn: true, nickname: judged.nickname || undefined, checkedAt }
+      }
+      if (navError) {
+        // 页面没打开成功、判定依据也不足，这种情况不能说「未登录」（会让用户白扫一次码）
+        this.emit(platform, 'status', '页面加载较慢')
+        return {
+          platform,
+          name: driver.name,
+          loggedIn: false,
+          checkedAt,
+          error: '页面没有响应（打开超时），未能检查登录态，请稍后点「刷新登录状态」重试'
+        }
       }
       this.emit(platform, 'status', '未登录')
       return {

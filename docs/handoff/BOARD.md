@@ -1,6 +1,6 @@
 # 任务看板（自动生成，勿手改）
 
-> 生成时间 2026-11-10T06:24:02.819Z · 单一事实源 `docs/handoff/state.json`
+> 生成时间 2026-11-10T08:08:56.248Z · 单一事实源 `docs/handoff/state.json`
 
 **当前阶段**：P10（先能用三件事）派工完成，看板 29/33 —— 用户要求先能用、定价后置：T-31 桌面端出图出片 / T-32 员工多步干活 / T-33 成本护栏 已派 Codex；dsh-lead 推主线（生产可用性收口 + 复核），T-11 渠道仍 blocked(env)。
 
@@ -68,6 +68,7 @@
 | T-60 | P35 评论真机校准（视频号读+回复）+ 0.1.18 | done | dsh-lead | 11-09 16:51 | - |
 | T-61 | P35 视频号发布真机校准（语法错误/shadow 按钮/successUrlHints）+ 0.1.19 | done | dsh-lead | - | - |
 | T-62 | P36 修 platform:status 报 Object has been destroyed（含抖音 cookie 误判）+ 0.1.20 | done | dsh-lead | 11-10 06:24 | - |
+| T-63 | P37 修「点平台发布弹出视频号助手」（0 透明度渲染）+ 抖音冷启动误报「打开页面失败」+ 0.1.21 | doing | dsh-lead | 11-10 08:08 | packages/desktop/src/main/platform.ts, scripts/check-desktop-p24.mjs, scripts/check-desktop-p25.mjs, docs/handoff/P37-平台页弹窗与冷启动误报.md |
 
 **未完成任务详情**
 
@@ -76,3 +77,8 @@
 - 验收：至少一条外部 IM 消息走通 网关→agent→计费→回复
 - 写作用域：packages/server/src/channels, packages/desktop/src/main
 - 断点：`docs/handoff/checkpoints/T-11.md`
+
+### T-63 · P37 修「点平台发布弹出视频号助手」（0 透明度渲染）+ 抖音冷启动误报「打开页面失败」+ 0.1.21
+- 状态：doing · 负责人：dsh-lead
+- 验收：-
+- 写作用域：packages/desktop/src/main/platform.ts, scripts/check-desktop-p24.mjs, scripts/check-desktop-p25.mjs, docs/handoff/P37-平台页弹窗与冷启动误报.md
