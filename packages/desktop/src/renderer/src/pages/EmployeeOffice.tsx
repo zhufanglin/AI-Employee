@@ -231,10 +231,10 @@ export default function EmployeeOffice() {
     </section>
 
     <section className="office-block">
-      <div className="office-section-head"><div><h3>我的资料库 <small>{library.length} 份</small></h3><p>上传后会保存在服务端工作区，员工在任务里按文件名读取</p></div>
+      <div className="office-section-head"><div><h3>我的资料库 <small>{library.length} 份</small></h3><p>上传后会保存在服务端工作区，员工在任务里按文件名读取；首次进入会自动放一份《企业基础资料.md》模板，填好后重新上传同名文件即可替换</p></div>
         <button className="ghost" disabled={busy} onClick={() => void refreshLibrary()}>刷新</button>
       </div>
-      {!library.length && <div className="empty-state">还没有资料。点「添加资料」上传客户名单、产品价格表、竞品文档或 PDF。</div>}
+      {!library.length && <div className="empty-state">还没有资料。点「添加资料」上传客户名单、产品价格表、竞品文档或 PDF；员工所有任务都会先读《企业基础资料.md》。</div>}
       {!!library.length && <div className="attach-list">
         {library.slice(0, 20).map((f: any) => <span className="attach-chip" key={f.key}>
           <button className="link" disabled={busy} onClick={() => void act(async () => { await window.fcm.workspace.download({ key: f.key, name: f.name }) })}>{f.name}</button>

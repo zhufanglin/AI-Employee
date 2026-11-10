@@ -151,10 +151,81 @@ export function displayName(stored: string): string { return stored.replace(/^[0
 
 export function storedName(name: string): string { return randomUUID() + "-" + name; }
 
+/** 企业基础资料模板：新用户工作区首次创建时自动放一份，员工按此文件读公司口径。 */
+export const PROFILE_FILE = "企业基础资料.md";
+const PROFILE_TEMPLATE = [
+  "# 企业基础资料",
+  "",
+  "> 不确定的字段可以留空，但填得越具体，员工产出越贴合。不要在这里写密码、Cookie、AppSecret 或访问令牌。",
+  "> 填好后用客户端的「员工办公区 → 添加资料」重新上传同名文件即可替换这份模板。",
+  "",
+  "## 企业与产品",
+  "- 企业/品牌名称：",
+  "- 所在行业：",
+  "- 主营产品或服务：",
+  "- 核心价格带：",
+  "- 主要利润来源：",
+  "- 当前重点市场/地区：",
+  "- 不能公开的信息：",
+  "",
+  "## 目标客户",
+  "- B2B / B2C：",
+  "- 目标客户身份：",
+  "- 典型行业 / 规模 / 地区：",
+  "- 最常见需求：",
+  "- 最常见顾虑：",
+  "- 主要决策人：",
+  "- 平均成交周期：",
+  "",
+  "## 竞争与优势",
+  "- 主要同行：",
+  "- 客户为什么选择我们：",
+  "- 客户为什么不选择我们：",
+  "- 已验证案例与数据：",
+  "- 禁止使用或尚未证实的宣传语：",
+  "",
+  "## 获客与内容",
+  "- 当前获客渠道：",
+  "- 当前内容平台：",
+  "- 老板 / 主理人人设：",
+  "- 希望客户采取的下一步动作：",
+  "- 可提供的资料钩子 / 体验产品：",
+  "",
+  "## 销售与私域",
+  "- 线索阶段定义：",
+  "- 销售跟进频率：",
+  "- 可接受的优惠边界：",
+  "- 需要升级给老板处理的情况：",
+  "",
+  "## 输出偏好",
+  "- 语气（专业 / 直接 / 温和 / 有冲击力 / 其他）：",
+  "- 输出语言：",
+  "- 每次默认给几个方案：",
+  "- 是否需要保存结果到文件：",
+  "",
+].join("\n");
+
 export type WorkspaceFile = { name: string; stored: string; key: string; ext: string; bytes: number; updatedAt: string };
+
+/**
+ * 首次进入用户工作区时放一份《企业基础资料》模板（只做一次）。
+ * 判断依据是工作区目录此前不存在：用户删掉模板后不会再被强行塞回来。
+ */
+export async function ensureWorkspaceSeed(userId: string): Promise<void> {
+  if (!userId) return;
+  const dir = userDir(userId);
+  try { await stat(dir); return; } catch { /* 目录不存在 → 首次创建 */ }
+  try {
+    await mkdir(dir, { recursive: true });
+    await writeFile(join(dir, PROFILE_FILE), PROFILE_TEMPLATE, "utf8");
+  } catch (error) {
+    console.error("[file] workspace seed failed:", error instanceof Error ? error.message : error);
+  }
+}
 
 /** 列出用户工作区文件，按更新时间倒序；目录不存在返回空数组。 */
 export async function listWorkspaceFiles(userId: string): Promise<WorkspaceFile[]> {
+  await ensureWorkspaceSeed(userId);
   const dir = userDir(userId);
   let entries: string[] = [];
   try { entries = await readdir(dir); } catch { return []; }
@@ -215,6 +286,8 @@ export async function saveWorkspaceFile(userId: string, rawName: string, buffer:
   const path = join(userDir(userId), stored);
   await mkdir(dirname(path), { recursive: true });
   await writeFile(path, buffer);
+  // 用户上传了与模板同名的文件 → 删掉自动放的模板，避免员工读到空白模板
+  if (name === PROFILE_FILE) { try { await unlink(join(userDir(userId), PROFILE_FILE)); } catch { /* 没模板更正常 */ } }
   const mime = MIME_BY_EXT[ext] || "application/octet-stream";
   let url: string | null = null;
   const client = ossClient();
@@ -252,6 +325,7 @@ export const handlers = {
     const path = join(userDir(userId), stored);
     await mkdir(dirname(path), { recursive: true });
     await writeFile(path, content, "utf8");
+    if (name === PROFILE_FILE) { try { await unlink(join(userDir(userId), PROFILE_FILE)); } catch { /* 没模板更正常 */ } }
     const ext = extOf(name);
     const mime = String(params.mime ?? "").trim() || MIME_BY_EXT[ext] || "application/octet-stream";
     let url: string | null = null;

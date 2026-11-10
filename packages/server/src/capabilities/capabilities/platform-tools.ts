@@ -44,7 +44,7 @@ export const descriptors: CapabilityDescriptor[] = [
     name: "platform_stats",
     title: "平台数据（本机）",
     category: "platform",
-    description: "读取本机已发布内容的播放/点赞等数据（创作后台页面读取）；当前版本仅登记能力，尚未实现",
+    description: "在本机客户端打开抖音/小红书/视频号的创作后台数据页，抓回页面标题、链接与正文快照（含登录态判断），用于复盘取数；要结构化字段再用 llm_text 抽取",
     params: {
       platform: "必填，平台：douyin（抖音）| xiaohongshu（小红书）| shipinhao（视频号）",
     },
