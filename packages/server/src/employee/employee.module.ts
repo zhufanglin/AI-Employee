@@ -15,6 +15,7 @@ import { PackageService } from "./package.service";
 import { EmployeeCronService } from "./employee-cron.service";
 import { EmployeeService } from "./employee.service";
 import { EmployeeExecutionService } from "./employee-execution.service";
+import { EmployeeExpiryService } from "./employee-expiry.service";
 
 @Module({
   imports: [StrategyModule],
@@ -31,7 +32,14 @@ import { EmployeeExecutionService } from "./employee-execution.service";
     AdminEmployeeOrderController,
     EmployeeExecutionController,
   ],
-  providers: [EmployeeService, EmployeeCronService, PackageService, EmployeeOrderService, EmployeeExecutionService],
-  exports: [EmployeeService, PackageService, EmployeeOrderService],
+  providers: [
+    EmployeeService,
+    EmployeeCronService,
+    PackageService,
+    EmployeeOrderService,
+    EmployeeExecutionService,
+    EmployeeExpiryService,
+  ],
+  exports: [EmployeeService, PackageService, EmployeeOrderService, EmployeeExpiryService],
 })
 export class EmployeeModule {}

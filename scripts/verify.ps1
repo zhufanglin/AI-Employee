@@ -132,6 +132,10 @@ if ($Smoke) {
     & $node "scripts\smoke-p43-chat.mjs"
     $script:code = $LASTEXITCODE
   }
+  Step "smoke: P43 员工到期自动扫描" {
+    & $node "scripts\smoke-p43-expiry.mjs"
+    $script:code = $LASTEXITCODE
+  }
   Step "smoke: T-12 支付与后台" {
     & $node "scripts\smoke-t12.mjs"
     $script:code = $LASTEXITCODE

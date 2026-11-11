@@ -1,7 +1,7 @@
 {
   "project": "中科元晟 AI员工 0.4.29 完全复刻",
   "version": 1,
-  "updatedAt": "2026-11-11T06:11:42.727Z",
+  "updatedAt": "2026-11-11T06:34:19.688Z",
   "phase": "P10（先能用三件事）派工完成，看板 29/33",
   "phaseGoal": "用户要求先能用、定价后置：T-31 桌面端出图出片 / T-32 员工多步干活 / T-33 成本护栏 已派 Codex；dsh-lead 推主线（生产可用性收口 + 复核），T-11 渠道仍 blocked(env)。",
   "owners": {
@@ -3522,6 +3522,30 @@
       ],
       "createdAt": "2026-11-11T06:11:42.726Z",
       "updatedAt": "2026-11-11T06:11:42.727Z"
+    },
+    {
+      "id": "T-67",
+      "title": "P43 P1：员工授权到期自动扫描（对齐原版 employee-expiry.scheduler）+ 生产上线",
+      "status": "done",
+      "owner": "dsh-lead",
+      "scope": [
+        "packages/server/src/employee/employee-expiry.service.ts",
+        "packages/server/src/employee/employee.module.ts",
+        "packages/server/src/admin/admin-extra.controller.ts",
+        "scripts/smoke-p43-expiry.mjs",
+        "scripts/verify.ps1",
+        "docs/handoff/P43-全面逆向对照报告.md"
+      ],
+      "notes": [
+        "原版 employee-expiry.scheduler.js 是常驻定时器；复刻此前只有 POST /admin/employee-orders/expire-scan 手动入口",
+        "新增 EmployeeExpiryService：启动先扫一次 + 每 EMPLOYEE_EXPIRY_INTERVAL_MIN（默认 10 分钟）扫一轮，复用 orders.expireEmployees()（幂等）",
+        "不引入 @nestjs/schedule/node-cron（与 P22 记忆清理同一取舍）；EMPLOYEE_EXPIRY_ENABLED=0 可关",
+        "观察口 GET /admin/employee-expiry、POST /admin/employee-expiry/run（@HttpCode(200)）",
+        "smoke-p43-expiry.mjs 23 checks 全绿并加入 verify；全量 verify GREEN",
+        "生产已部署，实测 GET 200（nextAt 有值、lastRun=启动时扫描）、POST run 200"
+      ],
+      "createdAt": "2026-11-11T06:34:19.688Z",
+      "updatedAt": "2026-11-11T06:34:19.688Z"
     }
   ],
   "primary": "dsh-lead",

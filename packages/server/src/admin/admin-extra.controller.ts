@@ -1,5 +1,6 @@
 import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post, Put, Query } from "@nestjs/common";
 import { MemoryCleanupService } from "../capabilities/memory-cleanup.service";
+import { EmployeeExpiryService } from "../employee/employee-expiry.service";
 import { Roles } from "../common/decorators";
 import { AdminExtraService } from "./admin-extra.service";
 import { AdminService } from "./admin.service";
@@ -16,6 +17,7 @@ export class AdminExtraController {
     private readonly extra: AdminExtraService,
     private readonly admin: AdminService,
     private readonly memoryCleanup: MemoryCleanupService,
+    private readonly employeeExpiry: EmployeeExpiryService,
   ) {}
 
   // ---------- 长期记忆清理（P22 定时任务） ----------
@@ -31,6 +33,20 @@ export class AdminExtraController {
   memoryCleanupRun(@Body() body: any) {
     const mode = body && body.mode === "report" ? "report" : "apply";
     return this.memoryCleanup.runOnce("管理员手动", mode);
+  }
+
+  // ---------- 员工授权到期扫描（P43 P1，对齐原版 employee-expiry.scheduler） ----------
+  /** 扫描状态：开关、周期、下次执行、上次结果。 */
+  @Get("employee-expiry")
+  employeeExpiryStatus() {
+    return this.employeeExpiry.status();
+  }
+
+  /** 立即手动扫一轮（过期授权置 expired、超时未支付订单置 closed）。 */
+  @Post("employee-expiry/run")
+  @HttpCode(HttpStatus.OK)
+  employeeExpiryRun() {
+    return this.employeeExpiry.runOnce("管理员手动");
   }
 
   // ---------- 站点 / 集成 ----------
