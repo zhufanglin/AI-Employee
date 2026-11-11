@@ -18,7 +18,7 @@ export class ToolapiController {
   @Get("potential-customers") queryPotential(@Req() r: any, @Query() q: any) { return this.service.queryPotentialCustomers({ ...q, phone: this.phone(r, undefined, q) }).then(data => ({ success: true, data })); }
   @Put("potential-customers/:id") updatePotential(@Req() r: any, @Param("id") id: string, @Body() b: any) { return this.service.updatePotentialCustomer(id, this.phone(r, b), b).then(data => ({ success: true, data })); }
   @Post("today-communications") createComm(@Req() r: any, @Body() b: any) { return this.service.createTodayCommunication({ ...b, phone: this.phone(r, b) }).then(data => ({ success: true, data })); }
-  @Post("today-communications/generate") generateComm(@Req() r: any) { return this.service.generateTodayCommunications(this.phone(r)).then(data => ({ success: true, data })); }
+  @Post("today-communications/generate") generateComm(@Req() r: any, @Body() b: any) { return this.service.generateTodayCommunications(this.phone(r), { limit: b?.limit }).then(data => ({ success: true, data })); }
   @Get("today-communications") queryComm(@Req() r: any, @Query() q: any) { return this.service.queryTodayCommunications({ ...q, phone: this.phone(r, undefined, q) }).then(data => ({ success: true, data })); }
   @Put("today-communications/:id") updateComm(@Req() r: any, @Param("id") id: string, @Body() b: any) { return this.service.updateTodayCommunication(id, this.phone(r, b), b).then(data => ({ success: true, data })); }
   @Post("customer-profiles") createProfile(@Req() r: any, @Body() b: any) { return this.service.createCustomerProfile({ ...b, phone: this.phone(r, b) }).then(data => ({ success: true, data })); }

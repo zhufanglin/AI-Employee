@@ -4,6 +4,10 @@ export type FcmApi = {
     get: () => Promise<{ apiBase: string; user: any; hasToken: boolean; onboarded?: boolean }>
     setApiBase: (v: string) => Promise<boolean>
     markOnboarded: () => Promise<boolean>
+    /** P43：恢复默认设置（保留登录态） */
+    reset: () => Promise<{ apiBase: string; hasToken: boolean; onboarded: boolean }>
+    /** P43：把一段文本另存到用户选定位置 */
+    saveTextFile: (p: { defaultName?: string; content?: string; extension?: string }) => Promise<{ canceled: boolean; path?: string }>
   }
   // 客户端更新：状态推送走 onStatus，用户在设置页手动检查/下载/安装。
   update: {
@@ -12,6 +16,21 @@ export type FcmApi = {
     download: () => Promise<any>
     install: () => Promise<any>
     onStatus: (fn: (s: any) => void) => () => void
+  }
+  // asar 热更新（P43 P1-6）：只下载并替换 app.asar，替代整包 NSIS 安装。
+  asarUpdate: {
+    status: () => Promise<AsarOpResult<AsarUpdateStatus>>
+    check: () => Promise<AsarOpResult<AsarCheckData>>
+    download: () => Promise<AsarOpResult<AsarDownloadData>>
+    install: () => Promise<AsarOpResult<AsarInstallData>>
+  }
+  // 客户端日志（P43 P1-7）：日志文件列表、最近 N 行、读文件、目录与路径。
+  logs: {
+    getDir: () => Promise<LogOpResult<{ dir: string }>>
+    getFilePath: () => Promise<LogOpResult<{ path: string; name: string; exists: boolean }>>
+    listFiles: () => Promise<LogOpResult<{ dir: string; items: LogFileItem[] }>>
+    getRecent: (p?: { lines?: number; file?: string }) => Promise<LogOpResult<LogRecentData>>
+    readFile: (p: { name?: string; path?: string; maxBytes?: number }) => Promise<LogOpResult<LogReadData>>
   }
   // 本机执行器（把云端派下来的员工任务拉到这台电脑上跑）
   employeeExecution: {
@@ -58,6 +77,8 @@ export type FcmApi = {
   }
   chat: {
     send: (p: { requestId: string; body: any }) => Promise<{ usage: any; content: string; aborted?: boolean }>
+    /** P43：带附件发送（附件先传到工作区） */
+    sendWithMedia: (p: { requestId: string; body: any; attachments?: Array<{ name: string; mime?: string; base64: string }> }) => Promise<{ usage: any; content: string; aborted?: boolean }>
     /** P0-2：中断正在生成的请求 */
     abort: (requestId: string) => Promise<boolean>
     /** 会话列表（默认 30 条） */
@@ -147,6 +168,60 @@ export type FilePathData = { ok: true; path: string }
 export type FileOkData = { ok: true; error?: string }
 // cron-ops.ts 的统一包裹：{ ok, data?, error? }
 export type CronOpResult<T> = { ok: boolean; data?: T; error?: string }
+
+// asar-update.ts / log-ops.ts 的统一包裹（与 CronOpResult 同形，单独命名便于阅读）
+export type AsarOpResult<T> = { ok: boolean; data?: T; error?: string }
+export type LogOpResult<T> = { ok: boolean; data?: T; error?: string }
+
+// 与 packages/desktop/src/main/asar-update.ts 的 PendingAsarUpdate / AsarUpdateStatus 逐字对齐
+export type PendingAsarUpdate = {
+  version: string
+  file: string
+  sha512: string
+  size: number
+  publishedAt: string | null
+  minVersion: string | null
+  downloaded: boolean
+  incompatible: boolean
+}
+
+export type AsarUpdateStatus = {
+  currentVersion: string
+  base: string
+  lastCheckAt: string | null
+  pending?: PendingAsarUpdate
+  canInstall: boolean
+  message?: string
+}
+
+export type AsarCheckData = AsarUpdateStatus & {
+  latestVersion: string
+  updateAvailable: boolean
+  message: string
+}
+
+export type AsarDownloadData = AsarUpdateStatus & { filePath: string; message: string }
+export type AsarInstallData = { restarting: true; version: string; backup: string }
+
+// 与 packages/desktop/src/main/log-ops.ts 逐字对齐
+export type LogFileItem = { name: string; size: number; mtime: number }
+
+export type LogRecentData = {
+  file: string
+  path: string
+  lines: string[]
+  truncated: boolean
+  size: number
+}
+
+export type LogReadData = {
+  file: string
+  path: string
+  text: string
+  size: number
+  bytes: number
+  truncated: boolean
+}
 
 // 战略与人设（P42）：GET /api/strategy 的返回，正文是整篇 markdown。
 export type StrategyDocView = {

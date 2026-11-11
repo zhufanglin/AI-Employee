@@ -14,6 +14,6 @@ import { JWT_SECRET } from "../common/env";
   ],
   controllers: [AuthController, AdminLoginAliasController],
   providers: [AuthService, SmsSender],
-  exports: [AuthService],
+  exports: [AuthService, SmsSender],
 })
 export class AuthModule {}

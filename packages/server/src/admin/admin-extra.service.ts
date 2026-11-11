@@ -1,10 +1,13 @@
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
+import { randomInt } from "node:crypto";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 import { PackageService } from "../employee/package.service";
 import * as bcrypt from "bcryptjs";
 import { PrismaService } from "../prisma/prisma.service";
+import { SmsSender, invalidateSmsConfigCache } from "../auth/sms.sender";
+import { invalidateWechatPayConfigCache } from "../payments/wechat-pay.service";
 
 /** 密钥类字段一律脱敏返回；写入时空值或含 **** 视为“不修改”。 */
 function mask(v?: string | null): string {
@@ -28,6 +31,7 @@ export class AdminExtraService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly packages: PackageService,
+    private readonly sms: SmsSender,
   ) {}
 
   // ================= 站点 / 集成配置 =================
@@ -155,16 +159,25 @@ export class AdminExtraService {
         },
       });
     }
+    // 保存后立即失效缓存，下一次发送/测试立刻使用新配置
+    invalidateSmsConfigCache();
     return { message: "短信配置已保存" };
   }
 
-  /** 只做配置核验，不实际下发（真实下发在 auth/sms 链路，缺失 AK 时该链路自带降级）。 */
+  /** 真实下发一条测试短信：生成 6 位随机码走 SmsSender（DB > env > devMode）。 */
   async testSms(body: any) {
     const phone = String(body?.phone ?? "").trim();
     if (!/^1\d{10}$/.test(phone)) throw new BadRequestException("手机号格式不正确");
-    const c = await this.prisma.smsConfig.findFirst({ orderBy: { createdAt: "asc" } });
-    if (!c) throw new BadRequestException("请先保存短信配置");
-    return { message: "短信配置校验通过（实际下发在登录链路执行）", code: "" };
+    const code = String(randomInt(100000, 1000000));
+    const res = await this.sms.send(phone, code, "admin-test");
+    // 生产环境绝不回传验证码；沿用 SmsSender.returnCodeAllowed 的「非生产 + 显式开关」语义
+    const devCode = this.sms.returnCodeAllowed ? res.devCode : undefined;
+    return {
+      sent: res.sent,
+      provider: res.provider ?? "",
+      message: res.message ?? (res.sent ? "测试短信已发送" : "测试短信发送失败"),
+      ...(devCode ? { devCode } : {}),
+    };
   }
 
   async getOssConfig() {
@@ -250,6 +263,8 @@ export class AdminExtraService {
           isActive: data.isActive ?? true,
         },
       });
+    // 保存后立即失效 60 秒 DB 配置缓存，下一次下单/回调马上用新配置
+    invalidateWechatPayConfigCache();
     return { message: "微信支付配置已保存" };
   }
 

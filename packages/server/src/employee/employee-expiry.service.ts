@@ -1,5 +1,6 @@
 import { Injectable, Logger, OnApplicationBootstrap, OnApplicationShutdown } from "@nestjs/common";
 import { EmployeeOrderService } from "./employee-order.service";
+import { EmployeeService } from "./employee.service";
 
 /**
  * P43 P1：员工授权到期与未支付订单的自动扫描。
@@ -34,6 +35,8 @@ export type EmployeeExpiryRun = {
   reason: string;
   expiredPurchases: number;
   closedOrders: number;
+  /** P43 P1：超过审批时限被自动通过的任务数 */
+  autoApproved: number;
   durationMs: number;
 };
 
@@ -45,7 +48,10 @@ export class EmployeeExpiryService implements OnApplicationBootstrap, OnApplicat
   private lastRun: EmployeeExpiryRun | null = null;
   private stopped = false;
 
-  constructor(private readonly orders: EmployeeOrderService) {}
+  constructor(
+    private readonly orders: EmployeeOrderService,
+    private readonly employees: EmployeeService,
+  ) {}
 
   private get enabled(): boolean {
     return envFlag("EMPLOYEE_EXPIRY_ENABLED", true);
@@ -54,6 +60,16 @@ export class EmployeeExpiryService implements OnApplicationBootstrap, OnApplicat
   private get intervalMin(): number {
     const value = envInt("EMPLOYEE_EXPIRY_INTERVAL_MIN", 10);
     return value >= 1 ? value : 10;
+  }
+
+  /**
+   * 审批超时自动通过（P43 P1）：默认 0 = 关闭，行为与原版一致（原版没有审批机制）。
+   * 开着时，超过 N 小时没人验收的任务自动置 succeeded 并打 autoApproved 标记，
+   * 避免渠道回推的长任务永远悬在 awaiting_approval。
+   */
+  private get approvalTimeoutHours(): number {
+    const value = envInt("EMPLOYEE_APPROVAL_TIMEOUT_HOURS", 0);
+    return value > 0 ? value : 0;
   }
 
   onApplicationBootstrap() {
@@ -82,6 +98,7 @@ export class EmployeeExpiryService implements OnApplicationBootstrap, OnApplicat
       enabled: this.enabled,
       intervalMin: this.intervalMin,
       schedule: "每 " + this.intervalMin + " 分钟",
+      approvalTimeoutHours: this.approvalTimeoutHours,
       nextAt: this.nextAt ? this.nextAt.toISOString() : null,
       lastRun: this.lastRun,
     };
@@ -110,17 +127,27 @@ export class EmployeeExpiryService implements OnApplicationBootstrap, OnApplicat
     }
     const startedAt = Date.now();
     const result = await this.orders.expireEmployees();
+    // 审批超时自动通过（默认关闭）
+    let autoApproved = 0;
+    if (this.approvalTimeoutHours > 0) {
+      try {
+        autoApproved = await this.employees.autoApproveOverdue(this.approvalTimeoutHours);
+      } catch (error: any) {
+        this.logger.warn("审批超时自动通过失败：" + (error?.message ?? error));
+      }
+    }
     const run: EmployeeExpiryRun = {
       at: new Date().toISOString(),
       reason,
       expiredPurchases: Number(result?.expiredPurchases || 0),
       closedOrders: Number(result?.closedOrders || 0),
+      autoApproved,
       durationMs: Date.now() - startedAt,
     };
     this.lastRun = run;
-    if (run.expiredPurchases > 0 || run.closedOrders > 0) {
+    if (run.expiredPurchases > 0 || run.closedOrders > 0 || run.autoApproved > 0) {
       this.logger.log(
-        "员工到期扫描（" + reason + "）：过期授权 " + run.expiredPurchases + " 条，关闭超时订单 " + run.closedOrders + " 条",
+        "员工到期扫描（" + reason + "）：过期授权 " + run.expiredPurchases + " 条，关闭超时订单 " + run.closedOrders + " 条，自动通过审批 " + run.autoApproved + " 条",
       );
     }
     return run;

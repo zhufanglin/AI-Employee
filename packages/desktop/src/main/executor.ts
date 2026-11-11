@@ -1,5 +1,5 @@
 import { app } from 'electron'
-import { mkdirSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { runToolLoop } from '../../../worker/tool-loop.mjs'
 
@@ -119,6 +119,21 @@ export class TaskExecutor {
     ]
   }
 
+  /** 读工作区的 AGENTS.md 与 TOOLS.md（不存在就跳过），拼成一段规则文本 */
+  private readWorkspaceRules(): string {
+    const home = app.getPath('userData')
+    const parts: string[] = []
+    for (const name of ['AGENTS.md', 'TOOLS.md']) {
+      const file = join(home, name)
+      try {
+        if (!existsSync(file)) continue
+        const text = readFileSync(file, 'utf8').trim()
+        if (text) parts.push('### ' + name + '\n' + text)
+      } catch { /* 读不到就跳过，不影响任务执行 */ }
+    }
+    return parts.join('\n\n')
+  }
+
   private async execute(task: TaskRow, signal: AbortSignal) {
     await this.loadEmployees()
     let emp = this.employees.get(task.employeeId)
@@ -135,7 +150,9 @@ export class TaskExecutor {
     const strategy = str((task as any).strategyText)
     const persona = str((task as any).personaText)
     const needs = Array.isArray((task as any).employeeNeeds) ? ((task as any).employeeNeeds as string[]) : []
-    const out = await runToolLoop({ api: this.deps.api, model, messages: this.buildMessages(task, emp), skill, strategy, persona, needs, strategyMeta: { version: str((task as any).strategyVersion), updatedAt: str((task as any).strategyUpdatedAt) }, signal, maxSteps: Number(process.env.FCM_EXECUTOR_MAX_STEPS || 8), timeoutMs: Number(process.env.FCM_EXECUTOR_TASK_TIMEOUT_MS || 900000) })
+    // P43：工作区规则文件（AGENTS.md / TOOLS.md）原版每会话注入，这里从 userData 读
+    const rules = str((task as any).workspaceRules) || this.readWorkspaceRules()
+    const out = await runToolLoop({ api: this.deps.api, model, messages: this.buildMessages(task, emp), skill, strategy, persona, needs, workspaceRules: rules, strategyMeta: { version: str((task as any).strategyVersion), updatedAt: str((task as any).strategyUpdatedAt) }, signal, maxSteps: Number(process.env.FCM_EXECUTOR_MAX_STEPS || 8), timeoutMs: Number(process.env.FCM_EXECUTOR_TASK_TIMEOUT_MS || 900000) })
     const content: string = out.content
     const dir = join(app.getPath('userData'), 'employee-output')
     mkdirSync(dir, { recursive: true })

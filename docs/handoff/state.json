@@ -3546,6 +3546,40 @@
       ],
       "createdAt": "2026-11-11T06:34:19.688Z",
       "updatedAt": "2026-11-11T06:34:19.688Z"
+    },
+    {
+      "id": "T-68",
+      "title": "P43 P1 剩余 7 条：后台配置接库 / 员工订单支付 / asar 热更新 / 客户端日志 / 审批重跑 / 工作区规则 / toolapi 真生成",
+      "status": "done",
+      "owner": "dsh-lead",
+      "scope": [
+        "packages/server/src/auth/**",
+        "packages/server/src/payments/**",
+        "packages/server/src/employee/**",
+        "packages/server/src/toolapi/**",
+        "packages/server/src/admin/**",
+        "packages/worker/tool-loop.mjs",
+        "packages/worker/cloud-executor.mjs",
+        "packages/desktop/src/main/**",
+        "packages/desktop/src/preload/**",
+        "packages/desktop/src/renderer/**",
+        "scripts/smoke-p43-p1.mjs",
+        "scripts/publish-asar.mjs",
+        "docs/handoff/P43-P1剩余7条.md"
+      ],
+      "notes": [
+        "SmsConfig / WechatPayConfig 改为 DB(isActive) > env 逐字段回落 + 60s 缓存 + 后台保存失效 + 测试短信真下发",
+        "员工订单 EO 前缀 + POST /api/employee-orders/:orderNo/pay + markPaid 金额校验与幂等开通；渲染层商城页仍缺",
+        "toolapi generateTodayCommunications 走 aiText 真生成（解析失败才回落固定文案）",
+        "审批驳回重跑（RETRY_LIMIT=2，回 queued）+ autoApproveOverdue(EMPLOYEE_APPROVAL_TIMEOUT_HOURS，默认关)",
+        "worker 注入 AGENTS.md/TOOLS.md（WORKSPACE_RULES_BUDGET=4000），服务端两个 pull 下发；soulContent 回落 skillMd",
+        "asar 热更新 asar-update:check/download/install/status + scripts/publish-asar.mjs；log:* 五条 IPC + chat:sendWithMedia/session:delete/dialog:save/settings:reset",
+        "冒烟 scripts/smoke-p43-p1.mjs 55 项并加入 verify；全量 verify GREEN（28 步）",
+        "生产已部署 dist+worker（HEALTH=200）；桌面 0.1.25 发布安装；asar 热更新包首次上传（asar.json 200）",
+        "回归坑：sms.sender.ts 的 import type PrismaService 导致 Nest 解析成 Function 启动失败，已改运行时 import 并加反向断言"
+      ],
+      "createdAt": "2026-11-11T07:47:12.278Z",
+      "updatedAt": "2026-11-11T07:47:12.289Z"
     }
   ],
   "primary": "dsh-lead",

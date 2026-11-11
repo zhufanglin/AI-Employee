@@ -132,6 +132,10 @@ if ($Smoke) {
     & $node "scripts\smoke-p43-chat.mjs"
     $script:code = $LASTEXITCODE
   }
+  Step "smoke: P43 P1 剩余 7 条（配置接库/热更新/日志/驳回重跑）" {
+    & $node "scripts\smoke-p43-p1.mjs"
+    $script:code = $LASTEXITCODE
+  }
   Step "smoke: P43 员工到期自动扫描" {
     & $node "scripts\smoke-p43-expiry.mjs"
     $script:code = $LASTEXITCODE

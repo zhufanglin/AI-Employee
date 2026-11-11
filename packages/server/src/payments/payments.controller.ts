@@ -52,3 +52,19 @@ export class PaymentsController {
     return this.payments.mockPay(orderNo);
   }
 }
+
+/**
+ * 员工订单前台支付（P43 P1-3）。挂在 payments 模块，避免 EmployeeModule ↔ PaymentsModule 循环依赖。
+ * 契约：POST /api/employee-orders/:orderNo/pay（JWT）
+ * 返回：{ orderNo, amount, codeUrl, expiresAt, mock }；未配置微信支付时返回 502 中文错误。
+ * 支付结果以 /api/payments/wechat/notify 回调为准，扫码后前端轮询 GET /api/employee-orders/:orderNo/status。
+ */
+@Controller("employee-orders")
+export class EmployeeOrderPayController {
+  constructor(private readonly payments: PaymentsService) {}
+
+  @Post(":orderNo/pay")
+  pay(@CurrentUser() user: AuthUser, @Param("orderNo") orderNo: string) {
+    return this.payments.createEmployeePay(user.id, orderNo);
+  }
+}

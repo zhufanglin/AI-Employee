@@ -124,9 +124,11 @@ async function execute(task, signal) {
   const strategy = (task && typeof task.strategyText === "string" && task.strategyText) || "";
   const persona = (task && typeof task.personaText === "string" && task.personaText) || "";
   const needs = Array.isArray(task && task.employeeNeeds) ? task.employeeNeeds : [];
-  log("model =", model, "skillChars =", skill ? skill.length : 0, "strategyChars =", strategy.length, "personaChars =", persona.length, "needs =", needs.length);
+  // P43：工作区 AGENTS.md / TOOLS.md 由服务端随任务下发
+  const workspaceRules = (task && typeof task.workspaceRules === "string" && task.workspaceRules) || "";
+  log("model =", model, "skillChars =", skill ? skill.length : 0, "strategyChars =", strategy.length, "personaChars =", persona.length, "needs =", needs.length, "rulesChars =", workspaceRules.length);
   const out = await runToolLoop({
-    api: toolCall, model, messages: buildMessages(task, emp), skill, strategy, persona, needs,
+    api: toolCall, model, messages: buildMessages(task, emp), skill, strategy, persona, needs, workspaceRules,
     strategyMeta: { version: task && task.strategyVersion, updatedAt: task && task.strategyUpdatedAt }, signal,
     maxSteps: Number(process.env.FCM_EXECUTOR_MAX_STEPS || 8),
     timeoutMs: Number(process.env.FCM_EXECUTOR_TASK_TIMEOUT_MS || 900000),

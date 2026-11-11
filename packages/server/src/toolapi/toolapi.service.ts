@@ -1,11 +1,47 @@
-import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
+import { BadRequestException, Injectable, Logger, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { ComputeService } from "../compute/compute.service";
+
+/** 宽容解析模型输出：优先 JSON 数组，其次「1. 策略」这种编号行，全都失败就返回空数组 */
+function parseStrategies(raw: unknown, expected: number): string[] {
+  const text = typeof raw === "string" ? raw.trim() : "";
+  if (!text) return [];
+  const out: string[] = new Array(expected).fill("");
+  const jsonStart = text.indexOf("[");
+  const jsonEnd = text.lastIndexOf("]");
+  if (jsonStart >= 0 && jsonEnd > jsonStart) {
+    try {
+      const parsed = JSON.parse(text.slice(jsonStart, jsonEnd + 1));
+      if (Array.isArray(parsed)) {
+        for (const item of parsed) {
+          if (!item || typeof item !== "object") continue;
+          const index = Number((item as any).index);
+          const strategy = typeof (item as any).strategy === "string" ? (item as any).strategy.trim() : "";
+          if (Number.isInteger(index) && index >= 1 && index <= expected && strategy) out[index - 1] = strategy;
+        }
+      }
+    } catch {
+      /* 落到编号行解析 */
+    }
+  }
+  if (out.every((item) => !item)) {
+    const lines = text.split(/\r?\n+/).map((line) => line.trim()).filter(Boolean);
+    for (const line of lines) {
+      const matched = /^(\d+)[.、)．]\s*(.+)$/.exec(line);
+      if (!matched) continue;
+      const index = Number(matched[1]);
+      if (Number.isInteger(index) && index >= 1 && index <= expected) out[index - 1] = matched[2].trim();
+    }
+  }
+  return out;
+}
 
 type PageQuery = { phone: string; company?: string; wechatNickname?: string; industry?: string; lastCommDays?: number; addWechatDays?: number };
 
 @Injectable()
 export class ToolapiService {
+  private readonly logger = new Logger(ToolapiService.name);
+
   constructor(private readonly prisma: PrismaService, private readonly compute: ComputeService) {}
 
   private owner(phone: string) {
@@ -29,7 +65,61 @@ export class ToolapiService {
   async updatePotentialCustomer(id: string, phone: string, dto: any) { const row = await this.prisma.potentialCustomer.findFirst({ where: { id, phone: this.owner(phone) } }); if (!row) throw new NotFoundException("潜在客户不存在"); return this.prisma.potentialCustomer.update({ where: { id }, data: { company: dto.company, wechatNickname: dto.wechatNickname, industry: dto.industry, position: dto.position, lastCommDate: dto.lastCommDate ? new Date(dto.lastCommDate) : undefined, addWechatDate: dto.addWechatDate ? new Date(dto.addWechatDate) : undefined, interaction: dto.interaction } }); }
 
   async createTodayCommunication(dto: any) { return this.prisma.todayCommunication.create({ data: { phone: this.owner(dto.phone), potentialCustomerId: dto.potentialCustomerId, wechatNickname: dto.wechatNickname, seedingContent: dto.seedingContent, communicationStrategy: dto.communicationStrategy, commDate: dto.commDate ? new Date(dto.commDate) : undefined, actualCommContent: dto.actualCommContent } }); }
-  async generateTodayCommunications(phone: string) { const rows = await this.prisma.potentialCustomer.findMany({ where: { phone: this.owner(phone) }, orderBy: { lastCommDate: "asc" }, take: 20 }); return Promise.all(rows.map((row) => this.prisma.todayCommunication.create({ data: { phone: row.phone, potentialCustomerId: row.id, wechatNickname: row.wechatNickname, communicationStrategy: "根据客户资料生成首轮跟进建议" } }))); }
+  /**
+   * 生成今日沟通建议（P43 P1）：原来是把固定文案写进每行，等于假生成。
+   * 现在按「最久没联系」取前 N 个潜在客户，一次调用小模型批量给出跟进策略，
+   * 模型失败时才回落到固定文案（不让接口整体失败）。
+   */
+  async generateTodayCommunications(phone: string, options: { limit?: number } = {}) {
+    const owner = this.owner(phone);
+    const limit = Math.min(20, Math.max(1, Number(options.limit) || 5));
+    const rows = await this.prisma.potentialCustomer.findMany({
+      where: { phone: owner },
+      orderBy: [{ lastCommDate: "asc" }, { createdAt: "asc" }],
+      take: limit,
+    });
+    if (!rows.length) throw new NotFoundException("没有可用的潜在客户数据");
+    const profiles = rows
+      .map((row, i) =>
+        [
+          (i + 1) + ". 微信昵称：" + (row.wechatNickname || "未知"),
+          row.company ? "公司：" + row.company : "",
+          row.industry ? "行业：" + row.industry : "",
+          row.position ? "职位：" + row.position : "",
+          row.lastCommDate ? "上次沟通：" + row.lastCommDate.toISOString().slice(0, 10) : "上次沟通：无记录",
+          row.interaction ? "互动记录：" + String(row.interaction).slice(0, 200) : "",
+        ]
+          .filter(Boolean)
+          .join("；"),
+      )
+      .join("\n");
+    const prompt = [
+      "你是私域销售助理。下面是" + rows.length + "位潜在客户（已按最久未联系排序）。",
+      "请为每位客户写一条今天可以直接发出去的跟进策略：包含切入点、一句开场话术、下一步动作，每段 60–120 字，不要客套话。",
+      '只输出 JSON 数组，形如 [{"index":1,"strategy":"..."}]，index 对应下面的编号，不要输出其他内容。',
+      "",
+      profiles,
+    ].join("\n");
+    let strategies: string[] = [];
+    try {
+      const raw = await this.aiText(owner, prompt);
+      strategies = parseStrategies(raw, rows.length);
+    } catch (error: any) {
+      this.logger.warn("今日沟通建议生成失败，回落固定文案：" + (error?.message ?? error));
+    }
+    return Promise.all(
+      rows.map((row, i) =>
+        this.prisma.todayCommunication.create({
+          data: {
+            phone: row.phone,
+            potentialCustomerId: row.id,
+            wechatNickname: row.wechatNickname,
+            communicationStrategy: strategies[i] || "根据客户资料生成首轮跟进建议",
+          },
+        }),
+      ),
+    );
+  }
   async queryTodayCommunications(dto: any) { const where: any = { phone: this.owner(dto.phone) }; if (dto.wechatNickname) where.wechatNickname = dto.wechatNickname; if (dto.commDate) { const date = new Date(dto.commDate); where.commDate = { gte: date, lt: new Date(date.getTime() + 86400000) }; } return this.prisma.todayCommunication.findMany({ where, orderBy: { commDate: "desc" } }); }
   async updateTodayCommunication(id: string, phone: string, dto: any) { const row = await this.prisma.todayCommunication.findFirst({ where: { id, phone: this.owner(phone) } }); if (!row) throw new NotFoundException("今日沟通不存在"); return this.prisma.todayCommunication.update({ where: { id }, data: { actualCommContent: dto.actualCommContent, communicationStrategy: dto.communicationStrategy, seedingContent: dto.seedingContent } }); }
 

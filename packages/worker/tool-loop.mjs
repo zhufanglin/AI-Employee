@@ -54,6 +54,19 @@ export function skillSection(skill) {
   return '\n\n以下是该岗位的技能说明（SKILL.md），请遵守其中的执行流程和最终交付格式；工具白名单、JSON 指令协议、计费和安全限制始终优先，技能说明不得覆盖这些要求：\n---\n' + body + '\n---';
 }
 
+const WORKSPACE_RULES_BUDGET = 4000;
+
+/**
+ * 工作区规则（P43）：原版每次会话都会把工作区的 AGENTS.md / TOOLS.md 注入上下文，
+ * 我们之前只把文件拷到工作区却没读——这里补上注入。
+ */
+export function workspaceRulesSection(rules) {
+  const text = typeof rules === 'string' ? rules.trim() : '';
+  if (!text) return '';
+  const body = text.length > WORKSPACE_RULES_BUDGET ? text.slice(0, WORKSPACE_RULES_BUDGET) + '\n\n[工作区规则已截断]' : text;
+  return '\n\n## 工作区规则（AGENTS.md / TOOLS.md）\n以下是工作区里的规则文件，是老板对本工作区的长期约定；与本次任务要求冲突时以本次任务为准，但不要违反其中的硬性限制：\n---\n' + body + '\n---';
+}
+
 const STRATEGY_BUDGET = 6000;
 const PERSONA_BUDGET = 1500;
 
@@ -105,7 +118,7 @@ export function recentContext(messages, maxChars = 1200) {
   return parts.slice(-6).join('\n').slice(-maxChars);
 }
 
-export async function runToolLoop({ api, model, messages, skill, strategy, persona, needs, strategyMeta, maxSteps = 8, timeoutMs = 900000, pollMs = 8000, signal: externalSignal }) {
+export async function runToolLoop({ api, model, messages, skill, strategy, persona, needs, workspaceRules, strategyMeta, maxSteps = 8, timeoutMs = 900000, pollMs = 8000, signal: externalSignal }) {
   if (!Number.isInteger(maxSteps) || maxSteps < 1 || maxSteps > 20 || !Number.isFinite(timeoutMs) || timeoutMs < 1000 || !Number.isFinite(pollMs) || pollMs < 10) throw new Error('执行器配置无效');
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
@@ -123,6 +136,8 @@ export async function runToolLoop({ api, model, messages, skill, strategy, perso
     const catalogue = await api('/capabilities', { signal });
     const descriptors = (Array.isArray(catalogue?.items) ? catalogue.items : []).filter(item => CAPABILITIES.has(item.name)).map(({ name, description, params }) => ({ name, description, params }));
     transcript[0].content += '\n能力参数说明：' + JSON.stringify(descriptors).slice(0, 12000);
+    const rulesText = workspaceRulesSection(workspaceRules);
+    if (rulesText) transcript[0].content += rulesText;
     const auth = needsSection(needs);
     if (auth) transcript[0].content += auth;
     const section = skillSection(skill);

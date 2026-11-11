@@ -5,7 +5,9 @@ const api = {
   settings: {
     get: () => ipcRenderer.invoke('settings:get'),
     setApiBase: (v: string) => ipcRenderer.invoke('settings:set-api-base', v),
-    markOnboarded: () => ipcRenderer.invoke('settings:mark-onboarded')
+    markOnboarded: () => ipcRenderer.invoke('settings:mark-onboarded'),
+    reset: () => ipcRenderer.invoke('settings:reset'),
+    saveTextFile: (p: { defaultName?: string; content?: string; extension?: string }) => ipcRenderer.invoke('dialog:save', p)
   },
   update: {
     status: () => ipcRenderer.invoke('update:status'),
@@ -17,6 +19,21 @@ const api = {
       ipcRenderer.on('update:status', h)
       return () => ipcRenderer.removeListener('update:status', h)
     }
+  },
+  // asar 热更新（P43 P1-6）：只替换 app.asar，返回 { ok, data?, error? }。
+  asarUpdate: {
+    status: () => ipcRenderer.invoke('asar-update:status'),
+    check: () => ipcRenderer.invoke('asar-update:check'),
+    download: () => ipcRenderer.invoke('asar-update:download'),
+    install: () => ipcRenderer.invoke('asar-update:install')
+  },
+  // 客户端日志（P43 P1-7）：列表 / 最近 N 行 / 读文件 / 目录与路径。
+  logs: {
+    getDir: () => ipcRenderer.invoke('log:getDir'),
+    getFilePath: () => ipcRenderer.invoke('log:getFilePath'),
+    listFiles: () => ipcRenderer.invoke('log:listFiles'),
+    getRecent: (p?: { lines?: number; file?: string }) => ipcRenderer.invoke('log:getRecent', p || {}),
+    readFile: (p: { name?: string; path?: string; maxBytes?: number }) => ipcRenderer.invoke('log:readFile', p)
   },
   auth: {
     smsSend: (phone: string) => ipcRenderer.invoke('auth:sms-send', phone),
@@ -168,6 +185,9 @@ const api = {
   },
   chat: {
     send: (p: { requestId: string; body: any }) => ipcRenderer.invoke('chat:send', p),
+    // P43：带附件发送（附件先传到工作区，再在消息里告知模型）
+    sendWithMedia: (p: { requestId: string; body: any; attachments?: Array<{ name: string; mime?: string; base64: string }> }) =>
+      ipcRenderer.invoke('chat:send-with-media', p),
     // P0-2：中断正在生成的请求（requestId 与 send 一致）
     abort: (requestId: string) => ipcRenderer.invoke('chat:abort', requestId),
     // P0-2 会话持久化：列表 / 新建 / 详情 / 重命名 / 删除 / 追加消息

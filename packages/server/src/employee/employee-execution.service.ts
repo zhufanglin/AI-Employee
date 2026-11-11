@@ -2,6 +2,7 @@ import { BadRequestException, Injectable, NotFoundException } from "@nestjs/comm
 import { PrismaService } from "../prisma/prisma.service";
 import { EmployeeService } from "./employee.service";
 import { StrategyService, parseNeeds } from "../strategy/strategy.service";
+import { readWorkspaceRules } from "./workspace-rules";
 import { randomUUID } from "node:crypto";
 
 @Injectable()
@@ -65,6 +66,7 @@ export class EmployeeExecutionService {
         payloadByEmp.set(employeeId, { employeeNeeds, ...resolved });
       }),
     );
+    const workspaceRules = readWorkspaceRules(userId);
     const items = rows.map(row => {
       const payload = payloadByEmp.get(row.employeeId);
       return {
@@ -75,6 +77,7 @@ export class EmployeeExecutionService {
         personaText: payload?.personaText ?? "",
         strategyVersion: payload?.strategyVersion ?? "",
         strategyUpdatedAt: payload?.strategyUpdatedAt ?? null,
+        workspaceRules,
       };
     });
     return { items, count: items.length };

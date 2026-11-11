@@ -9,7 +9,14 @@ import { PlatformManager } from './platform'
 import { registerFileOps } from './file-ops'
 import { registerCronOps } from './cron-ops'
 import { registerStrategyOps } from './strategy-ops'
+import { registerAsarUpdate } from './asar-update'
+import { installConsoleFileLog, registerLogOps } from './log-ops'
 import { PublishQueue, defaultQueuePath, registerPublishQueue } from './publish-queue'
+
+// P43 P1-7：主进程日志同时追加一份到 app.getPath('logs')/main.log。
+// 这里尽早安装（只包一层 console，不立即写盘），连 app.whenReady 之前的日志也能落到文件；
+// 真正的目录解析在第一次写日志时惰性进行，避免 app ready 前访问 getPath 抛错。
+installConsoleFileLog()
 
 const DEFAULT_API_BASE = process.env.FCM_API_BASE || 'https://ai.fcmediaagent.com/api'
 
@@ -509,6 +516,11 @@ function registerIpc() {
   registerCronOps(ipcMain, { api })
   // 战略与人设（P42）：老板填一份战略长文 + 一张人设表，员工接活时按岗位读取。
   registerStrategyOps(ipcMain, { api })
+  // asar 热更新（P43 P1-6）：只替换安装目录 resources/app.asar，替代 6–13 分钟的整包 NSIS 安装。
+  // 更新源固定为 https://updates.fcmediaagent.com/desktop/asar，可用 FCM_ASAR_URL 覆盖。
+  registerAsarUpdate(ipcMain, { getWindow: () => win })
+  // 客户端日志（P43 P1-7）：日志目录用 app.getPath('logs')，目录不存在时由模块自动创建。
+  registerLogOps(ipcMain, { dir: () => app.getPath('logs') })
 
   // 定时发布（P26）：发布内容必须存在本机（平台按 IP/设备风控，且服务端定时表不存内容），
   // 队列落在 <userData>/publish-queue.json，到点由主进程触发 platform.publish。
@@ -607,9 +619,9 @@ function registerIpc() {
   ipcMain.handle('channel:personal-wechat-send-file', (_e, p: { name: string; filePath?: string; fileUrl?: string; humanize?: boolean }) => api('/channels/personal-wechat/send-file', { method: 'POST', body: JSON.stringify({ name: p.name, file_path: p.filePath, file_url: p.fileUrl, humanize: p.humanize }) }))
   ipcMain.handle('channel:personal-wechat-listen', (_e, p: { wxid?: string; nickname?: string }) => api('/channels/personal-wechat/listen', { method: 'POST', body: JSON.stringify(p) }))
 
-  ipcMain.handle('chat:send', async (event, p: { requestId: string; body: any }) => {
-    const { requestId } = p
-    const body = { ...p.body, stream: true, stream_options: { include_usage: true } }
+  // 对话流式调用（chat:send / chat:send-with-media 共用）
+  const runChatStream = async (event: any, requestId: string, bodyIn: any) => {
+    const body = { ...bodyIn, stream: true, stream_options: { include_usage: true } }
     const controller = new AbortController()
     chatAborts.set(requestId, controller)
     let usage: any = null
@@ -662,6 +674,32 @@ function registerIpc() {
     } finally {
       chatAborts.delete(requestId)
     }
+  }
+
+  ipcMain.handle('chat:send', (event, p: { requestId: string; body: any }) => runChatStream(event, p.requestId, p.body))
+
+  // chat:send-with-media（P43 P1）——原版可以带图片/文件一起发。
+  // 做法：先把附件传到服务端工作区，再把「资料已上传」写进最后一条用户消息，员工/模型可用 doc_read 读。
+  ipcMain.handle('chat:send-with-media', async (event, p: { requestId: string; body: any; attachments?: Array<{ name: string; mime?: string; base64: string }> }) => {
+    const body = JSON.parse(JSON.stringify(p.body || {}))
+    const attachments = Array.isArray(p.attachments) ? p.attachments : []
+    const uploaded: string[] = []
+    for (const file of attachments) {
+      if (!file?.base64) continue
+      const bytes = Buffer.from(String(file.base64), 'base64')
+      if (bytes.byteLength > 20 * 1024 * 1024) throw new Error(String(file.name || '附件') + ' 超过 20MB，请拆分后再上传')
+      await api('/workspace/upload', { method: 'POST', body: JSON.stringify({ name: file.name, base64: String(file.base64) }) })
+      uploaded.push(String(file.name))
+    }
+    if (uploaded.length) {
+      const note = '（已上传资料到工作区：' + uploaded.join('、') + '，需要时可用 file_list / doc_read 读取）'
+      const messages = Array.isArray(body.messages) ? body.messages : []
+      for (let i = messages.length - 1; i >= 0; i--) {
+        if (messages[i]?.role === 'user') { messages[i].content = String(messages[i].content || '') + '\n' + note; break }
+      }
+      body.messages = messages
+    }
+    return runChatStream(event, p.requestId, body)
   })
 
   // chat:abort —— 只取消还在生成中的请求；已经结束的返回 false。
@@ -694,10 +732,33 @@ function registerIpc() {
     })
   )
 
+  // 原版叫 session:delete，我们内部叫 chat:session-remove，这里补一个别名方便老调用方
+  ipcMain.handle('session:delete', (_e, id: string) =>
+    api('/chat/sessions/' + encodeURIComponent(id), { method: 'DELETE' })
+  )
+
   ipcMain.handle('update:status', () => updateStatus())
   ipcMain.handle('update:check', () => checkForUpdates())
   ipcMain.handle('update:download', () => downloadUpdate())
   ipcMain.handle('update:install', () => quitAndInstall())
+
+  // dialog:save（P43 P1）——把一段文本另存到用户选定的位置（原版对话框保存能力）
+  ipcMain.handle('dialog:save', async (_e, p: { defaultName?: string; content?: string; extension?: string } = {}) => {
+    const ext = (p.extension || 'md').replace(/^\./, '')
+    const result = await dialog.showSaveDialog({ defaultPath: p.defaultName || '导出.' + ext })
+    if (result.canceled || !result.filePath) return { canceled: true }
+    writeFileSync(result.filePath, String(p.content ?? ''), 'utf8')
+    return { canceled: false, path: result.filePath }
+  })
+
+  // settings:reset（P43 P1）——恢复默认设置，但保留登录态（避免误点被踢下线）
+  ipcMain.handle('settings:reset', () => {
+    settings.apiBase = DEFAULT_API_BASE
+    settings.onboarded = false
+    delete (settings as any).apiBaseOverride
+    saveSettings()
+    return { apiBase: settings.apiBase, hasToken: !!settings.token, onboarded: false }
+  })
 
   ipcMain.handle('settings:mark-onboarded', () => { settings.onboarded = true; saveSettings(); return true })
   ipcMain.handle('settings:get-onboarded', () => !!settings.onboarded)

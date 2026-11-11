@@ -2,7 +2,11 @@ import { BadRequestException, ForbiddenException, Injectable, NotFoundException 
 import { PrismaService } from "../prisma/prisma.service";
 import { PackageService } from "./package.service";
 import { StrategyService, parseNeeds } from "../strategy/strategy.service";
+import { readWorkspaceRules } from "./workspace-rules";
 import { randomUUID } from "node:crypto";
+
+/** 驳回重跑上限（P43）：同一任务最多重跑 2 次，避免无限循环烧算力 */
+const RETRY_LIMIT = 2;
 
 /** 任务状态机：queued -> running -> succeeded/failed/needs_input/awaiting_approval */
 export const TASK_STATUSES = [
@@ -208,7 +212,15 @@ export class EmployeeService {
    */
   async detail(slug: string, withSkill = true) {
     const emp = await this.requireEmployee(slug);
-    return { ...this.serializeEmployee(emp), skillMd: withSkill ? ((emp as any).skillMd ?? null) : null };
+    // soulContent 是原版「SOUL.md 人格底稿」的遗留列（schema.prisma:407），本仓从未写过。
+    // 原版用 SOUL.md 承载岗位人格与流程，我们已由 SKILL.md 完整承接（skillMd），
+    // 所以这里回落成 skillMd，保证接口字段不空、老客户端读得到人格说明。
+    const soul = (emp as any).soulContent ?? (emp as any).skillMd ?? null;
+    return {
+      ...this.serializeEmployee(emp),
+      skillMd: withSkill ? ((emp as any).skillMd ?? null) : null,
+      soulContent: withSkill ? soul : null,
+    };
   }
 
   async getTask(userId: string, id: string) {
@@ -377,6 +389,8 @@ export class EmployeeService {
       ? await this.prisma.aiEmployee.findMany({ where: { id: { in: employeeIds } }, select: { id: true, skillMd: true } })
       : [];
     const skillByEmp = new Map(skills.map((s) => [s.id, s.skillMd ?? null]));
+    // P43：工作区规则文件（AGENTS.md / TOOLS.md）随任务下发
+    const workspaceRules = readWorkspaceRules(userId);
     // P42：随任务下发该员工声明的 needs 与战略/人设文本（按 userId → User.phone 归属）
     const owner = await (this.prisma as any).user.findUnique({ where: { id: userId }, select: { phone: true } });
     const phone = owner?.phone ? String(owner.phone) : "";
@@ -400,6 +414,7 @@ export class EmployeeService {
         personaText: payload?.personaText ?? "",
         strategyVersion: payload?.strategyVersion ?? "",
         strategyUpdatedAt: payload?.strategyUpdatedAt ?? null,
+        workspaceRules,
       };
     });
     return { items, count: items.length };
@@ -492,7 +507,71 @@ export class EmployeeService {
     return this.review(userId, id, true, body.reason);
   }
 
-  reject(userId: string, id: string, body: any = {}) {
-    return this.review(userId, id, false, body.reason);
+  /**
+   * 驳回验收（P43-P1）：原版驳回后可以直接重跑，我们之前只能判 failed 再手建任务。
+   * rerun=true 时把任务放回队列（保留 outputMeta、清掉上一轮产出），重跑上限 RETRY_LIMIT。
+   */
+  async reject(userId: string, id: string, body: any = {}) {
+    if (body?.rerun !== true) return this.review(userId, id, false, body?.reason);
+    const task = await this.findOwnTask(userId, id);
+    if (task.status !== "awaiting_approval") throw new BadRequestException("只有待验收任务可以驳回重跑");
+    const meta = (parseJson(task.outputMeta, {}) as Record<string, any>) || {};
+    const attempts = Number(meta.attempts ?? 0);
+    if (attempts >= RETRY_LIMIT) {
+      throw new BadRequestException(`该任务已重跑 ${RETRY_LIMIT} 次，仍不合格，请调整需求后重新派活`);
+    }
+    const { claimToken: _claim, ...rest } = meta;
+    const updated = await this.prisma.$transaction(async (tx) => {
+      await tx.employeeTaskArtifact.deleteMany({ where: { taskId: id } });
+      return tx.employeeTask.update({
+        where: { id },
+        data: {
+          status: "queued",
+          startedAt: null,
+          finishedAt: null,
+          error: null,
+          outputText: null,
+          outputPath: null,
+          outputMeta: {
+            ...rest,
+            attempts: attempts + 1,
+            rejected: true,
+            reviewReason: body?.reason ?? null,
+            lastRejectedAt: new Date().toISOString(),
+          },
+        },
+      });
+    });
+    const [withArtifacts] = await this.attachArtifacts([updated]);
+    return withArtifacts;
+  }
+
+  /**
+   * 审批超时自动通过（P43-P1，可选能力）：原版没有审批超时，
+   * 我们的渠道回推链路会一直等人工验收，超时太久任务就悬着。
+   * 由 EmployeeExpiryService 定时调用；hours<=0 表示关闭。
+   */
+  async autoApproveOverdue(hours: number): Promise<number> {
+    if (!Number.isFinite(hours) || hours <= 0) return 0;
+    const cutoff = new Date(Date.now() - hours * 3600_000);
+    const rows = await this.prisma.employeeTask.findMany({
+      where: { status: "awaiting_approval", updatedAt: { lt: cutoff } },
+      select: { id: true, outputMeta: true },
+      take: 200,
+    });
+    let approved = 0;
+    for (const row of rows) {
+      const meta = (parseJson(row.outputMeta, {}) as Record<string, unknown>) || {};
+      const changed = await this.prisma.employeeTask.updateMany({
+        where: { id: row.id, status: "awaiting_approval" },
+        data: {
+          status: "succeeded",
+          finishedAt: new Date(),
+          outputMeta: { ...meta, approved: true, autoApproved: true, approvedAt: new Date().toISOString(), reviewReason: `超过 ${hours} 小时未验收，自动通过` },
+        },
+      });
+      approved += changed.count;
+    }
+    return approved;
   }
 }
