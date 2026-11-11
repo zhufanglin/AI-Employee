@@ -51,6 +51,7 @@ try {
 
   // 3. 端上回写 -> 待验收
   const patch = await j("/employee-tasks/" + taskId, { method: "PATCH", headers: auth, body: JSON.stringify({
+    claimToken: claimed?.outputMeta?.claimToken,
     status: "awaiting_approval", outputKind: "text", outputText: "端上执行结果",
     outputMeta: { executor: "desktop", model: "smoke" },
     artifacts: [{ kind: "text", text: "端上执行结果" }, { kind: "file", path: "C:\\tmp\\smoke.md", mime: "text/markdown" }]

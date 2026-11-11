@@ -20,6 +20,9 @@ interface CronResult<T> {
 interface CronApi {
   list: () => Promise<CronResult<{ items: CronItem[]; total: number }>>
   create: (input: { employeeSlug: string; cronExpr: string; timezone?: string }) => Promise<CronResult<{ cronId: string; nextRunAt: string | null }>>
+  update?: (input: { cronId: string; enabled?: boolean; cronExpr?: string; timezone?: string }) => Promise<
+    CronResult<{ cronId: string; enabled: boolean; cronExpr: string; timezone: string; nextRunAt: string | null }>
+  >
   remove: (input: { cronId: string }) => Promise<CronResult<{ deleted: boolean }>>
 }
 
@@ -128,6 +131,10 @@ export default function Scheduled() {
   const [busy, setBusy] = useState('')
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
+
+  // 行内改 cron 表达式（对应原版 cron:update 的「改时间」）
+  const [editingId, setEditingId] = useState('')
+  const [editingExpr, setEditingExpr] = useState('')
 
   const [employeeSlug, setEmployeeSlug] = useState('')
   const [cronExpr, setCronExpr] = useState('0 9 * * *')
@@ -317,6 +324,74 @@ export default function Scheduled() {
     }
   }
 
+  /** 启用/停用（原版 cron:toggle）。走能力 cron_update，服务端会按需重算 nextRunAt。 */
+  async function toggleEnabled(item: CronItem): Promise<void> {
+    setError('')
+    setNotice('')
+    const update = cronApi().update
+    if (!update) {
+      setError('当前客户端版本不支持启停定时任务，请升级客户端')
+      return
+    }
+    setBusy('toggle:' + item.cronId)
+    try {
+      const result = await update({ cronId: item.cronId, enabled: !item.enabled })
+      if (!result.ok) {
+        setError(result.error || '修改定时任务失败')
+        return
+      }
+      setNotice((item.enabled ? '已停用：' : '已启用：') + item.cronExpr + '，下次运行 ' + fmtTime(result.data?.nextRunAt))
+      await refresh()
+    } catch (e: any) {
+      setError(String(e?.message || e))
+    } finally {
+      setBusy('')
+    }
+  }
+
+  function startEdit(item: CronItem): void {
+    setError('')
+    setNotice('')
+    setEditingId(item.cronId)
+    setEditingExpr(item.cronExpr)
+  }
+
+  /** 保存新的 cron 表达式（原版 cron:update） */
+  async function saveExpr(item: CronItem): Promise<void> {
+    setError('')
+    setNotice('')
+    const next = editingExpr.trim()
+    if (!next) {
+      setError('cron 表达式不能为空')
+      return
+    }
+    if (next.split(/\s+/).length !== 5) {
+      setError('cron 表达式必须是 5 段（分 时 日 月 周），例如 0 9 * * *')
+      return
+    }
+    const update = cronApi().update
+    if (!update) {
+      setError('当前客户端版本不支持修改定时任务，请升级客户端')
+      return
+    }
+    setBusy('edit:' + item.cronId)
+    try {
+      const result = await update({ cronId: item.cronId, cronExpr: next })
+      if (!result.ok) {
+        setError(result.error || '修改定时任务失败')
+        return
+      }
+      setNotice('已改为 ' + next + '，下次运行 ' + fmtTime(result.data?.nextRunAt))
+      setEditingId('')
+      setEditingExpr('')
+      await refresh()
+    } catch (e: any) {
+      setError(String(e?.message || e))
+    } finally {
+      setBusy('')
+    }
+  }
+
   async function remove(item: CronItem): Promise<void> {
     setError('')
     setNotice('')
@@ -375,13 +450,53 @@ export default function Scheduled() {
               {items.map((item) => (
                 <tr key={item.cronId}>
                   <td>{employeeLabel(item)}</td>
-                  <td className="mono">{item.cronExpr}</td>
+                  <td className="mono">
+                    {editingId === item.cronId ? (
+                      <input
+                        value={editingExpr}
+                        onChange={(e) => setEditingExpr(e.target.value)}
+                        style={{ width: 130 }}
+                        autoComplete="off"
+                        spellCheck={false}
+                      />
+                    ) : (
+                      item.cronExpr
+                    )}
+                  </td>
                   <td>{item.timezone || '—'}</td>
                   <td>{fmtTime(item.nextRunAt)}</td>
                   <td>
                     <span className={item.enabled ? 'pill ok' : 'pill'}>{item.enabled ? '启用' : '停用'}</span>
                   </td>
                   <td>
+                    <button
+                      className="ghost small"
+                      disabled={busy !== ''}
+                      onClick={() => void toggleEnabled(item)}
+                    >
+                      {busy === 'toggle:' + item.cronId ? '处理中…' : item.enabled ? '停用' : '启用'}
+                    </button>
+                    {editingId === item.cronId ? (
+                      <>
+                        <button className="ghost small" disabled={busy !== ''} onClick={() => void saveExpr(item)}>
+                          {busy === 'edit:' + item.cronId ? '保存中…' : '保存'}
+                        </button>
+                        <button
+                          className="ghost small"
+                          disabled={busy !== ''}
+                          onClick={() => {
+                            setEditingId('')
+                            setEditingExpr('')
+                          }}
+                        >
+                          取消
+                        </button>
+                      </>
+                    ) : (
+                      <button className="ghost small" disabled={busy !== ''} onClick={() => startEdit(item)}>
+                        改时间
+                      </button>
+                    )}
                     <button
                       className="ghost small"
                       disabled={busy !== ''}

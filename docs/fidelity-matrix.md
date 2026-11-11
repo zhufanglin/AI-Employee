@@ -7,10 +7,10 @@
 
 | 维度 | 原版基线 | 当前复刻 | 精确命中 / 缺失 | 新增或额外 | 命中率 |
 |---|---:|---:|---:|---:|---:|
-| HTTP 路由 | 237 | 220 | 143 命中 / 94 缺失 | 77 | 60.3% |
-| IPC handle | 147 | 63 | 12 命中 / 135 缺失 | 51 | 8.2% |
-| Prisma 表 | 47 | 40 | 34 命中 / 13 缺失 | 6 | 72.3% |
-| Prisma 字段名 | 588 | 524 | 159 缺失（含缺失表） | 95 | 73.0% |
+| HTTP 路由 | 237 | 238 | 143 命中 / 94 缺失 | 95 | 60.3% |
+| IPC handle | 147 | 83 | 12 命中 / 135 缺失 | 71 | 8.2% |
+| Prisma 表 | 47 | 44 | 34 命中 / 13 缺失 | 10 | 72.3% |
+| Prisma 字段名 | 588 | 563 | 159 缺失（含缺失表） | 134 | 73.0% |
 字段类型/可空性差异：0 项。逐表差异详见 `scripts/audit/out/diff.json`；F2 覆盖率仅按字段名计，类型差异单列，不混入覆盖率。
 
 以上是静态契约比对，不代表流程行为已验证。原版 IPC handle 基线取自既有 mock-electron 动态导入契约；本机对混淆包的字符串扫描找到 87 / 147 个通道字符串，字符串出现不等于运行行为已确认。
@@ -19,13 +19,13 @@
 
 | 模块 | 原版 | 复刻 | 精确命中 | 缺失 | 新增 | 状态 |
 |---|---:|---:|---:|---:|---:|---|
-| admin | 88 | 76 | 59 | 29 | 17 | PARTIAL |
+| admin | 88 | 78 | 59 | 29 | 19 | PARTIAL |
 | agent-plan | 2 | 0 | 0 | 2 | 0 | MISSING |
 | audio-materials | 3 | 3 | 3 | 0 | 0 | OK |
 | auth | 9 | 11 | 7 | 2 | 4 | PARTIAL |
 | bitable | 5 | 0 | 0 | 5 | 0 | MISSING |
 | capabilities | 0 | 3 | 0 | 0 | 3 | EXTRA |
-| channels | 0 | 14 | 0 | 0 | 14 | EXTRA |
+| channels | 0 | 15 | 0 | 0 | 15 | EXTRA |
 | clone-records | 4 | 4 | 4 | 0 | 0 | OK |
 | compose-videos | 6 | 6 | 6 | 0 | 0 | OK |
 | compute | 2 | 2 | 2 | 0 | 0 | OK |
@@ -42,14 +42,17 @@
 | fusion-materials | 4 | 0 | 0 | 4 | 0 | MISSING |
 | health | 0 | 1 | 0 | 0 | 1 | EXTRA |
 | media | 11 | 15 | 11 | 0 | 4 | PARTIAL |
+| memory | 0 | 5 | 0 | 0 | 5 | EXTRA |
 | orders | 5 | 0 | 0 | 5 | 0 | MISSING |
 | packages | 4 | 4 | 1 | 3 | 3 | PARTIAL |
 | payments | 1 | 7 | 1 | 0 | 6 | PARTIAL |
+| personas | 0 | 3 | 0 | 0 | 3 | EXTRA |
 | recorder | 7 | 0 | 0 | 7 | 0 | MISSING |
 | redemption | 1 | 1 | 1 | 0 | 0 | OK |
 | scene-videos | 6 | 0 | 0 | 6 | 0 | MISSING |
 | site | 1 | 1 | 1 | 0 | 0 | OK |
 | sms | 2 | 0 | 0 | 2 | 0 | MISSING |
+| strategy | 0 | 3 | 0 | 0 | 3 | EXTRA |
 | subscription | 7 | 0 | 0 | 7 | 0 | MISSING |
 | toolapi | 32 | 32 | 32 | 0 | 0 | OK |
 | volcengine | 2 | 2 | 2 | 0 | 0 | OK |
@@ -57,6 +60,7 @@
 | wechat-oa | 3 | 0 | 0 | 3 | 0 | MISSING |
 | workbench | 0 | 1 | 0 | 0 | 1 | EXTRA |
 | workflow | 2 | 0 | 0 | 2 | 0 | MISSING |
+| workspace | 0 | 4 | 0 | 0 | 4 | EXTRA |
 
 缺失模块合计：agent-plan、bitable、feishu、feishu-config、feishu-documents、fusion-folders、fusion-materials、orders、recorder、scene-videos、sms、subscription、wechat-oa、workflow
 
@@ -93,7 +97,7 @@
 | brand | 1 | 0 | 1 |
 | usage | 1 | 0 | 1 |
 
-复刻多出的通道（原版无，需评估是否保留）：`gateway:logs`、`gateway:control-url`、`app:info`、`settings:set-api-base`、`auth:sms-send`、`auth:sms-login`、`auth:password-login`、`auth:logout`、`auth:me`、`site:config`、`compute:models`、`credits:balance`、`credits:usage-records`、`employees:catalog`、`employees:mine`、`employees:install`、`employees:uninstall`、`employees:run`、`employee-tasks:list`、`employee-tasks:approve`、`employee-tasks:reject`、`employee-execution:heartbeat`、`employee-execution:status`、`employee-execution:tick`、`employee-execution:start`、`employee-execution:stop`、`employee-execution:nodes`、`media:upload`、`media:image`、`media:video`、`media:task`、`media:cancel`、`media:compose-create`、`media:compose-list`、`media:compose-remove`、`media:compose-transfer`、`media:clone-create`、`media:clone-list`、`media:clone-remove`、`media:audio-list`、`media:audio-upload`、`media:audio-remove`、`channel:personal-wechat-status`、`channel:personal-wechat-contacts`、`channel:personal-wechat-messages`、`channel:personal-wechat-send`、`channel:personal-wechat-send-file`、`channel:personal-wechat-listen`、`chat:send`、`settings:mark-onboarded`、`settings:get-onboarded`
+复刻多出的通道（原版无，需评估是否保留）：`gateway:logs`、`gateway:control-url`、`app:info`、`settings:set-api-base`、`auth:sms-send`、`auth:sms-login`、`auth:password-login`、`auth:logout`、`auth:me`、`site:config`、`compute:models`、`credits:balance`、`credits:usage-records`、`employees:catalog`、`employees:mine`、`employees:install`、`employees:uninstall`、`employees:run`、`employee-tasks:list`、`employee-tasks:approve`、`employee-tasks:reject`、`platform:warm`、`platform:status`、`platform:login`、`platform:logout`、`platform:publish`、`platform:stats`、`platform:comments`、`platform:reply-comment`、`platform:open-debug`、`platform:parse-metrics`、`platform:pick-media`、`employee-execution:heartbeat`、`employee-execution:status`、`employee-execution:tick`、`employee-execution:start`、`employee-execution:stop`、`employee-execution:nodes`、`workspace:pick`、`workspace:list`、`workspace:download`、`workspace:remove`、`memory:list`、`memory:stats`、`memory:remove`、`memory:merge`、`memory:dedupe`、`media:upload`、`media:image`、`media:video`、`media:task`、`media:cancel`、`media:compose-create`、`media:compose-list`、`media:compose-remove`、`media:compose-transfer`、`media:clone-create`、`media:clone-list`、`media:clone-remove`、`media:audio-list`、`media:audio-upload`、`media:audio-remove`、`channel:personal-wechat-status`、`channel:personal-wechat-contacts`、`channel:personal-wechat-messages`、`channel:personal-wechat-send`、`channel:personal-wechat-send-file`、`channel:personal-wechat-listen`、`chat:send`、`settings:mark-onboarded`、`settings:get-onboarded`
 
 ## 3. 数据表
 
@@ -152,31 +156,35 @@
 | EmployeeTaskArtifact | EXTRA_TABLE | 0 | 8 | - |
 | EmployeeExecutionNode | EXTRA_TABLE | 0 | 10 | - |
 | UserPackageGrant | EXTRA_TABLE | 0 | 12 | - |
+| AgentMemory | EXTRA_TABLE | 0 | 11 | - |
+| StrategyDoc | EXTRA_TABLE | 0 | 7 | - |
+| StrategyIteration | EXTRA_TABLE | 0 | 11 | - |
+| PersonaProfile | EXTRA_TABLE | 0 | 10 | - |
 
 ## 4. 文案（F1）
 
-抽取的用户可见中文文案：原版 `281` 条，其中在复刻中命中的 `47` 条。
+抽取的用户可见中文文案：原版 `281` 条，其中在复刻中命中的 `50` 条。
 
 | 模块 | 文案数 | 命中 | 覆盖率 |
 |---|---|---|---|
 | admin | 64 | 8 | 12.5% |
 | toolapi | 27 | 8 | 29.6% |
-| payment | 21 | 1 | 4.8% |
-| statistics | 19 | 1 | 5.3% |
+| payment | 21 | 2 | 9.5% |
+| statistics | 19 | 2 | 10.5% |
 | employee | 17 | 9 | 52.9% |
 | feishu-oauth | 14 | 0 | 0.0% |
 | media-proxy | 14 | 1 | 7.1% |
 | fusion-materials | 13 | 0 | 0.0% |
 | sms | 13 | 0 | 0.0% |
-| subscription | 13 | 2 | 15.4% |
+| subscription | 13 | 3 | 23.1% |
 | volcengine | 12 | 6 | 50.0% |
 | wechat-oa | 12 | 0 | 0.0% |
 | scene-videos | 11 | 0 | 0.0% |
 | redemption | 9 | 6 | 66.7% |
-| common | 8 | 0 | 0.0% |
+| common | 8 | 1 | 12.5% |
 | compute-proxy | 8 | 8 | 100.0% |
 | agent-plan | 7 | 5 | 71.4% |
-| auth | 7 | 2 | 28.6% |
+| auth | 7 | 3 | 42.9% |
 | audio-materials | 6 | 0 | 0.0% |
 | compose-videos | 5 | 0 | 0.0% |
 | orders | 5 | 2 | 40.0% |
@@ -233,13 +241,13 @@
 
 | 模块 | 原版路由 | 复刻路由 | 处置 |
 |---|---:|---:|---|
-| admin | 88 | 76 | IMPLEMENTED 主体（配置/定价/兑换码/用户/员工/用量/统计/上传/别名，58 项冒烟断言）；剩余 29 条见下方子域台账 |
+| admin | 88 | 78 | IMPLEMENTED 主体（配置/定价/兑换码/用户/员工/用量/统计/上传/别名，58 项冒烟断言）；剩余 29 条见下方子域台账 |
 | agent-plan | 2 | 0 | BLOCKED（代理分成计费规则未定，待用户拍板） |
 | audio-materials | 3 | 3 | CUT（同上） |
 | auth | 9 | 11 | IMPLEMENTED |
 | bitable | 5 | 0 | CUT（同上） |
 | capabilities | 0 | 3 | UNREVIEWED（默认：未处置，需下一轮收口） |
-| channels | 0 | 14 | EXTRA（复刻新增：渠道接入，原版在 Electron 主进程侧） |
+| channels | 0 | 15 | EXTRA（复刻新增：渠道接入，原版在 Electron 主进程侧） |
 | clone-records | 4 | 4 | CUT（同上） |
 | compose-videos | 6 | 6 | CUT（同上，由 media 云端 API 覆盖） |
 | compute | 2 | 2 | IMPLEMENTED |
@@ -256,14 +264,17 @@
 | fusion-materials | 4 | 0 | CUT（同上） |
 | health | 0 | 1 | EXTRA |
 | media | 11 | 15 | IMPLEMENTED |
+| memory | 0 | 5 | UNREVIEWED（默认：未处置，需下一轮收口） |
 | orders | 5 | 0 | IMPLEMENTED |
 | packages | 4 | 4 | IMPLEMENTED |
 | payments | 1 | 7 | IMPLEMENTED |
+| personas | 0 | 3 | UNREVIEWED（默认：未处置，需下一轮收口） |
 | recorder | 7 | 0 | CUT（录音器硬件绑定不在本期范围） |
 | redemption | 1 | 1 | IMPLEMENTED |
 | scene-videos | 6 | 0 | CUT（原版依赖自建 GPU 媒体服务；用户 m01410 改为调用第三方云端平台，见 media） |
 | site | 1 | 1 | IMPLEMENTED |
 | sms | 2 | 0 | IMPLEMENTED（发送走 auth/sms + 管理端配置校验） |
+| strategy | 0 | 3 | UNREVIEWED（默认：未处置，需下一轮收口） |
 | subscription | 7 | 0 | CUT（生产库 SubscriptionPlan/UserSubscription/SubscriptionOrder 均 0 行，且已用兑换码套餐替代） |
 | toolapi | 32 | 32 | IMPLEMENTED |
 | volcengine | 2 | 2 | IMPLEMENTED |
@@ -271,6 +282,7 @@
 | wechat-oa | 3 | 0 | CUT（公众号登录/运营不在本期范围，总纲 v3 已记录） |
 | workbench | 0 | 1 | EXTRA（M6.5 办公区） |
 | workflow | 2 | 0 | CUT（原版工作流编排为云端 agent 功能，复刻由 M6.5 员工任务+定时器覆盖） |
+| workspace | 0 | 4 | UNREVIEWED（默认：未处置，需下一轮收口） |
 
 处置口径：**只有用户明确确认过的裁剪才标 CUT**；未做但未确认的标 UNREVIEWED，不粉饰为完成。
 

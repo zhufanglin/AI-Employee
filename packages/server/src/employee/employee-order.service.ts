@@ -82,8 +82,9 @@ export class EmployeeOrderService {
     return { items, total: items.length, durationOptions: DURATION_OPTIONS };
   }
 
-  private async findOwn(userId: string, orderNo: string) {
-    const order = await this.prisma.employeeOrder.findUnique({ where: { orderNo } });
+  /** 既能按 orderNo 查，也能按主键 id 查（原版 /employee-orders/:id/status 传的是 id） */
+  private async findOwn(userId: string, ref: string) {
+    const order = await this.prisma.employeeOrder.findFirst({ where: { OR: [{ orderNo: ref }, { id: ref }] } });
     if (!order) throw new NotFoundException("订单不存在");
     if (order.userId !== userId) throw new ForbiddenException("无权查看该订单");
     return order;

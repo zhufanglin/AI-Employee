@@ -1,6 +1,27 @@
 export type FcmApi = {
   info: () => Promise<{ version: string; platform: string; electron: string; apiBase: string }>
-  settings: { get: () => Promise<{ apiBase: string; user: any; hasToken: boolean }>; setApiBase: (v: string) => Promise<boolean> }
+  settings: {
+    get: () => Promise<{ apiBase: string; user: any; hasToken: boolean; onboarded?: boolean }>
+    setApiBase: (v: string) => Promise<boolean>
+    markOnboarded: () => Promise<boolean>
+  }
+  // 客户端更新：状态推送走 onStatus，用户在设置页手动检查/下载/安装。
+  update: {
+    status: () => Promise<any>
+    check: () => Promise<any>
+    download: () => Promise<any>
+    install: () => Promise<any>
+    onStatus: (fn: (s: any) => void) => () => void
+  }
+  // 本机执行器（把云端派下来的员工任务拉到这台电脑上跑）
+  employeeExecution: {
+    heartbeat: () => Promise<any>
+    nodes: () => Promise<any>
+    status: () => Promise<any>
+    tick: () => Promise<any>
+    start: () => Promise<any>
+    stop: () => Promise<any>
+  }
   auth: {
     smsSend: (phone: string) => Promise<{ success: boolean; devCode?: string }>
     smsLogin: (p: { phone: string; code: string }) => Promise<any>
@@ -11,6 +32,12 @@ export type FcmApi = {
   site: { config: () => Promise<any> }
   models: () => Promise<Model[]>
   credits: { balance: () => Promise<{ balance: number; totalConsumed: number; totalRecharged: number }>; usageRecords: (q?: string) => Promise<any> }
+  // 兑换码与套餐（P43）：服务端 /packages/redeem 已有中文校验，客户端此前缺入口。
+  packages: {
+    presets: () => Promise<{ ok: boolean; data?: any; error?: string }>
+    mine: () => Promise<{ ok: boolean; data?: PackageMine; error?: string }>
+    redeem: (code: string) => Promise<{ ok: boolean; data?: PackageRedeemResult; error?: string }>
+  }
   employees: {
     catalog: (q?: string) => Promise<any>
     mine: () => Promise<any>
@@ -30,9 +57,18 @@ export type FcmApi = {
     reject: (p: { id: string; reason?: string }) => Promise<any>
   }
   chat: {
-    send: (p: { requestId: string; body: any }) => Promise<{ usage: any; content: string }>
+    send: (p: { requestId: string; body: any }) => Promise<{ usage: any; content: string; aborted?: boolean }>
+    /** P0-2：中断正在生成的请求 */
+    abort: (requestId: string) => Promise<boolean>
+    /** 会话列表（默认 30 条） */
+    sessions: (limit?: number) => Promise<{ items: ChatSessionSummary[] }>
+    createSession: (p?: { model?: string; title?: string }) => Promise<{ session: ChatSession }>
+    getSession: (id: string) => Promise<ChatSessionDetail>
+    renameSession: (id: string, patch: { title?: string; model?: string }) => Promise<{ session: ChatSession }>
+    removeSession: (id: string) => Promise<{ ok: boolean }>
+    appendMessages: (id: string, messages: ChatAppendMessage[]) => Promise<{ ok: boolean; appended: number }>
     onChunk: (cb: (p: { requestId: string; delta: string }) => void) => () => void
-    onDone: (cb: (p: { requestId: string; usage: any; content: string }) => void) => () => void
+    onDone: (cb: (p: { requestId: string; usage: any; content: string; aborted?: boolean }) => void) => () => void
     onError: (cb: (p: { requestId: string; message: string; status: number }) => void) => () => void
   }
   gateway: {
@@ -76,6 +112,9 @@ export type FcmApi = {
   cron: {
     list: () => Promise<CronOpResult<{ items: any[]; total: number }>>
     create: (input: { employeeSlug: string; cronExpr: string; timezone?: string }) => Promise<CronOpResult<{ cronId: string; nextRunAt: string | null }>>
+    update: (input: { cronId: string; enabled?: boolean; cronExpr?: string; timezone?: string }) => Promise<
+      CronOpResult<{ cronId: string; enabled: boolean; cronExpr: string; timezone: string; nextRunAt: string | null }>
+    >
     remove: (p: { cronId: string }) => Promise<CronOpResult<{ deleted: boolean }>>
   }
   // 战略与人设（P42，见 docs/handoff/P42-原版战略表人设表-逆向.md）
@@ -300,6 +339,81 @@ export type Model = {
   pricePerRequest: number
   pricePerInputToken: number
   pricePerOutputToken: number
+}
+
+/** 套餐授权（兑换码核销后的结果，字段与服务端 UserPackageGrant 对齐） */
+export type PackageGrant = {
+  id: string
+  packageId: string
+  source?: string
+  validDays?: number
+  grantedAt?: string
+  expiresAt: string
+  preset?: { id?: string; name?: string; description?: string } | null
+}
+
+export type PackagePreset = {
+  id: string
+  name?: string
+  description?: string
+  validDays?: number
+  owned?: boolean
+}
+
+export type PackageMine = {
+  active?: PackageGrant[]
+  expired?: PackageGrant[]
+  presets?: PackagePreset[]
+  effectivePackages?: string[]
+}
+
+export type PackageRedeemResult = {
+  packageId: string
+  validDays: number
+  expiresAt: string
+  grantId: string
+  preset?: { id?: string; name?: string } | null
+}
+
+// P0-2 对话页持久化：与服务端 /chat/sessions 契约逐字对齐。
+export type ChatSessionSummary = {
+  id: string
+  title: string
+  model?: string
+  updatedAt: string
+  messageCount: number
+  preview: string
+}
+
+export type ChatSession = {
+  id: string
+  title: string
+  model?: string
+  createdAt: string
+  updatedAt: string
+}
+
+export type ChatMessageItem = {
+  id: string
+  role: string
+  content: string
+  tokensIn?: number
+  tokensOut?: number
+  isError?: boolean
+  createdAt: string
+}
+
+export type ChatSessionDetail = {
+  session: ChatSession
+  messages: ChatMessageItem[]
+}
+
+export type ChatAppendMessage = {
+  role: 'user' | 'assistant'
+  content: string
+  tokensIn?: number
+  tokensOut?: number
+  isError?: boolean
 }
 
 declare global {

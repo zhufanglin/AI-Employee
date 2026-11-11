@@ -4,9 +4,13 @@ import { env, envBool, envInt } from "../common/env";
 
 /**
  * 短信发送器
- *  - 未配置 ALIYUN_SMS_ACCESS_KEY_ID 时用开发模式（只打日志、返回 devCode）
+ *  - 未配置 ALIYUN_SMS_ACCESS_KEY_ID 时用开发模式（只打日志）
  *  - 配置后走阿里云 Dysmsapi SendSms（RPC 签名 HMAC-SHA1 + POST 表单）
  *  - DEV_SMS_ALLOWLIST：逗号分隔的手机号，命中时直接返回 devCode（内测用，不真实发送）
+ *
+ * 安全约束（P43-A P0）：验证码绝不能默认回传给调用方，否则任意手机号都能接管已有账号。
+ * 只有同时满足「非生产环境」+「DEV_RETURN_SMS_CODE=true」才回传；
+ * DEV_SMS_ALLOWLIST 是显式的逐手机号内测名单（名单里必须是测试号，不能放真实客户号）。
  */
 @Injectable()
 export class SmsSender {
@@ -16,6 +20,12 @@ export class SmsSender {
     return !env("ALIYUN_SMS_ACCESS_KEY_ID");
   }
 
+  /** 是否允许把验证码回传给调用方：显式开关 + 非生产环境，缺一不可。 */
+  get returnCodeAllowed(): boolean {
+    if (env("NODE_ENV", "development") === "production") return false;
+    return envBool("DEV_RETURN_SMS_CODE", false);
+  }
+
   async send(phone: string, code: string, purpose: string): Promise<{ sent: boolean; devCode?: string }> {
     const allow = env("DEV_SMS_ALLOWLIST", "")
       .split(",")
@@ -23,12 +33,13 @@ export class SmsSender {
       .filter(Boolean);
     // "*" 表示本地/CI 全放开（只应出现在开发与测试环境）
     if (allow.includes(phone) || allow.includes("*")) {
-      this.logger.warn("[DEV-SMS allowlist] phone=" + phone + " purpose=" + purpose + " code=" + code);
+      this.logger.warn("[DEV-SMS allowlist] phone=" + phone + " purpose=" + purpose + " code=" + code +
+        "（该号码可免验证码登录，仅允许测试号，用完请从 DEV_SMS_ALLOWLIST 移除）");
       return { sent: true, devCode: code };
     }
     if (this.devMode) {
       this.logger.warn("[DEV-SMS] phone=" + phone + " purpose=" + purpose + " code=" + code);
-      return { sent: true, devCode: envBool("DEV_RETURN_SMS_CODE", true) ? code : undefined };
+      return { sent: true, devCode: this.returnCodeAllowed ? code : undefined };
     }
     try {
       await this.aliyunSend(phone, code);

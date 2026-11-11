@@ -864,6 +864,19 @@ model StrategyIteration {
   @@index([phone, versionNo])
 }
 
+/// P43：渠道入站消息幂等表（企微/公众号 5 秒超时会重发同一条 MsgId，靠唯一键挡住重复建单与重复扣算力）
+model ChannelInboundMsg {
+  id        String   @id @default(cuid())
+  channel   String   @db.VarChar(32)
+  msgId     String   @db.VarChar(191)
+  fromUser  String?  @db.VarChar(191)
+  taskId    String?  @db.VarChar(191)
+  createdAt DateTime @default(now())
+
+  @@unique([channel, msgId])
+  @@index([createdAt])
+}
+
 /// P42：人设规划表（一账号一行，原版 8 字段）
 model PersonaProfile {
   id          String   @id @default(cuid())
@@ -878,5 +891,34 @@ model PersonaProfile {
   createdAt   DateTime @default(now())
 
   @@index([phone, name])
+}
+
+/// P43：对话会话（桌面端会话列表；按登录用户隔离）
+model ChatSession {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String   @db.VarChar(200)
+  model     String?  @db.VarChar(120)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, updatedAt])
+  @@map("ChatSession")
+}
+
+/// P43：对话消息（正文可能很长，用 LongText；tokens 仅做展示统计）
+model ChatMessage {
+  id        String   @id @default(cuid())
+  sessionId String
+  /// user | assistant | system
+  role      String   @db.VarChar(16)
+  content   String   @db.LongText
+  tokensIn  Int?
+  tokensOut Int?
+  isError   Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([sessionId, createdAt])
+  @@map("ChatMessage")
 }
 

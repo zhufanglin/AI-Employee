@@ -12,7 +12,8 @@ import { PrismaService } from "../prisma/prisma.service";
 import { SmsSender } from "./sms.sender";
 import { env, envInt } from "../common/env";
 
-const CODE_TTL_MS = 5 * 60 * 1000;
+// 原版 sms.service.js 的验证码有效期是 10 分钟，这里与之一致。
+const CODE_TTL_MS = 10 * 60 * 1000;
 const CODE_RESEND_MS = 60 * 1000;
 
 @Injectable()
@@ -79,7 +80,11 @@ export class AuthService {
 
   async register(dto: { phone?: string; email?: string; password: string; code?: string; name?: string }) {
     if (!dto.phone && !dto.email) throw new BadRequestException("手机号或邮箱至少填写一项");
-    if (dto.code && dto.phone) await this.consumeCode(dto.phone, dto.code, "register");
+    // 手机号注册必须验短信验证码（P43-A P1：原先不传 code 就能直接用任意手机号注册）。
+    if (dto.phone) {
+      if (!dto.code) throw new BadRequestException("请先获取短信验证码");
+      await this.consumeCode(dto.phone, dto.code, "register");
+    }
     const exists = await this.prisma.user.findFirst({ where: { OR: [{ phone: dto.phone ?? undefined }, { email: dto.email ?? undefined }] } });
     if (exists) throw new BadRequestException("用户已存在");
     const user = await this.prisma.user.create({

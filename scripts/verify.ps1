@@ -124,6 +124,14 @@ if ($Smoke) {
     & $node "scripts\smoke-p42-strategy.mjs"
     $script:code = $LASTEXITCODE
   }
+  Step "smoke: P43 逆向修复（计费/幂等/状态机/匿名市场）" {
+    & $node "scripts\smoke-p43-p0p1.mjs"
+    $script:code = $LASTEXITCODE
+  }
+  Step "smoke: P43 对话持久化与会话列表" {
+    & $node "scripts\smoke-p43-chat.mjs"
+    $script:code = $LASTEXITCODE
+  }
   Step "smoke: T-12 支付与后台" {
     & $node "scripts\smoke-t12.mjs"
     $script:code = $LASTEXITCODE

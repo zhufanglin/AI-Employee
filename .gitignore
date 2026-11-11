@@ -13,6 +13,7 @@ _build_*.log
 _smoke_*.log
 _tmp/
 _cutmp/
+.smoke-tmp/
 _demo/
 _gwhome/
 _deploy/

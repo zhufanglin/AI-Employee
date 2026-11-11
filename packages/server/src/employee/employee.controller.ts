@@ -1,4 +1,5 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Req } from "@nestjs/common";
+import { OptionalAuth, Public } from "../common/decorators";
 import { EmployeeCronService } from "./employee-cron.service";
 import { EmployeeService } from "./employee.service";
 
@@ -12,9 +13,12 @@ export class EmployeeController {
     return this.employees.catalog(query);
   }
 
+  // 原版员工市场游客可浏览（employee.controller.js:41-62），登录用户额外带购买状态
+  @Public()
+  @OptionalAuth()
   @Get("marketplace")
-  marketplace(@Query() query: any) {
-    return this.employees.catalog(query);
+  marketplace(@Query() query: any, @Req() req: any) {
+    return this.employees.marketplace(query, req.user?.id);
   }
 
   @Get("mine")
@@ -27,9 +31,12 @@ export class EmployeeController {
     return this.employees.mine(req.user.id);
   }
 
+  // 原版员工详情同样允许游客查看（安装/运行仍然需要登录与授权）
+  @Public()
+  @OptionalAuth()
   @Get(":slug")
-  detail(@Param("slug") slug: string) {
-    return this.employees.detail(slug);
+  detail(@Param("slug") slug: string, @Req() req: any) {
+    return this.employees.detail(slug, !!req.user?.id);
   }
 
   @Post(":slug/install")

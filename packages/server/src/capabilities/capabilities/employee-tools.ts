@@ -56,6 +56,19 @@ export const descriptors: CapabilityDescriptor[] = [
     params: {},
   },
   {
+    name: "cron_update",
+    title: "修改/启停定时任务",
+    category: "employee",
+    description: "修改自己的一条员工定时任务的 cron 表达式、时区，或启用/停用（对应原版 cron:update / cron:toggle）",
+    params: {
+      cronId: "必填，定时任务 id",
+      enabled: "可选，true 启用 / false 停用",
+      cronExpr: "可选，新的 5 段 cron",
+      timezone: "可选，新的时区",
+      workflowKey: "可选，新的 workflowKey",
+    },
+  },
+  {
     name: "cron_delete",
     title: "删除定时任务",
     category: "employee",
@@ -311,6 +324,47 @@ export function buildEmployeeHandlers(prisma: any): Record<string, CapabilityHan
         lastRunAt: toIso(r.lastRunAt),
       }));
       return { items, total: items.length };
+    },
+
+    // 对应原版 IPC cron:update / cron:toggle：客户端定时任务页的「启用/停用」与「改时间」都走这里。
+    // 逻辑与 employee-cron.service.ts 的 update() 保持同口径：只有表达式/时区真的变了、或从停用到启用，
+    // 才把 nextRunAt 重算，避免用户只是改个 workflowKey 就把下次执行时间推乱。
+    cron_update: async (ctx: CapabilityContext) => {
+      const { userId, params } = ctx;
+      const cronId = requireString(params.cronId, "cronId 必填");
+      if (params.enabled !== undefined && typeof params.enabled !== "boolean") {
+        throw new BadRequestException("enabled 不合法");
+      }
+      const cron = (await prisma.employeeCron.findFirst({
+        where: { id: cronId, userId },
+      })) as CronRow | null;
+      if (!cron) throw new BadRequestException("定时器不存在");
+      const cronExpr =
+        params.cronExpr === undefined || params.cronExpr === null
+          ? cron.cronExpr
+          : requireString(params.cronExpr, "cronExpr 不合法");
+      const timezone =
+        params.timezone === undefined || params.timezone === null
+          ? cron.timezone
+          : requireString(params.timezone, "timezone 不合法");
+      let workflowKey = cron.workflowKey;
+      if (params.workflowKey !== undefined) {
+        workflowKey = requireString(params.workflowKey, "workflowKey 不合法");
+      }
+      const enabled = typeof params.enabled === "boolean" ? params.enabled : cron.enabled;
+      const changed = cronExpr !== cron.cronExpr || timezone !== cron.timezone || (enabled && !cron.enabled);
+      const nextRunAt = changed ? nextDate(cronExpr, timezone, new Date()) : cron.nextRunAt ?? nextDate(cronExpr, timezone, new Date());
+      const updated = (await prisma.employeeCron.update({
+        where: { id: cron.id },
+        data: { cronExpr, timezone, workflowKey, enabled, ...(changed ? { nextRunAt } : {}) },
+      })) as CronRow;
+      return {
+        cronId: updated.id,
+        enabled: updated.enabled,
+        cronExpr: updated.cronExpr,
+        timezone: updated.timezone,
+        nextRunAt: toIso(updated.nextRunAt),
+      };
     },
 
     cron_delete: async (ctx: CapabilityContext) => {

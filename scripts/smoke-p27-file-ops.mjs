@@ -49,7 +49,11 @@ function eq(actual, expected, label) {
   check(label, actual === expected, '期望 ' + JSON.stringify(expected) + '，实际 ' + JSON.stringify(actual))
 }
 
-const work = mkdtempSync(join(tmpdir(), 'p27-file-ops-'))
+// 注意：esbuild 会 spawn 子进程写产物，而本机 %TEMP% 对子进程写被拒（Access is denied），
+// 所以临时目录放在仓库内（.smoke-tmp 已在 .gitignore），可用 FCM_SMOKE_TMP 覆盖。
+const workBase = process.env.FCM_SMOKE_TMP || join(repo, '.smoke-tmp')
+mkdirSync(workBase, { recursive: true })
+const work = mkdtempSync(join(workBase, 'p27-file-ops-'))
 const root = join(work, 'workspace')
 const outsideDir = join(work, 'outside')
 const outFile = join(work, 'file-ops.cjs')

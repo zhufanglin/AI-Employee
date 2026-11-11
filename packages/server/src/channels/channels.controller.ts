@@ -2,7 +2,7 @@ import { Body, Controller, Get, HttpCode, Logger, Post, Query, Req, Res } from "
 import type { Request, Response } from "express";
 import { Public } from "../common/decorators";
 import { ChannelsConfig } from "./channels.config";
-import { ChannelDispatcherService, NOT_CONFIGURED_TEXT } from "./dispatcher.service";
+import { ACK_TEXT, ChannelDispatcherService, NOT_CONFIGURED_TEXT } from "./dispatcher.service";
 import { WeComService } from "./wecom/wecom.service";
 import { buildPassiveReplyXml } from "./wecom/xml";
 import { WeChatMpService } from "./wechat-mp/wechat-mp.service";
@@ -88,8 +88,8 @@ export class WeComChannelsController {
 
     const toUser = pickQuery(message.FromUserName);
     const fromUser = pickQuery(message.ToUserName);
-    const reply = await this.dispatcher.handleInbound({
-      channel: "wecom",
+    const payload = {
+      channel: "wecom" as const,
       fromUser: toUser,
       toUser: fromUser,
       msgType: pickQuery(message.MsgType),
@@ -97,7 +97,18 @@ export class WeComChannelsController {
       event: pickQuery(message.Event),
       msgId: pickQuery(message.MsgId),
       agentId: pickQuery(message.AgentID),
-    });
+    };
+    // 企微要求 5 秒内回包，超时会重发同一条消息。
+    // 文本消息 + 已配置员工时先回 ACK，建单/回推放后台；幂等由 dispatcher 的 (channel,msgId) 唯一键保证。
+    let reply: string;
+    if (payload.msgType === "text" && this.config.employeeSlug) {
+      void this.dispatcher.handleInbound(payload).catch((error: any) => {
+        this.logger.error("处理企微消息失败：" + (error?.message ?? error));
+      });
+      reply = ACK_TEXT;
+    } else {
+      reply = await this.dispatcher.handleInbound(payload);
+    }
     if (!reply) return "";
 
     const plainXml = buildPassiveReplyXml(toUser, fromUser, reply);
@@ -165,15 +176,25 @@ export class WeChatMpChannelsController {
 
     const toUser = pickQuery(msg.FromUserName);
     const fromUser = pickQuery(msg.ToUserName);
-    const reply = await this.dispatcher.handleInbound({
-      channel: "wechat-mp",
+    const payload = {
+      channel: "wechat-mp" as const,
       fromUser: toUser,
       toUser: fromUser,
       msgType: pickQuery(msg.MsgType),
       content: pickQuery(msg.Content),
       event: pickQuery(msg.Event),
       msgId: pickQuery(msg.MsgId),
-    });
+    };
+    // 公众号同样有 5 秒被动回复窗口，处理方式与企微一致。
+    let reply: string;
+    if (payload.msgType === "text" && this.config.employeeSlug) {
+      void this.dispatcher.handleInbound(payload).catch((error: any) => {
+        this.logger.error("处理公众号消息失败：" + (error?.message ?? error));
+      });
+      reply = ACK_TEXT;
+    } else {
+      reply = await this.dispatcher.handleInbound(payload);
+    }
     if (!reply) return "";
 
     const plainXml = buildPassiveReplyXml(toUser, fromUser, reply);

@@ -111,6 +111,16 @@ export class ChannelDispatcherService {
     const content = String(msg.content ?? "").trim();
     if (!content) return "请发送具体需求，例如：帮我看下今天 AI 行业有什么新政策。";
 
+    // 幂等：企微/公众号 5 秒内没收到回包会重发同一条消息（MsgId 相同）。
+    // 唯一键 (channel, msgId) 顶住重复回调，重复时直接回 ACK，不再建第二个任务、不再扣一次算力。
+    const claim = await this.claimInbound(msg);
+    // 注意：只有 null 才表示「这个 MsgId 已处理过」。空串是「没有幂等键 / 幂等表写失败，放行」，
+    // 不能用 !claim 判断，否则幂等表异常时会把每条正常消息都吞掉（P43 冒烟里踩过）。
+    if (claim === null) {
+      this.logger.warn("重复回调已忽略 channel=" + msg.channel + " msgId=" + msg.msgId + " from=" + msg.fromUser);
+      return ACK_TEXT;
+    }
+
     const userId = await this.resolveUserId(msg);
     if (!userId) {
       // 需求 T-11 第 5 条：接口需要 userId 绑定时不硬改员工链路，降级为只回「已收到」+ 留 TODO
@@ -135,15 +145,57 @@ export class ChannelDispatcherService {
         },
       });
       this.logger.log("渠道任务已创建 task=" + task.id + " channel=" + msg.channel + " from=" + msg.fromUser + " employee=" + slug);
+      await this.attachInboundTask(claim, task.id);
       this.watchTask(task.id, msg);
       return ACK_TEXT;
     } catch (error: any) {
+      // 建单失败要放掉幂等占位，否则用户原样重发会被当成重复回调。
+      await this.releaseInbound(claim);
       // 员工未安装 / 未购买 / 账号异常等：同样降级，但不能把 500 抛回微信（会被反复重试）
       this.logger.warn(
         "创建员工任务失败，降级为仅回复「已收到」：channel=" + msg.channel +
         " from=" + msg.fromUser + " reason=" + (error?.message ?? error),
       );
       return DEGRADED_ACK_TEXT;
+    }
+  }
+
+  /**
+   * 占位一条入站消息，返回占位记录 id；返回 null 表示这条 MsgId 已经处理过。
+   * 没有 MsgId 的渠道（个人微信轮询）没有天然幂等键，直接放行。
+   */
+  private async claimInbound(msg: InboundMessage): Promise<string | null> {
+    const msgId = String(msg.msgId ?? "").trim();
+    if (!msgId) return "";
+    try {
+      const row = await this.prisma.channelInboundMsg.create({
+        data: { channel: msg.channel, msgId: msgId.slice(0, 191), fromUser: msg.fromUser ? msg.fromUser.slice(0, 191) : null },
+        select: { id: true },
+      });
+      return row.id;
+    } catch (error: any) {
+      if (error?.code === "P2002") return null;
+      // 幂等表写失败不阻断主流程（宁可重复建单也别漏消息）。
+      this.logger.warn("写入渠道幂等记录失败，按未重复处理：" + (error?.message ?? error));
+      return "";
+    }
+  }
+
+  private async attachInboundTask(claim: string | null, taskId: string): Promise<void> {
+    if (!claim) return;
+    try {
+      await this.prisma.channelInboundMsg.update({ where: { id: claim }, data: { taskId } });
+    } catch (error: any) {
+      this.logger.warn("回填渠道幂等记录失败：" + (error?.message ?? error));
+    }
+  }
+
+  private async releaseInbound(claim: string | null): Promise<void> {
+    if (!claim) return;
+    try {
+      await this.prisma.channelInboundMsg.delete({ where: { id: claim } });
+    } catch {
+      /* 已经被清掉就算了 */
     }
   }
 

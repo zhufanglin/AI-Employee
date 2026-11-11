@@ -143,6 +143,40 @@ async function createCron(deps: CronOpsDeps, input: CronCreateInput | undefined)
   return { ok: true, data: { cronId, nextRunAt: text(data?.nextRunAt) || null } }
 }
 
+async function updateCron(
+  deps: CronOpsDeps,
+  input: { cronId?: string; enabled?: boolean; cronExpr?: string; timezone?: string } | undefined
+): Promise<CronOpResult<{ cronId: string; enabled: boolean; cronExpr: string; timezone: string; nextRunAt: string | null }>> {
+  const cronId = text(input?.cronId)
+  if (!cronId) return fail('cronId 必填')
+  const params: Record<string, unknown> = { cronId }
+  if (typeof input?.enabled === 'boolean') params.enabled = input.enabled
+  const cronExpr = text(input?.cronExpr)
+  if (cronExpr) {
+    if (cronExpr.split(/\s+/).length !== 5) {
+      return fail('cron 表达式必须是 5 段（分 时 日 月 周），例如 0 9 * * *')
+    }
+    params.cronExpr = cronExpr
+  }
+  const timezone = text(input?.timezone)
+  if (timezone) params.timezone = timezone
+  if (Object.keys(params).length === 1) return fail('没有要修改的内容（enabled / cronExpr / timezone 至少给一个）')
+
+  const result = await runCapability(deps, 'cron_update', params)
+  if (!result.ok) return result
+  const data = result.data
+  return {
+    ok: true,
+    data: {
+      cronId: text(data?.cronId) || cronId,
+      enabled: data?.enabled !== false,
+      cronExpr: text(data?.cronExpr) || cronExpr,
+      timezone: text(data?.timezone) || timezone || DEFAULT_TIMEZONE,
+      nextRunAt: text(data?.nextRunAt) || null
+    }
+  }
+}
+
 async function deleteCron(deps: CronOpsDeps, input: { cronId?: string } | undefined): Promise<CronOpResult<{ deleted: boolean }>> {
   const cronId = text(input?.cronId)
   if (!cronId) return fail('cronId 必填')
@@ -152,7 +186,8 @@ async function deleteCron(deps: CronOpsDeps, input: { cronId?: string } | undefi
 }
 
 /**
- * 注册定时任务 IPC 通道：cron:list / cron:create / cron:delete。
+ * 注册定时任务 IPC 通道：cron:list / cron:create / cron:update / cron:delete。
+ * cron:update 对应原版 cron:update / cron:toggle（启用停用、改 cron 表达式），走能力 cron_update。
  * 所有异常都在这里兜住，渲染进程永远拿到 { ok, data?, error? }。
  */
 export function registerCronOps(ipc: IpcMain, deps: CronOpsDeps): void {
@@ -168,5 +203,6 @@ export function registerCronOps(ipc: IpcMain, deps: CronOpsDeps): void {
 
   ipc.handle('cron:list', () => guard(() => listCron(deps)))
   ipc.handle('cron:create', (_event, input) => guard(() => createCron(deps, input)))
+  ipc.handle('cron:update', (_event, input) => guard(() => updateCron(deps, input)))
   ipc.handle('cron:delete', (_event, input) => guard(() => deleteCron(deps, input)))
 }

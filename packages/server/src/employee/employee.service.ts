@@ -85,6 +85,41 @@ export class EmployeeService {
     return { items, total: items.length, categories };
   }
 
+  /**
+   * 员工市场（原版 employee.controller.js:41-62 游客可访问）。
+   * 登录用户额外返回 purchased / userExpiresAt / userPurchaseStatus，
+   * 与原版 marketplace 的字段语义对齐（P43-B P1）。
+   */
+  async marketplace(query: CatalogQuery, userId?: string) {
+    const base = await this.catalog(query);
+    if (!userId) return base;
+    const ids = base.items.map((item: any) => item.id).filter(Boolean);
+    if (ids.length === 0) return base;
+    const now = Date.now();
+    const [installs, purchases] = await Promise.all([
+      this.prisma.aiEmployeeInstall.findMany({ where: { userId, employeeId: { in: ids } } }),
+      this.prisma.aiEmployeePurchase.findMany({ where: { userId, employeeId: { in: ids } } }),
+    ]);
+    const installBy = new Map(installs.map((row) => [row.employeeId, row]));
+    const purchaseBy = new Map(purchases.map((row) => [row.employeeId, row]));
+    const items = base.items.map((item: any) => {
+      const install = installBy.get(item.id);
+      const purchase = purchaseBy.get(item.id);
+      const purchaseActive =
+        !!purchase && purchase.status === "active" && (!purchase.expiresAt || purchase.expiresAt.getTime() > now);
+      const userPurchaseStatus = purchaseActive ? "active" : purchase ? "expired" : "none";
+      return {
+        ...item,
+        purchased: purchaseActive,
+        userPurchaseStatus,
+        userExpiresAt: purchaseActive && purchase?.expiresAt ? purchase.expiresAt.toISOString() : null,
+        installed: !!install && install.enabled,
+        installedExpiresAt: install?.expiresAt ? install.expiresAt.toISOString() : null,
+      };
+    });
+    return { ...base, items };
+  }
+
   private async requireEmployee(slug: string) {
     const emp = await this.prisma.aiEmployee.findUnique({ where: { slug } });
     if (!emp || !emp.isActive) throw new NotFoundException("员工不存在或已下架");
@@ -167,9 +202,13 @@ export class EmployeeService {
     };
   }
 
-  async detail(slug: string) {
+  /**
+   * 员工详情。withSkill=false（游客浏览）时不返回 skillMd ——
+   * 岗位提示词是我们的核心资产，匿名接口不该泄露。
+   */
+  async detail(slug: string, withSkill = true) {
     const emp = await this.requireEmployee(slug);
-    return { ...this.serializeEmployee(emp), skillMd: (emp as any).skillMd ?? null };
+    return { ...this.serializeEmployee(emp), skillMd: withSkill ? ((emp as any).skillMd ?? null) : null };
   }
 
   async getTask(userId: string, id: string) {
@@ -378,9 +417,22 @@ export class EmployeeService {
     if (TERMINAL.includes(task.status as TaskStatus)) {
       throw new BadRequestException("任务已结束，不能再修改");
     }
+    // 已被执行器领取的任务：回写必须携带领取凭据，否则第二台设备（或任何持 token 的客户端）
+    // 可以覆盖第一台的产出（P43-B P0）。
+    const currentMeta = (parseJson(task.outputMeta, {}) as Record<string, unknown>) || {};
+    const claimedToken = typeof currentMeta.claimToken === "string" ? currentMeta.claimToken : "";
+    if (claimedToken && (body.claimToken === undefined || body.claimToken === null || body.claimToken === "")) {
+      throw new BadRequestException("任务已被执行器领取，回写必须携带领取凭据");
+    }
     const data: any = {};
     if (body.status !== undefined) {
       if (!TASK_STATUSES.includes(body.status)) throw new BadRequestException("status 不合法");
+      // 成功状态只能由审批接口（approve）写入。此前 PATCH 可以直接把 running/awaiting_approval
+      // 改成 succeeded，等于绕过验收（P43-B P0）。
+      if (body.status === "succeeded") {
+        throw new BadRequestException("任务完成需走验收：执行器应回写待验收状态，再由审批接口确认");
+      }
+      if (body.status === "queued") throw new BadRequestException("任务状态不能回退到排队中");
       data.status = body.status;
       if (body.status === "running" && !task.startedAt) data.startedAt = new Date();
       if (TERMINAL.includes(body.status)) data.finishedAt = new Date();

@@ -24,6 +24,9 @@ let platform: PlatformManager | null = null
 let queue: PublishQueue | null = null
 let queueTimer: NodeJS.Timeout | null = null
 
+// P0-2 对话中断：send 时把 requestId 对应的 AbortController 存进来，chat:abort 用它取消 fetch/流读取。
+const chatAborts = new Map<string, AbortController>()
+
 function settingsPath() {
   return join(app.getPath('userData'), 'settings.json')
 }
@@ -379,6 +382,21 @@ function registerIpc() {
   })
   ipcMain.handle('credits:balance', () => api('/credits/balance'))
   ipcMain.handle('credits:usage-records', (_e, q: string) => api('/credits/ai-usage-records' + (q || '')))
+  // 兑换码与套餐（P43）：服务端 /packages/redeem 与 /packages/mine 早就实现了，
+  // 但客户端一直没有入口 —— 用户从运营那里拿到兑换码之后无处激活。
+  // 这里统一返回 { ok, data } / { ok, error }，把服务端的中文校验原因原样交给界面。
+  const packageCall = async (path: string, init: any = {}) => {
+    try {
+      return { ok: true, data: await api(path, init) }
+    } catch (e: any) {
+      return { ok: false, error: String((e && e.message) || e) }
+    }
+  }
+  ipcMain.handle('packages:presets', () => packageCall('/packages/presets', { auth: false }))
+  ipcMain.handle('packages:mine', () => packageCall('/packages/mine'))
+  ipcMain.handle('packages:redeem', (_e, code: string) =>
+    packageCall('/packages/redeem', { method: 'POST', body: JSON.stringify({ code }) })
+  )
 
   ipcMain.handle('employees:catalog', (_e, q: string) => api('/employees/catalog' + (q || '')))
   ipcMain.handle('employees:mine', () => api('/employees/mine'))
@@ -592,45 +610,89 @@ function registerIpc() {
   ipcMain.handle('chat:send', async (event, p: { requestId: string; body: any }) => {
     const { requestId } = p
     const body = { ...p.body, stream: true, stream_options: { include_usage: true } }
-    const res = await fetch(settings.apiBase + '/compute/chat/completions', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json', authorization: 'Bearer ' + settings.token },
-      body: JSON.stringify(body)
-    })
-    if (!res.ok) {
-      const text = await res.text()
-      let msg = 'HTTP ' + res.status
-      try { const j = JSON.parse(text); msg = j?.error?.message || j?.message || msg } catch {}
-      event.sender.send('chat:error', { requestId, message: msg, status: res.status })
-      throw new Error(msg)
-    }
-    const reader = (res.body as any).getReader()
-    const decoder = new TextDecoder()
-    let buf = ''
+    const controller = new AbortController()
+    chatAborts.set(requestId, controller)
     let usage: any = null
     let content = ''
-    while (true) {
-      const { done, value } = await reader.read()
-      if (done) break
-      buf += decoder.decode(value, { stream: true })
-      const lines = buf.split('\n')
-      buf = lines.pop() || ''
-      for (const raw of lines) {
-        const line = raw.trim()
-        if (!line.startsWith('data:')) continue
-        const data = line.slice(5).trim()
-        if (!data || data === '[DONE]') continue
-        try {
-          const j = JSON.parse(data)
-          if (j.usage) usage = j.usage
-          const delta = j.choices?.[0]?.delta?.content || ''
-          if (delta) { content += delta; event.sender.send('chat:chunk', { requestId, delta }) }
-        } catch {}
+    try {
+      const res = await fetch(settings.apiBase + '/compute/chat/completions', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', authorization: 'Bearer ' + settings.token },
+        body: JSON.stringify(body),
+        signal: controller.signal
+      })
+      if (!res.ok) {
+        const text = await res.text()
+        let msg = 'HTTP ' + res.status
+        try { const j = JSON.parse(text); msg = j?.error?.message || j?.message || msg } catch {}
+        event.sender.send('chat:error', { requestId, message: msg, status: res.status })
+        throw new Error(msg)
       }
+      const reader = (res.body as any).getReader()
+      const decoder = new TextDecoder()
+      let buf = ''
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        buf += decoder.decode(value, { stream: true })
+        const lines = buf.split('\n')
+        buf = lines.pop() || ''
+        for (const raw of lines) {
+          const line = raw.trim()
+          if (!line.startsWith('data:')) continue
+          const data = line.slice(5).trim()
+          if (!data || data === '[DONE]') continue
+          try {
+            const j = JSON.parse(data)
+            if (j.usage) usage = j.usage
+            const delta = j.choices?.[0]?.delta?.content || ''
+            if (delta) { content += delta; event.sender.send('chat:chunk', { requestId, delta }) }
+          } catch {}
+        }
+      }
+      event.sender.send('chat:done', { requestId, usage, content })
+      return { usage, content }
+    } catch (e: any) {
+      // 用户点「停止」时 fetch / reader 抛 AbortError：这不是失败，按正常结束回传已生成的内容。
+      if (e?.name === 'AbortError') {
+        event.sender.send('chat:done', { requestId, usage, content, aborted: true })
+        return { usage, content, aborted: true }
+      }
+      throw e
+    } finally {
+      chatAborts.delete(requestId)
     }
-    event.sender.send('chat:done', { requestId, usage, content })
-    return { usage, content }
   })
+
+  // chat:abort —— 只取消还在生成中的请求；已经结束的返回 false。
+  ipcMain.handle('chat:abort', (_e, requestId: string) => {
+    const controller = chatAborts.get(requestId)
+    if (!controller) return false
+    controller.abort()
+    return true
+  })
+
+  // P0-2 会话持久化：把服务端 /chat/sessions 系列接口包成 IPC（api() 的 base 已含 /api）。
+  ipcMain.handle('chat:sessions', (_e, limit?: number) => {
+    const n = Math.max(1, Math.min(100, Math.floor(Number(limit) || 30)))
+    return api('/chat/sessions?limit=' + n)
+  })
+  ipcMain.handle('chat:session-create', (_e, p: { model?: string; title?: string } = {}) =>
+    api('/chat/sessions', { method: 'POST', body: JSON.stringify({ model: p?.model, title: p?.title }) })
+  )
+  ipcMain.handle('chat:session-get', (_e, id: string) => api('/chat/sessions/' + encodeURIComponent(id)))
+  ipcMain.handle('chat:session-rename', (_e, p: { id: string; patch?: { title?: string; model?: string } }) =>
+    api('/chat/sessions/' + encodeURIComponent(p.id), { method: 'PATCH', body: JSON.stringify(p.patch || {}) })
+  )
+  ipcMain.handle('chat:session-remove', (_e, id: string) =>
+    api('/chat/sessions/' + encodeURIComponent(id), { method: 'DELETE' })
+  )
+  ipcMain.handle('chat:session-append', (_e, p: { id: string; messages: any[] }) =>
+    api('/chat/sessions/' + encodeURIComponent(p.id) + '/messages', {
+      method: 'POST',
+      body: JSON.stringify({ messages: p.messages || [] })
+    })
+  )
 
   ipcMain.handle('update:status', () => updateStatus())
   ipcMain.handle('update:check', () => checkForUpdates())

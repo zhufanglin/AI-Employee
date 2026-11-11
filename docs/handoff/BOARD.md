@@ -1,6 +1,6 @@
 # 任务看板（自动生成，勿手改）
 
-> 生成时间 2026-11-10T15:28:41.725Z · 单一事实源 `docs/handoff/state.json`
+> 生成时间 2026-11-11T06:09:59.233Z · 单一事实源 `docs/handoff/state.json`
 
 **当前阶段**：P10（先能用三件事）派工完成，看板 29/33 —— 用户要求先能用、定价后置：T-31 桌面端出图出片 / T-32 员工多步干活 / T-33 成本护栏 已派 Codex；dsh-lead 推主线（生产可用性收口 + 复核），T-11 渠道仍 blocked(env)。
 
@@ -70,6 +70,7 @@
 | T-62 | P36 修 platform:status 报 Object has been destroyed（含抖音 cookie 误判）+ 0.1.20 | done | dsh-lead | 11-10 06:24 | - |
 | T-63 | P37 修「点平台发布弹出视频号助手」（0 透明度渲染）+ 抖音冷启动误报「打开页面失败」+ 0.1.21 | done | dsh-lead | 11-10 08:08 | packages/desktop/src/main/platform.ts, scripts/check-desktop-p24.mjs, scripts/check-desktop-p25.mjs, docs/handoff/P37-平台页弹窗与冷启动误报.md |
 | T-64 | P38 视频号评论读通（脏表单拦导航→重建窗口重试）+ 0.1.22 | done | dsh-lead | - | packages/desktop/src/main/platform.ts |
+| T-65 | P42 战略表+人设表忠实复刻（工作区企业战略.md + 3 表 + needs 授权注入 + 桌面页）+ 0.1.23 | done | dsh-lead | - | packages/server/src/strategy/**, packages/server/prisma/schema.prisma, packages/worker/tool-loop.mjs, packages/desktop/src/main/strategy-ops.ts, packages/desktop/src/renderer/src/pages/Strategy.tsx, packages/desktop/resources/skills/**, docs/handoff/P42-战略表与人设表.md |
 
 **未完成任务详情**
 

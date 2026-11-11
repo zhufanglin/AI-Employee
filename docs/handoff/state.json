@@ -1,7 +1,7 @@
 {
   "project": "中科元晟 AI员工 0.4.29 完全复刻",
   "version": 1,
-  "updatedAt": "2026-11-10T09:46:40.730Z",
+  "updatedAt": "2026-11-11T06:11:42.727Z",
   "phase": "P10（先能用三件事）派工完成，看板 29/33",
   "phaseGoal": "用户要求先能用、定价后置：T-31 桌面端出图出片 / T-32 员工多步干活 / T-33 成本护栏 已派 Codex；dsh-lead 推主线（生产可用性收口 + 复核），T-11 渠道仍 blocked(env)。",
   "owners": {
@@ -3498,6 +3498,30 @@
           "what": "done: P42 + 0.1.23"
         }
       ]
+    },
+    {
+      "id": "T-66",
+      "title": "P43 全面逆向对照 + P0/P1 修复（兑换码入口 / 对话持久化 / 媒体结算 / 渠道幂等 / cron 启停 / 状态机）+ 0.1.24",
+      "status": "done",
+      "owner": "dsh-lead",
+      "scope": [
+        "packages/server/src/**",
+        "packages/server/prisma/schema.prisma",
+        "packages/desktop/src/main/**",
+        "packages/desktop/src/preload/index.ts",
+        "packages/desktop/src/renderer/src/**",
+        "docs/handoff/P43-全面逆向对照报告.md",
+        "docs/handoff/P43-sections/**"
+      ],
+      "notes": [
+        "语义口径：HTTP 字面命中 60.3% 但 73/94 为同义或定向删减；IPC 语义覆盖约 75%（110/147），真 MISSING 仅 tads/clawhub/log/asar-update 4 组",
+        "P0 全修：媒体结算 settleSuccess、渠道 MsgId 幂等、user_billing、devCode 泄露、updateTask 绕审批、匿名市场、兑换码入口、对话持久化+中断",
+        "渠道幂等踩坑：claimInbound 空串代表「放行」，不能 if (!claim)（会把正常消息当重复吞掉），已改 claim === null 并加静态断言",
+        "P27 冒烟临时目录改到仓库内 .smoke-tmp（esbuild 子进程写 %TEMP% 被拒 Access is denied）",
+        "verify GREEN（27 步全绿）；0.1.24 已发布 https://updates.fcmediaagent.com/desktop/latest/ 并安装，asar 内容断言 11/11"
+      ],
+      "createdAt": "2026-11-11T06:11:42.726Z",
+      "updatedAt": "2026-11-11T06:11:42.727Z"
     }
   ],
   "primary": "dsh-lead",

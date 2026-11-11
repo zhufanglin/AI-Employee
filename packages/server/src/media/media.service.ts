@@ -289,6 +289,8 @@ export class MediaService {
     if (body?.inputSeconds != null && body?.seconds != null && Number(body.inputSeconds) !== Number(body.seconds)) throw new BadRequestException("媒体时长参数不一致");
     const inputSeconds = Number(body?.inputSeconds ?? body?.seconds ?? (taskType === "video_gen" ? 5 : taskType === "smart_clip" ? 15 : taskType === "lipsync" ? 10 : 0));
     const nodeInfoList = this.buildNodeInfoList(taskType, { ...body, seconds: inputSeconds });
+    // 音色合成（indextts）按输入音频秒计费，但上游不返回可核对时长，体验版先关闭提交入口（T-33 护栏与之一致）。
+    if (taskType === "indextts") throw new BadRequestException("音色合成时长暂无法确认，体验版暂不支持提交");
     if (!Number.isFinite(inputSeconds) || inputSeconds < 0 || (!["image_gen", "indextts"].includes(taskType) && inputSeconds === 0)) throw new BadRequestException("请提供大于零且可确认的媒体时长");
     const estimatedAmount = await this.price(taskType, inputSeconds);
     const limit = (key: string, fallback: number) => {
@@ -336,7 +338,15 @@ export class MediaService {
       const updated = await this.prisma.mediaTaskRecord.updateMany({ where: { taskId: reservationId, status: "SUBMITTING" }, data: { taskId: upstreamTaskId, status: String(upstream.status ?? "QUEUED") } });
       if (!updated.count) throw new ConflictException("媒体任务状态已变更，需要人工核对");
       const task = await this.prisma.mediaTaskRecord.findUniqueOrThrow({ where: { taskId: upstreamTaskId } });
-      return { taskId: task.taskId, status: upstream.status ?? "QUEUED", estimatedAmount, upstream };
+      const status = String(upstream.status ?? "QUEUED");
+      // 与原版 media-proxy.service.js 对齐：提交响应里带 user_billing，客户端可直接展示本次预估扣费。
+      return {
+        taskId: task.taskId,
+        status,
+        estimatedAmount,
+        user_billing: { task_type: taskType, estimated_amount: estimatedAmount, status },
+        upstream,
+      };
     } catch (error) {
       if (!upstreamAccepted && (error instanceof BadRequestException || error instanceof ProviderRejectedError)) await this.refundFailure(reservationId, { status: "FAILED" });
       else {
@@ -345,6 +355,71 @@ export class MediaService {
       }
       throw error;
     }
+  }
+
+  /**
+   * 结算时尽量取「实际时长」：上游回包里若带了 duration / durationSeconds / outputSeconds
+   * 就用它，没有就回落到提交时确认的 inputSeconds（per_input_second 口径下二者一致）。
+   * 原版 media-user-billing.service.js 也是「先按预估预扣、成功后按实际补扣/退差价」。
+   */
+  private actualSeconds(upstream: any, task: { inputSeconds?: number | null }): number {
+    const candidates = [
+      upstream?.resultMeta?.usage?.duration,
+      upstream?.resultMeta?.usage?.durationSeconds,
+      upstream?.resultMeta?.duration,
+      upstream?.resultMeta?.durationSeconds,
+      upstream?.resultMeta?.outputSeconds,
+      upstream?.resultMeta?.data?.duration,
+      upstream?.duration,
+      upstream?.durationSeconds,
+      upstream?.outputSeconds,
+    ];
+    for (const value of candidates) {
+      const seconds = Number(value);
+      if (Number.isFinite(seconds) && seconds > 0) return seconds;
+    }
+    const submitted = Number(task.inputSeconds);
+    return Number.isFinite(submitted) && submitted > 0 ? submitted : 0;
+  }
+
+  /**
+   * 成功后结算：估算金额是预扣，这里按实际计费口径算出 settledAmount，
+   * 与预估的差额补扣（多退少补）。用 settledAmount=null 做悲观闸门，保证只结算一次。
+   */
+  private async settleSuccess(task: any, fields: any): Promise<{ amount: number | null; delta: number }> {
+    const seconds = this.actualSeconds(fields, task);
+    let amount: number;
+    try {
+      amount = await this.price(task.taskType, seconds);
+    } catch {
+      // 价目被停用等异常不阻断任务结果，保留预扣金额作为结算额。
+      amount = task.estimatedAmount;
+    }
+    const delta = amount - task.estimatedAmount;
+    return this.prisma.$transaction(async tx => {
+      const claimed = await tx.mediaTaskRecord.updateMany({
+        where: { id: task.id, settledAmount: null },
+        data: { settledAmount: amount, settledAt: new Date() },
+      });
+      if (!claimed.count) return { amount: null, delta: 0 };
+      if (!delta) return { amount, delta: 0 };
+      const users = await tx.$queryRaw<Array<{ credits: number }>>`SELECT credits FROM User WHERE id = ${task.userId} FOR UPDATE`;
+      if (!users.length) throw new NotFoundException("用户不存在");
+      const before = users[0].credits;
+      const after = before + delta;
+      if (after < 0 && delta > 0) {
+        // 结算补扣时余额已被别处花光：允许透支到 0，差额计入欠费流水（与原版一样不阻断任务结果）。
+        const charged = -before;
+        await tx.user.update({ where: { id: task.userId }, data: { credits: 0, totalCreditsConsumed: { increment: charged } } });
+        if (charged > 0) {
+          await tx.creditTransaction.create({ data: { userId: task.userId, type: "consume", amount: -charged, balanceBefore: before, balanceAfter: 0, description: `媒体任务结算（余额不足，欠 ${delta - charged} 积分）：${task.taskType}（${task.taskId}）` } });
+        }
+        return { amount, delta };
+      }
+      await tx.user.update({ where: { id: task.userId }, data: { credits: { increment: delta }, totalCreditsConsumed: { increment: delta } } });
+      await tx.creditTransaction.create({ data: { userId: task.userId, type: delta > 0 ? "consume" : "refund", amount: -delta, balanceBefore: before, balanceAfter: after, description: `媒体任务结算（实际 ${amount} 积分，预估 ${task.estimatedAmount}）：${task.taskType}（${task.taskId}）` } });
+      return { amount, delta };
+    });
   }
 
   private async refundFailure(taskId: string, data: any, onlySubmitting = false, finalStatus: "FAILED" | "CANCELLED" = "FAILED") {
@@ -420,6 +495,12 @@ export class MediaService {
         data.resultMeta = { ...(fields.resultMeta as any), archivedBytes: archived.bytes, sourceUrl: archived.sourceUrl };
       }
       await this.prisma.mediaTaskRecord.updateMany({ where: { id: task.id, status: { not: "FAILED" } }, data });
+      if (fields.providerStatus === "SUCCESS") await this.settleSuccess(task, fields);
+      return { ...(await this.prisma.mediaTaskRecord.findUniqueOrThrow({ where: { id: task.id } })), upstream };
+    }
+    // 状态没变但可能漏过结算（例如上次结算失败重试），补一次；settleSuccess 内部按 settledAmount 幂等。
+    if (fields.providerStatus === "SUCCESS" && task.status === "SUCCESS" && task.settledAmount === null) {
+      await this.settleSuccess(task, fields);
       return { ...(await this.prisma.mediaTaskRecord.findUniqueOrThrow({ where: { id: task.id } })), upstream };
     }
     return { ...task, upstream };
@@ -444,6 +525,7 @@ export class MediaService {
       }
     }
     await this.prisma.mediaTaskRecord.updateMany({ where: { id: task.id, status: { not: "FAILED" } }, data });
+    if (normalized.status === "SUCCESS") await this.settleSuccess(task, fields);
     return this.prisma.mediaTaskRecord.findUniqueOrThrow({ where: { id: task.id } });
   }
 

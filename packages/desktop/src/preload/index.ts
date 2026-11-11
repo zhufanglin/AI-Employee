@@ -31,6 +31,12 @@ const api = {
     balance: () => ipcRenderer.invoke('credits:balance'),
     usageRecords: (q?: string) => ipcRenderer.invoke('credits:usage-records', q || '')
   },
+  // 兑换码与套餐（P43）：服务端早就有 /packages/redeem，客户端此前没有入口。
+  packages: {
+    presets: () => ipcRenderer.invoke('packages:presets'),
+    mine: () => ipcRenderer.invoke('packages:mine'),
+    redeem: (code: string) => ipcRenderer.invoke('packages:redeem', code)
+  },
   employees: {
     catalog: (q?: string) => ipcRenderer.invoke('employees:catalog', q || ''),
     mine: () => ipcRenderer.invoke('employees:mine'),
@@ -86,6 +92,7 @@ const api = {
   cron: {
     list: () => ipcRenderer.invoke('cron:list'),
     create: (input: { employeeSlug: string; cronExpr: string; timezone?: string }) => ipcRenderer.invoke('cron:create', input),
+    update: (input: { cronId: string; enabled?: boolean; cronExpr?: string; timezone?: string }) => ipcRenderer.invoke('cron:update', input),
     remove: (p: { cronId: string }) => ipcRenderer.invoke('cron:delete', p)
   },
   // 战略与人设（P42）：老板填一份战略长文 + 一张人设表，员工接活时按岗位读取。
@@ -161,12 +168,22 @@ const api = {
   },
   chat: {
     send: (p: { requestId: string; body: any }) => ipcRenderer.invoke('chat:send', p),
+    // P0-2：中断正在生成的请求（requestId 与 send 一致）
+    abort: (requestId: string) => ipcRenderer.invoke('chat:abort', requestId),
+    // P0-2 会话持久化：列表 / 新建 / 详情 / 重命名 / 删除 / 追加消息
+    sessions: (limit?: number) => ipcRenderer.invoke('chat:sessions', limit),
+    createSession: (p?: { model?: string; title?: string }) => ipcRenderer.invoke('chat:session-create', p || {}),
+    getSession: (id: string) => ipcRenderer.invoke('chat:session-get', id),
+    renameSession: (id: string, patch: { title?: string; model?: string }) =>
+      ipcRenderer.invoke('chat:session-rename', { id, patch }),
+    removeSession: (id: string) => ipcRenderer.invoke('chat:session-remove', id),
+    appendMessages: (id: string, messages: any[]) => ipcRenderer.invoke('chat:session-append', { id, messages }),
     onChunk: (cb: (p: { requestId: string; delta: string }) => void) => {
       const h = (_e: any, p: any) => cb(p)
       ipcRenderer.on('chat:chunk', h)
       return () => ipcRenderer.removeListener('chat:chunk', h)
     },
-    onDone: (cb: (p: { requestId: string; usage: any; content: string }) => void) => {
+    onDone: (cb: (p: { requestId: string; usage: any; content: string; aborted?: boolean }) => void) => {
       const h = (_e: any, p: any) => cb(p)
       ipcRenderer.on('chat:done', h)
       return () => ipcRenderer.removeListener('chat:done', h)

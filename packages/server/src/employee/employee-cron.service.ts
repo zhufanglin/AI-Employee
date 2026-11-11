@@ -81,10 +81,10 @@ export class EmployeeCronService implements OnModuleInit, OnModuleDestroy {
               const install = await tx.aiEmployeeInstall.findUnique({ where: { userId_employeeId: { userId: current.userId, employeeId: current.employeeId } } });
               if (!emp || !emp.isActive || !install?.enabled || (install.expiresAt && install.expiresAt <= runAt)) return true;
               const data = { userId: current.userId, employeeId: current.employeeId, cronId: current.id, title: emp.name + " · " + current.workflowKey, input: { workflowKey: current.workflowKey }, executor: emp.cliRequirement === "required" ? "desktop" : "cloud", runAt };
-              if (missed) {
-                const original = await tx.employeeTask.create({ data: { ...data, status: "failed", error: "missed_schedule", finishedAt: now } });
-                await tx.employeeTask.create({ data: { ...data, status: "queued", missedOf: original.id } });
-              } else await tx.employeeTask.create({ data: { ...data, status: "queued" } });
+              // 迟到（含服务重启后补跑）只补发一次正常任务，不再写 status=failed 的占位记录 ——
+              // 原版 employee-expiry.scheduler.js 的 24h catch-up 也只 force run，
+              // 写假失败会污染成功率与「失败 Top5」（P43-B P1）。
+              await tx.employeeTask.create({ data: { ...data, status: "queued" } });
               return true;
             });
             if (!result) break;
