@@ -35,9 +35,16 @@ export default function Settings({ config }: { config: any }) {
   const [logLoading, setLogLoading] = useState(false)
   const [logNotice, setLogNotice] = useState<Notice>(null)
 
+  // 合规文本（P45）：版本号 + 三份文本入口 + 本机已同意版本
+  const [legalMeta, setLegalMeta] = useState<{ ok: boolean; version: string; docs: Array<{ key: string; title: string; updatedAt: string }> } | null>(null)
+  const [legalAccepted, setLegalAccepted] = useState('')
+  const [legalNotice, setLegalNotice] = useState<Notice>(null)
+
   useEffect(() => {
     window.fcm.info().then((i) => { setInfo(i); setApiBase(i.apiBase) })
     window.fcm.update.status().then(setUpd)
+    window.fcm.legal.meta().then(setLegalMeta).catch(() => setLegalMeta(null))
+    window.fcm.settings.get().then((s) => setLegalAccepted(s.legalAcceptedVersion || '')).catch(() => {})
     const off = window.fcm.update.onStatus(setUpd)
     return off
   }, [])
@@ -179,6 +186,61 @@ export default function Settings({ config }: { config: any }) {
           {canDownload && <button disabled={!!asarBusy} onClick={onDownload}>{asarBusy === 'download' ? '下载中…' : '下载更新'}</button>}
           {canInstall && <button className="primary" disabled={!!asarBusy} onClick={onInstall}>{asarBusy === 'install' ? '安装中…' : '立即安装（会重启客户端）'}</button>}
         </div>
+      </section>
+
+
+      <section className="settings-card">
+        <div className="settings-card-head">
+          <h3>关于与合规</h3>
+          <p>使用本软件前请阅读以下文本；条款更新后需要重新确认。</p>
+        </div>
+        <div className="kv">
+          <div><span>当前条款版本</span><b>{legalMeta?.version || '—'}</b></div>
+          <div><span>我已同意的版本</span><b>{legalAccepted || '—'}</b></div>
+        </div>
+        {legalMeta && !legalMeta.ok && (
+          <div className="notice muted">暂时连不上服务器，条款文本仍可通过下面的入口在浏览器打开。</div>
+        )}
+        {legalNotice && <div className={'notice ' + legalNotice.kind}>{legalNotice.text}</div>}
+        <div className="row" style={{ marginTop: 12, gap: 10, flexWrap: 'wrap' }}>
+          {(legalMeta?.docs?.length
+            ? legalMeta.docs
+            : [
+                { key: 'terms', title: '用户协议', updatedAt: '' },
+                { key: 'privacy', title: '隐私政策', updatedAt: '' },
+                { key: 'aigc', title: 'AI 生成内容标识说明', updatedAt: '' }
+              ]
+          ).map((d) => (
+            <button
+              key={d.key}
+              className="ghost"
+              onClick={async () => {
+                try {
+                  const r = await window.fcm.legal.open(d.key as 'terms' | 'privacy' | 'aigc')
+                  setLegalNotice({ kind: 'ok', text: '已在浏览器打开：' + r.url })
+                } catch (e: any) {
+                  setLegalNotice({ kind: 'err', text: '打开失败：' + (e?.message || e) })
+                }
+              }}
+            >
+              {d.title} ↗
+            </button>
+          ))}
+          {legalMeta?.version && legalMeta.version !== legalAccepted && (
+            <button
+              onClick={async () => {
+                const r = await window.fcm.legal.accept(legalMeta.version)
+                setLegalAccepted(r.legalAcceptedVersion)
+                setLegalNotice({ kind: 'ok', text: '已确认条款版本 ' + r.legalAcceptedVersion })
+              }}
+            >
+              我已阅读并同意当前版本
+            </button>
+          )}
+        </div>
+        <p className="muted small" style={{ marginTop: 10 }}>
+          运营主体：中科元晟智科人工智能科技有限公司 · 客服 support@fcmediaagent.com
+        </p>
       </section>
 
       <section className="settings-card">

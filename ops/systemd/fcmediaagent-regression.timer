@@ -1,0 +1,13 @@
+[Unit]
+Description=fcmediaagent 每日 04:10 生产回归检查定时器（P44 第三波）
+
+[Timer]
+# 每天 04:10（服务器本地时区，生产机 Asia/Shanghai 由 timedatectl 决定）
+OnCalendar=*-*-* 04:10:00
+# 错峰 2 分钟，避免和备份/整点任务同时抢资源；Persistent 保证关机后补跑
+RandomizedDelaySec=120
+Persistent=true
+Unit=fcmediaagent-regression.service
+
+[Install]
+WantedBy=timers.target

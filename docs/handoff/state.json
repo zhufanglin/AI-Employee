@@ -1,7 +1,7 @@
 {
   "project": "中科元晟 AI员工 0.4.29 完全复刻",
   "version": 1,
-  "updatedAt": "2026-11-11T06:34:19.688Z",
+  "updatedAt": "2026-11-12T08:00:30.465Z",
   "phase": "P10（先能用三件事）派工完成，看板 29/33",
   "phaseGoal": "用户要求先能用、定价后置：T-31 桌面端出图出片 / T-32 员工多步干活 / T-33 成本护栏 已派 Codex；dsh-lead 推主线（生产可用性收口 + 复核），T-11 渠道仍 blocked(env)。",
   "owners": {
@@ -3580,6 +3580,69 @@
       ],
       "createdAt": "2026-11-11T07:47:12.278Z",
       "updatedAt": "2026-11-11T07:47:12.289Z"
+    },
+    {
+      "id": "T-69",
+      "title": "T-69 dsh-lead P44 运维落地：备份/监控上线 + worker 心跳修复 + 恢复演练跑通 + admin 改密",
+      "status": "done",
+      "owner": "dsh-lead",
+      "scope": [],
+      "accept": "",
+      "blockedBy": [],
+      "createdAt": "2026-11-12T07:19:37.783Z",
+      "history": [
+        {
+          "at": "2026-11-12T07:19:38.351Z",
+          "by": "dsh-lead",
+          "what": "done: 完成"
+        }
+      ],
+      "finishedAt": "2026-11-12T07:19:37.906Z",
+      "result": "完成",
+      "lease": {
+        "reason": null
+      }
+    },
+    {
+      "id": "T-70",
+      "title": "T-70",
+      "status": "done",
+      "owner": "dsh-lead",
+      "scope": [],
+      "accept": "",
+      "blockedBy": [],
+      "createdAt": "2026-11-12T08:00:28.012Z",
+      "history": [
+        {
+          "at": "2026-11-12T08:00:28.943Z",
+          "by": "dsh-lead",
+          "what": "claim"
+        },
+        {
+          "at": "2026-11-12T08:00:29.914Z",
+          "by": "dsh-lead",
+          "what": "save: 服务端 legal 模块上线生产；桌面 LegalGate 同意闸门；market 商城页；publish-resilience；prod-regression timer；verify GREEN 29 步"
+        },
+        {
+          "at": "2026-11-12T08:00:30.465Z",
+          "by": "dsh-lead",
+          "what": "done: 完成"
+        }
+      ],
+      "lease": {
+        "at": "2026-11-12T08:00:28.942Z",
+        "heartbeat": "2026-11-12T08:00:29.914Z",
+        "reason": null
+      },
+      "checkpoint": {
+        "progress": [],
+        "notes": [
+          "08:00 服务端 legal 模块上线生产；桌面 LegalGate 同意闸门；market 商城页；publish-resilience；prod-regression timer；verify GREEN 29 步"
+        ],
+        "files": []
+      },
+      "finishedAt": "2026-11-12T08:00:30.464Z",
+      "result": "完成"
     }
   ],
   "primary": "dsh-lead",

@@ -104,6 +104,10 @@ if ($Smoke) {
     & $node "scripts\smoke-t11-result-page.mjs"
     $script:code = $LASTEXITCODE
   }
+  Step "smoke: P45 合规文本（协议/隐私/AIGC 标识）" {
+    & $node "scripts\smoke-legal.mjs"
+    $script:code = $LASTEXITCODE
+  }
   Step "smoke: W2" {
     & $node "scripts\smoke-w2.mjs"
     $script:code = $LASTEXITCODE
@@ -243,6 +247,10 @@ Step "smoke: T-19 员工执行器" {
     & $node "scripts\check-desktop-p32.mjs"
     if ($LASTEXITCODE -ne 0) { $script:code = $LASTEXITCODE; return }
     & $node "scripts\check-desktop-p33.mjs"
+    if ($LASTEXITCODE -ne 0) { $script:code = $LASTEXITCODE; return }
+    & $node "scripts\check-publish-resilience.mjs"
+    if ($LASTEXITCODE -ne 0) { $script:code = $LASTEXITCODE; return }
+    & $node "scripts\check-desktop-p45.mjs"
     $script:code = $LASTEXITCODE
   }
 }

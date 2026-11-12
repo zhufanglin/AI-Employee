@@ -26,6 +26,7 @@ import { WorkspaceModule } from "./workspace/workspace.module";
 import { MemoryModule } from "./memory/memory.module";
 import { StrategyModule } from "./strategy/strategy.module";
 import { ChatModule } from "./chat/chat.module";
+import { LegalModule } from "./legal/legal.module";
 
 @Module({
   imports: [
@@ -49,6 +50,7 @@ import { ChatModule } from "./chat/chat.module";
     MemoryModule,
     StrategyModule,
     ChatModule,
+    LegalModule,
   ],
   controllers: [HealthController],
   providers: [

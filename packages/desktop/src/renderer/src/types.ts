@@ -1,13 +1,31 @@
+/** P45 合规：三份对外文本的 key */
+export type LegalDocKey = 'terms' | 'privacy' | 'aigc'
+export type LegalDocMeta = { key: string; title: string; updatedAt: string }
+export type LegalMetaResult = { ok: boolean; version: string; docs: LegalDocMeta[]; error?: string }
+
 export type FcmApi = {
   info: () => Promise<{ version: string; platform: string; electron: string; apiBase: string }>
   settings: {
-    get: () => Promise<{ apiBase: string; user: any; hasToken: boolean; onboarded?: boolean }>
+    get: () => Promise<{
+      apiBase: string
+      user: any
+      hasToken: boolean
+      onboarded?: boolean
+      /** P45：客户端记住的已同意条款版本（与 legal.meta().version 比对） */
+      legalAcceptedVersion?: string
+    }>
     setApiBase: (v: string) => Promise<boolean>
     markOnboarded: () => Promise<boolean>
     /** P43：恢复默认设置（保留登录态） */
     reset: () => Promise<{ apiBase: string; hasToken: boolean; onboarded: boolean }>
     /** P43：把一段文本另存到用户选定位置 */
     saveTextFile: (p: { defaultName?: string; content?: string; extension?: string }) => Promise<{ canceled: boolean; path?: string }>
+  }
+  /** P45 合规文本：服务端 /api/legal 的版本与目录 */
+  legal: {
+    meta: () => Promise<LegalMetaResult>
+    accept: (version: string) => Promise<{ ok: boolean; legalAcceptedVersion: string }>
+    open: (key: LegalDocKey) => Promise<{ ok: boolean; url: string }>
   }
   // 客户端更新：状态推送走 onStatus，用户在设置页手动检查/下载/安装。
   update: {

@@ -1,6 +1,6 @@
 {
   "_readme": "P44 WP2 监控告警配置示例。复制为 /opt/fcmediaagent/ops/monitor.config.json（或脚本同目录 monitor.config.json，或 --config 指定）。文件不存在时脚本使用内置默认值；本文件里列出的就是默认值。以下划线开头的键只是说明，脚本会忽略。改完无需重启 timer，下一次运行即生效。",
-  "_check_order": "六项检查固定顺序：api_health, queue_backlog, worker_heartbeat, upstream_overdue, resources, backup_freshness",
+  "_check_order": "七项检查固定顺序：api_health, queue_backlog, worker_heartbeat, upstream_overdue, resources, backup_freshness, prod_regression",
 
   "timeZone": "Asia/Shanghai",
 
@@ -55,6 +55,13 @@
     "enabled": true,
     "backupDir": "/opt/fcmediaagent/backups/mysql",
     "maxAgeHours": 26
+  },
+
+  "appRegression": {
+    "_doc": "检查⑦生产回归检查。enabled=是否启用（默认 true）；jsonPath=prod-regression.mjs 的结果文件（默认 /opt/fcmediaagent/logs/regression.json）；maxAgeMinutes=结果超过多少分钟未更新即告警（默认 2160，即 36 小时，对应每天 04:10 跑一次 + 12 小时余量）。结果文件不存在时：生产机记 skip（未部署），开发机记 skip（本机无生产环境）；结果因 cron 漏跑而变旧时记 fail「回归检查 36 小时未跑」；结果 ok=false 时记 fail 并带第一条失败项。",
+    "enabled": true,
+    "jsonPath": "/opt/fcmediaagent/logs/regression.json",
+    "maxAgeMinutes": 2160
   },
 
   "alert": {

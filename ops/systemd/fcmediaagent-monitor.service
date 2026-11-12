@@ -1,5 +1,5 @@
 [Unit]
-Description=fcmediaagent 生产监控告警（P44 WP2：六项检查 + webhook 推送）
+Description=fcmediaagent 生产监控告警（P44 WP2：七项检查 + webhook 推送）
 Documentation=file:/opt/fcmediaagent/ops/README.md
 # 队列积压检查要 docker exec，先等 docker 起来
 Wants=network-online.target

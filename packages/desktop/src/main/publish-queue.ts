@@ -17,6 +17,13 @@
 
 import { existsSync, mkdirSync, readFileSync, renameSync, unlinkSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
+import {
+  PLATFORM_RETRY_DELAY_MS,
+  PLATFORM_RETRY_TIMES,
+  derivePublishStage,
+  isTransientPublishError,
+  transientErrorKind
+} from './publish-resilience'
 
 export type JobStatus = 'pending' | 'running' | 'done' | 'failed'
 
@@ -28,6 +35,14 @@ export interface PublishResult {
   url?: string
   /** 成功提示或中文失败原因 */
   message: string
+  /** 失败时的可诊断错误（与 message 同文案，供日志/脚本稳定读取） */
+  error?: string
+  /** 失败阶段：登录 / 准备 / 上传 / 填写 / 提交 / 判定 */
+  stage?: string
+  /** 平台 publish() 留下的失败截图路径（上传/填写/提交/判定各阶段） */
+  screenshots?: string[]
+  /** 该平台是否经过瞬时失败后的自动重试（true 表示至少重试过一次） */
+  retried?: boolean
 }
 
 export interface ScheduledJob {
@@ -54,6 +69,8 @@ export interface ScheduledJob {
   url?: string
   /** 失败原因或成功提示 */
   message?: string
+  /** 失败诊断：第一个失败平台的错误文案（未登录预检失败时与 result.message 完全一致） */
+  error?: string
   /** 迟到补跑时标记：到点时客户端没有开着 */
   late?: boolean
 }
@@ -63,11 +80,18 @@ export interface PublishQueueDeps {
   file: () => string
   /** 真正执行发布，通常是 platform.publish(input) */
   publish: (input: { platform: string; type: 'video' | 'image'; title: string; content: string; tags: string[]; mediaPaths: string[] }) => Promise<any>
+  /**
+   * 登录态预检，通常是 platform.status(platform, opts)。
+   * 发布前用 maxAgeMs: 0 绕过 PlatformManager 的 5 分钟 STATUS_CACHE_MS，避免拿着过期登录态去发。
+   */
+  status?: (platform: string, opts?: { maxAgeMs?: number }) => Promise<any>
   log?: (message: string) => void
   /** 状态变化时通知渲染层（main 里接 win.webContents.send） */
   notify?: (event: string, payload: any) => void
   /** 便于单测注入固定时间 */
   now?: () => number
+  /** 便于单测跳过 8 秒等待；默认 setTimeout */
+  sleep?: (ms: number) => Promise<void>
 }
 
 export const PLATFORMS = ['douyin', 'xiaohongshu', 'shipinhao'] as const
@@ -163,11 +187,18 @@ function loadResults(raw: any): PublishResult[] {
     const platform = text(item.platform)
     if (!PLATFORMS.includes(platform as any)) continue
     const ok = item.ok === true
+    const screenshots = Array.isArray(item.screenshots)
+      ? item.screenshots.map((shot: any) => text(shot)).filter(Boolean)
+      : undefined
     out.push({
       platform,
       ok,
       url: text(item.url) || undefined,
-      message: text(item.message) || (ok ? '发布成功' : '发布失败，原因未知')
+      message: text(item.message) || (ok ? '发布成功' : '发布失败，原因未知'),
+      error: text(item.error) || undefined,
+      stage: text(item.stage) || undefined,
+      screenshots: screenshots && screenshots.length > 0 ? screenshots : undefined,
+      retried: item.retried === true
     })
   }
   return out
@@ -185,8 +216,11 @@ export class PublishQueue {
   private jobs: ScheduledJob[] = []
   private loaded = false
   private running = false
+  private readonly deps: PublishQueueDeps
 
-  constructor(private readonly deps: PublishQueueDeps) {}
+  constructor(deps: PublishQueueDeps) {
+    this.deps = deps
+  }
 
   private filePath(): string {
     const path = this.deps.file()
@@ -220,7 +254,20 @@ export class PublishQueue {
       const raw = readFileSync(path, 'utf8').replace(/^\uFEFF/, '')
       const parsed = JSON.parse(raw)
       const items = Array.isArray(parsed?.jobs) ? parsed.jobs : []
+      // 上次进程在「运行中」被杀掉的任务：normalize 会把状态改回 pending，这里数一下便于留日志。
+      const interrupted = items.filter((item: any) => item && item.status === 'running').length
       this.jobs = items.map((item: any) => this.normalize(item)).filter(Boolean) as ScheduledJob[]
+      if (interrupted > 0) {
+        this.log(
+          `定时发布队列：${interrupted} 条上次中断的任务已从 running 恢复为 pending，已到点（含错过时间）的会立即重跑`
+        )
+        try {
+          // 立刻落盘，避免恢复后再次崩溃时盘上还留着 running。
+          this.save()
+        } catch (e) {
+          this.log('定时发布队列恢复后写盘失败（不影响本次启动）：' + text(e))
+        }
+      }
     } catch (e) {
       this.log('定时发布队列读取失败，已备份并从空队列开始：' + text(e))
       try {
@@ -255,6 +302,8 @@ export class PublishQueue {
       mediaPaths: Array.isArray(raw.mediaPaths) ? raw.mediaPaths.map((p: any) => text(p)).filter(Boolean) : toList(raw.mediaPaths),
       scheduledAt,
       // 上次退出时还在 running 的任务已经没有进程在跑了，回到 pending 重排一次。
+      // 注意：results 原样保留（loadResults），所以多平台崩溃后已完成的平台记录不会丢；
+      // runJob 真正开跑时会清空 results 重发所有平台（与手动 retry 的语义一致）。
       status: status === 'running' ? 'pending' : status,
       attempts: Number(raw.attempts) || 0,
       createdAt: text(raw.createdAt) || new Date(this.nowMs()).toISOString(),
@@ -262,6 +311,7 @@ export class PublishQueue {
       finishedAt: text(raw.finishedAt) || undefined,
       url: text(raw.url) || undefined,
       message: text(raw.message) || undefined,
+      error: text(raw.error) || undefined,
       late: raw.late === true
     }
   }
@@ -413,6 +463,7 @@ export class PublishQueue {
     job.startedAt = new Date(startedMs).toISOString()
     job.late = startedMs - parseWhen(job.scheduledAt) > LATE_MS
     job.message = undefined
+    job.error = undefined
     job.url = undefined
     // 重新跑就重发所有平台，先清空上一次尝试的中间结果（之后每发完一个会立刻写盘）。
     job.results = []
@@ -430,37 +481,18 @@ export class PublishQueue {
     }
 
     for (const platform of platforms) {
+      // 1) 发布前登录态预检：必须绕过 PlatformManager 的 5 分钟缓存，否则拿过期状态去发。
+      //    未登录直接记该平台失败，不抛异常，后面的平台继续发。
+      const notLoggedIn = await this.checkLoggedIn(platform)
       let result: PublishResult
-      try {
-        const published = await this.deps.publish({
-          platform,
-          type: job.type,
-          title: job.title,
-          content: job.content,
-          tags: job.tags,
-          mediaPaths: job.mediaPaths
-        })
-        const ok = published && (published.ok === true || published.success === true)
-        if (ok) {
-          result = {
-            platform,
-            ok: true,
-            url: text(published?.url) || undefined,
-            message: text(published?.message) || '发布成功'
-          }
-          this.log(`定时发布成功：${platformLabel(platform)} «${job.title}»${result.url ? ' → ' + result.url : ''}`)
-        } else {
-          result = {
-            platform,
-            ok: false,
-            message: text(published?.message) || text(published?.error) || '发布失败，原因未知'
-          }
-          this.log(`定时发布失败：${platformLabel(platform)} «${job.title}»：${result.message}`)
-        }
-      } catch (e) {
-        result = { platform, ok: false, message: text(e) || '发布失败，原因未知' }
-        this.log(`定时发布异常：${platformLabel(platform)} «${job.title}»：${result.message}`)
+      if (notLoggedIn) {
+        result = { platform, ok: false, message: notLoggedIn, error: notLoggedIn, stage: '登录' }
+        this.log(`定时发布跳过：${platformLabel(platform)} «${job.title}»：${notLoggedIn}`)
+      } else {
+        // 2) 真正发布；瞬时失败（超时/页面没响应/net::/target closed 等）同一平台最多自动重试 1 次。
+        result = await this.publishWithRetry(job, platform)
       }
+      if (!result.ok && !job.error) job.error = result.error || result.message
       job.results.push(result)
       // 单个平台一结束就落盘 + 通知界面，中途崩溃也能看到已完成哪几个。
       this.save()
@@ -501,6 +533,121 @@ export class PublishQueue {
     }
     this.save()
     this.notify('queue', { action: job.status === 'done' ? 'done' : 'failed', job })
+  }
+
+  private sleep(ms: number): Promise<void> {
+    if (this.deps.sleep) return this.deps.sleep(ms)
+    return new Promise((resolve) => setTimeout(resolve, ms))
+  }
+
+  /**
+   * 发布前登录态预检。
+   *   - 返回字符串 = 未登录（文案可直接展示，调用方直接记为失败）；
+   *   - 返回 undefined = 已登录，或没有注入 status / 预检本身异常（此时放行，让 publish 自己判登录，
+   *     避免「检查登录态」这种辅助步骤把本来能发的任务误杀）。
+   * maxAgeMs: 0 是关键：status() 默认复用 5 分钟缓存，用户刚退出登录时缓存还是 true。
+   */
+  private async checkLoggedIn(platform: string): Promise<string | undefined> {
+    if (!this.deps.status) return undefined
+    const label = platformLabel(platform)
+    try {
+      const list = await this.deps.status(platform, { maxAgeMs: 0 })
+      const all = Array.isArray(list) ? list : list ? [list] : []
+      const entry = all.find((item: any) => text(item?.platform) === platform) || all[0]
+      if (!entry) {
+        this.log(`[queue] ${label} 登录态预检没有返回结果，交给发布流程自行判定`)
+        return undefined
+      }
+      if (entry.loggedIn === true) return undefined
+      if (entry.error) this.log(`[queue] ${label} 登录态预检异常：${text(entry.error)}`)
+      return `${label}未登录，请到「平台发布」页点「扫码登录」后再试`
+    } catch (e) {
+      this.log(`[queue] ${label} 登录态预检失败，跳过预检直接发布：` + text(e))
+      return undefined
+    }
+  }
+
+  /**
+   * 执行一次平台发布并归一结果：成功/失败信息、失败阶段、截图都从 platform.publish() 的返回里取。
+   * platform.publish() 目前没有 stage 字段，但会返回 steps（每步 step/ok/detail）和 screenshots，
+   * 所以在 queue 侧用 derivePublishStage(steps, message) 补出「上传/填写/提交/判定」。
+   */
+  private async publishOnce(job: ScheduledJob, platform: string): Promise<PublishResult> {
+    try {
+      const published = await this.deps.publish({
+        platform,
+        type: job.type,
+        title: job.title,
+        content: job.content,
+        tags: job.tags,
+        mediaPaths: job.mediaPaths
+      })
+      const ok = published && (published.ok === true || published.success === true)
+      const screenshots = Array.isArray(published?.screenshots)
+        ? published.screenshots.map((shot: any) => text(shot)).filter(Boolean)
+        : []
+      if (ok) {
+        const message = text(published?.message) || '发布成功'
+        this.log(`定时发布成功：${platformLabel(platform)} «${job.title}»${published?.url ? ' → ' + published.url : ''}`)
+        return {
+          platform,
+          ok: true,
+          url: text(published?.url) || undefined,
+          message,
+          screenshots: screenshots.length > 0 ? screenshots : undefined
+        }
+      }
+      const message = text(published?.message) || text(published?.error) || '发布失败，原因未知'
+      // 先透传 publish 自带的 stage（如果以后 platform.ts 加了）；没有就从 steps/文案推断。
+      const stage = text(published?.stage) || derivePublishStage(published?.steps, message)
+      this.log(`定时发布失败：${platformLabel(platform)} «${job.title}» [${stage}]：${message}`)
+      return {
+        platform,
+        ok: false,
+        message,
+        error: message,
+        stage,
+        screenshots: screenshots.length > 0 ? screenshots : undefined
+      }
+    } catch (e) {
+      const message = text(e) || '发布失败，原因未知'
+      this.log(`定时发布异常：${platformLabel(platform)} «${job.title}» [${derivePublishStage([], message)}]：${message}`)
+      return {
+        platform,
+        ok: false,
+        message,
+        error: message,
+        stage: derivePublishStage([], message)
+      }
+    }
+  }
+
+  /**
+   * 同一平台失败后的有限自动重试：只有瞬时特征才重试，最多 PLATFORM_RETRY_TIMES 次，
+   * 每次前等 PLATFORM_RETRY_DELAY_MS。一旦重试过就在结果里标 retried=true（重试成功也标）。
+   * 稳定的业务失败（未选中图片/标题过长/未登录）一次就停。
+   */
+  private async publishWithRetry(job: ScheduledJob, platform: string): Promise<PublishResult> {
+    let result = await this.publishOnce(job, platform)
+    let retriedTimes = 0
+    while (
+      !result.ok &&
+      retriedTimes < PLATFORM_RETRY_TIMES &&
+      isTransientPublishError(result.error || result.message)
+    ) {
+      retriedTimes += 1
+      const kind = transientErrorKind(result.error || result.message) || '瞬时失败'
+      this.log(
+        `定时发布遇到瞬时故障（${kind}），${Math.round(PLATFORM_RETRY_DELAY_MS / 1000)} 秒后自动重试 ` +
+          `${platformLabel(platform)}（第 ${retriedTimes}/${PLATFORM_RETRY_TIMES} 次）：${result.message}`
+      )
+      this.notify('queue', { action: 'retrying', job, platform, attempt: retriedTimes, kind })
+      await this.sleep(PLATFORM_RETRY_DELAY_MS)
+      result = await this.publishOnce(job, platform)
+      // 只要重试过就标记，方便界面/日志区分「一次就成」和「重试后才成」。
+      result.retried = true
+    }
+    return result
   }
 }
 

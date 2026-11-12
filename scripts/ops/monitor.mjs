@@ -2,13 +2,14 @@
 /**
  * P44 WP2 生产监控告警（Node 24 纯内置，零依赖）
  *
- * 六项检查：
+ * 七项检查：
  *   1. api_health         GET http://127.0.0.1:3000/api/health，非 200 或 db!=up
  *   2. queue_backlog      docker exec fcm-mysql mysql 统计超时 queued 任务数
  *   3. worker_heartbeat   worker.log mtime 超过阈值分钟
  *   4. upstream_overdue   最近 N 行日志出现 AccountOverdueError
  *   5. resources          磁盘 / 使用率、可用内存
  *   6. backup_freshness   最新 *.sql.gz 超过阈值小时
+ *   7. prod_regression    每日回归结果 regression.json 未跑/失败
  *
  * 用法：
  *   node monitor.mjs --once                 单跑一次（默认，供 systemd timer 调用）
@@ -32,7 +33,7 @@ const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
 const IS_LINUX = process.platform === 'linux';
 const PROD_ENV_FILE = '/opt/fcmediaagent/app/.env';
 
-const CHECK_ORDER = ['api_health', 'queue_backlog', 'worker_heartbeat', 'upstream_overdue', 'resources', 'backup_freshness'];
+const CHECK_ORDER = ['api_health', 'queue_backlog', 'worker_heartbeat', 'upstream_overdue', 'resources', 'backup_freshness', 'prod_regression'];
 
 const CHECK_LABELS = {
   api_health: 'API 健康',
@@ -41,6 +42,7 @@ const CHECK_LABELS = {
   upstream_overdue: '上游欠费',
   resources: '磁盘/内存',
   backup_freshness: '备份新鲜度',
+  prod_regression: '生产回归检查',
 };
 
 const DEFAULTS = {
@@ -82,6 +84,11 @@ const DEFAULTS = {
     enabled: true,
     backupDir: '/opt/fcmediaagent/backups/mysql',
     maxAgeHours: 26,
+  },
+  appRegression: {
+    enabled: true,
+    jsonPath: '/opt/fcmediaagent/logs/regression.json',
+    maxAgeMinutes: 2160,
   },
   alert: {
     webhookUrl: '',
@@ -702,6 +709,81 @@ async function checkBackupFreshness(ctx) {
   return pass('最新备份 ' + newest.name + ' 距今 ' + ageHours + ' 小时（阈值 ' + maxAgeHours + ' 小时）', detail);
 }
 
+/* ------------------------------------------------------------------ */
+/* 检查 7：生产回归检查（读取 prod-regression.mjs 的结果）              */
+/* ------------------------------------------------------------------ */
+
+function formatMinutes(minutes) {
+  const n = Number(minutes);
+  if (!Number.isFinite(n)) return String(minutes);
+  if (n >= 120) {
+    const hours = Math.round(n / 6) / 10;
+    return hours + ' 小时';
+  }
+  return Math.round(n) + ' 分钟';
+}
+
+function firstFailedMessage(checks) {
+  if (!Array.isArray(checks)) return '';
+  for (const c of checks) {
+    if (!c || c.ok !== false) continue;
+    const d = c.detail;
+    if (d && typeof d === 'object' && d.message) return String(d.message);
+    return String(c.name || '未知检查项') + ' 失败';
+  }
+  return '';
+}
+
+async function checkProdRegression(ctx) {
+  const c = ctx.config.appRegression || {};
+  if (!c.enabled) return skipped('配置已禁用（appRegression.enabled=false）');
+  const jsonPath = String(c.jsonPath || DEFAULTS.appRegression.jsonPath);
+  const maxAgeMinutes = positiveNumber(c.maxAgeMinutes, 2160);
+  let text;
+  try {
+    text = await fsp.readFile(jsonPath, 'utf8');
+  } catch (err) {
+    if (err && err.code === 'ENOENT') {
+      if (!IS_LINUX) return skipped('本机无生产环境：' + jsonPath + ' 不存在，需要生产环境');
+      return skipped('回归检查结果不存在（未部署）：' + jsonPath, { jsonPath: jsonPath });
+    }
+    return fail('无法读取回归结果：' + describeError(err), { jsonPath: jsonPath });
+  }
+  let data;
+  try {
+    data = JSON.parse(text.replace(/^\uFEFF/, ''));
+  } catch (err) {
+    return fail('回归结果不是合法 JSON：' + describeError(err), { jsonPath: jsonPath });
+  }
+  if (!data || typeof data !== 'object' || Array.isArray(data)) {
+    return fail('回归结果结构不合法（期望对象）', { jsonPath: jsonPath });
+  }
+  const atMs = Date.parse(String(data.at || ''));
+  if (!Number.isFinite(atMs)) {
+    return fail('回归结果缺少合法的 at 时间：' + truncate(data.at, 64), { jsonPath: jsonPath, at: data.at });
+  }
+  const checks = Array.isArray(data.checks) ? data.checks : [];
+  const ageMinutes = round1((Date.now() - atMs) / 60000);
+  const failedCount = checks.filter((x) => x && x.ok === false).length;
+  const detail = {
+    jsonPath: jsonPath,
+    at: data.at,
+    ageMinutes: ageMinutes,
+    maxAgeMinutes: maxAgeMinutes,
+    total: Number.isFinite(Number(data.total)) ? Number(data.total) : checks.length,
+    failed: failedCount,
+    baseUrl: data.baseUrl || '',
+  };
+  if (ageMinutes > maxAgeMinutes) {
+    return fail('回归检查 ' + formatMinutes(ageMinutes) + '未跑（阈值 ' + formatMinutes(maxAgeMinutes) + '）', detail);
+  }
+  if (data.ok !== true || failedCount > 0) {
+    const reason = firstFailedMessage(checks) || (data.ok === false ? '结果标记 ok=false' : '结果不是 ok=true');
+    return fail('回归检查失败：' + truncate(reason, 200), detail);
+  }
+  return pass('回归检查通过：' + detail.total + ' 项全绿（' + formatMinutes(ageMinutes) + '前）', detail);
+}
+
 const CHECKS = {
   api_health: checkApiHealth,
   queue_backlog: checkQueueBacklog,
@@ -709,6 +791,7 @@ const CHECKS = {
   upstream_overdue: checkUpstreamOverdue,
   resources: checkResources,
   backup_freshness: checkBackupFreshness,
+  prod_regression: checkProdRegression,
 };
 
 /* ------------------------------------------------------------------ */
@@ -996,8 +1079,13 @@ async function main() {
       for (const e of entries) await appendLog(logFile, e);
       await appendLog(logFile, summary);
     } catch (err) {
-      logWriteFailed = true;
-      console.error('[monitor] 写监控日志失败：' + describeError(err) + '（文件：' + logFile + '）');
+      // 开发机（Windows/macOS）没有 /opt 生产目录：降级为警告，不把整轮检查判失败。
+      if (!IS_LINUX) {
+        console.error('[monitor] 本机无生产日志目录，跳过写日志（不影响检查结果）：' + describeError(err) + '（文件：' + logFile + '）');
+      } else {
+        logWriteFailed = true;
+        console.error('[monitor] 写监控日志失败：' + describeError(err) + '（文件：' + logFile + '）');
+      }
     }
   }
 
@@ -1006,7 +1094,8 @@ async function main() {
     try {
       await saveState(stateFile, state);
     } catch (err) {
-      console.error('[monitor] 写 state 失败：' + describeError(err) + '（文件：' + stateFile + '）');
+      // 同日志：开发机没有 /opt 目录，降级为警告。
+      console.error('[monitor] 写 state 失败' + (IS_LINUX ? '：' : '（本机无生产目录，已忽略）：') + describeError(err) + '（文件：' + stateFile + '）');
     }
   }
 

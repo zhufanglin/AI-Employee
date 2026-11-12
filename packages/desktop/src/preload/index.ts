@@ -43,6 +43,12 @@ const api = {
     me: () => ipcRenderer.invoke('auth:me')
   },
   site: { config: () => ipcRenderer.invoke('site:config') },
+  // 合规文本（P45）：版本元信息 / 打开协议原文 / 记录同意。全部返回 { ok, ... }。
+  legal: {
+    meta: () => ipcRenderer.invoke('legal:meta'),
+    accept: (version: string) => ipcRenderer.invoke('legal:accept', version),
+    open: (key: 'terms' | 'privacy' | 'aigc') => ipcRenderer.invoke('legal:open', key)
+  },
   models: () => ipcRenderer.invoke('compute:models'),
   credits: {
     balance: () => ipcRenderer.invoke('credits:balance'),

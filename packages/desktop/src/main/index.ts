@@ -21,7 +21,15 @@ installConsoleFileLog()
 
 const DEFAULT_API_BASE = process.env.FCM_API_BASE || 'https://ai.fcmediaagent.com/api'
 
-type Settings = { apiBase: string; token?: string; user?: any; onboarded?: boolean }
+// P45 合规：服务端 /api/legal 拿不到版本时的兜底（只用于离线时仍能展示条款入口，不替代服务端正文）
+const LEGAL_FALLBACK_VERSION = '2026-11-12'
+const LEGAL_FALLBACK_DOCS = [
+  { key: 'terms', title: '用户协议', updatedAt: LEGAL_FALLBACK_VERSION },
+  { key: 'privacy', title: '隐私政策', updatedAt: LEGAL_FALLBACK_VERSION },
+  { key: 'aigc', title: 'AI 生成内容标识说明', updatedAt: LEGAL_FALLBACK_VERSION }
+]
+
+type Settings = { apiBase: string; token?: string; user?: any; onboarded?: boolean; legalAcceptedVersion?: string }
 
 let settings: Settings = { apiBase: DEFAULT_API_BASE }
 let win: BrowserWindow | null = null
@@ -365,8 +373,39 @@ function registerIpc() {
     apiBase: settings.apiBase
   }))
 
-  ipcMain.handle('settings:get', () => ({ apiBase: settings.apiBase, user: settings.user, hasToken: !!settings.token, onboarded: !!settings.onboarded }))
+  ipcMain.handle('settings:get', () => ({
+    apiBase: settings.apiBase,
+    user: settings.user,
+    hasToken: !!settings.token,
+    onboarded: !!settings.onboarded,
+    // P45 合规：客户端记录用户同意的条款版本；版本号变了（协议更新）会重新弹一次同意
+    legalAcceptedVersion: settings.legalAcceptedVersion || ''
+  }))
   ipcMain.handle('settings:set-api-base', (_e, apiBase: string) => { settings.apiBase = apiBase; saveSettings(); return true })
+
+  // P45 合规基线：协议/隐私/AIGC 说明的版本元信息、外链打开、同意记录。
+  // 版本号由服务端给出（服务端改了条款正文，版本号会变，客户端就会重新弹同意）。
+  ipcMain.handle('legal:meta', async () => {
+    try {
+      const r = await api('/legal', { auth: false })
+      return { ok: true, version: String(r?.version || ''), docs: Array.isArray(r?.docs) ? r.docs : [] }
+    } catch (e: any) {
+      // 网络不通时不能让用户卡在启动页：用内置兜底版本号，页面本身仍可点开（打开的是线上地址）
+      return { ok: false, version: LEGAL_FALLBACK_VERSION, docs: LEGAL_FALLBACK_DOCS, error: String(e?.message || e) }
+    }
+  })
+  ipcMain.handle('legal:accept', (_e, version: string) => {
+    settings.legalAcceptedVersion = String(version || LEGAL_FALLBACK_VERSION)
+    saveSettings()
+    return { ok: true, legalAcceptedVersion: settings.legalAcceptedVersion }
+  })
+  ipcMain.handle('legal:open', async (_e, key: string) => {
+    const path = '/legal/' + String(key || 'terms').replace(/[^a-z-]/gi, '')
+    const origin = settings.apiBase.replace(/\/api\/?$/, '')
+    const url = origin + '/api' + path
+    await shell.openExternal(url)
+    return { ok: true, url }
+  })
 
   ipcMain.handle('auth:sms-send', (_e, phone: string) => api('/auth/sms/send', { method: 'POST', auth: false, body: JSON.stringify({ phone }) }))
   ipcMain.handle('auth:sms-login', async (_e, p: { phone: string; code: string }) => {
@@ -530,6 +569,8 @@ function registerIpc() {
   queue = new PublishQueue({
     file: () => defaultQueuePath(app.getPath('userData')),
     publish: (input: any) => platform!.publish(input),
+    // 发布前登录态预检：queue 会传 maxAgeMs: 0 绕过 PlatformManager 的 5 分钟缓存（STATUS_CACHE_MS）。
+    status: (id: string, opts?: { maxAgeMs?: number }) => platform!.status(id, opts),
     log: (message: string) => console.log('[queue] ' + message),
     notify: (event: string, payload: any) => {
       if (win && !win.isDestroyed()) win.webContents.send('queue:event', { event, payload })

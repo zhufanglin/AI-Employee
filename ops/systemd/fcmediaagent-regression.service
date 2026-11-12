@@ -1,0 +1,32 @@
+[Unit]
+Description=fcmediaagent 生产回归检查（P44 第三波：只读低成本回归）
+Documentation=file:/opt/fcmediaagent/ops/README.md
+# 只依赖本机 api，不碰 docker；等网络与 api 就绪即可
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+# 需要 root：结果文件与日志写在 /opt/fcmediaagent/logs
+User=root
+Group=root
+WorkingDirectory=/opt/fcmediaagent
+Environment=NODE_ENV=production
+Environment=TZ=Asia/Shanghai
+# 生产 Node 绝对路径：非交互环境没有 PATH
+ExecStart=/opt/node/bin/node /opt/fcmediaagent/ops/prod-regression.mjs --quiet
+# 退出码语义：0=全部通过；1=有检查项失败（结果同时写入 regression.json）
+TimeoutStartSec=180
+# 低优先级，别和 api/worker 抢资源
+Nice=10
+IOSchedulingClass=idle
+
+# 逐次追加到回归日志；脚本自己也会 append 一行摘要
+StandardOutput=append:/opt/fcmediaagent/logs/regression.log
+StandardError=append:/opt/fcmediaagent/logs/regression.log
+
+# 失败不自动重试：次日 timer 会再来一次，重试只会放大日志
+Restart=no
+
+[Install]
+WantedBy=multi-user.target
