@@ -23,10 +23,12 @@
   },
 
   "workerHeartbeat": {
-    "_doc": "检查③worker 心跳。logPath=worker 日志路径（默认 /opt/fcmediaagent/logs/worker.log）；maxIdleMinutes=日志 mtime 超过多少分钟没更新即告警（默认 10，需大于 worker 空转时最长的日志间隔）。",
+    "_doc": "检查③worker 心跳。worker 只在有任务时才写日志，所以分两档：logPath=worker 日志路径（默认 /opt/fcmediaagent/logs/worker.log）；maxIdleMinutes=日志 mtime 新鲜区（默认 45，worker 每 30 分钟打一行 idle 心跳日志）；maxIdleAlertMinutes=日志停更多久才真正告警（默认 360，即 6 小时）；serviceName=systemd 服务名（默认 fcmediaagent-worker），inactive/failed 立即告警。",
     "enabled": true,
     "logPath": "/opt/fcmediaagent/logs/worker.log",
-    "maxIdleMinutes": 10
+    "maxIdleMinutes": 45,
+    "maxIdleAlertMinutes": 360,
+    "serviceName": "fcmediaagent-worker"
   },
 
   "upstreamOverdue": {

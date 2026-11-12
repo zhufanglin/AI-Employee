@@ -62,7 +62,9 @@ const DEFAULTS = {
   workerHeartbeat: {
     enabled: true,
     logPath: '/opt/fcmediaagent/logs/worker.log',
-    maxIdleMinutes: 10,
+    maxIdleMinutes: 45,
+    maxIdleAlertMinutes: 360,
+    serviceName: 'fcmediaagent-worker',
   },
   upstreamOverdue: {
     enabled: true,
@@ -466,27 +468,57 @@ async function checkWorkerHeartbeat(ctx) {
   const c = ctx.config.workerHeartbeat || {};
   if (!c.enabled) return skipped('配置已禁用（workerHeartbeat.enabled=false）');
   const logPath = String(c.logPath || DEFAULTS.workerHeartbeat.logPath);
-  const maxIdle = positiveNumber(c.maxIdleMinutes, 10);
+  const maxIdle = positiveNumber(c.maxIdleMinutes, 45);
+  // worker 只在有任务时才写日志：空闲一段时间是正常状态，所以「日志停更」分两档：
+  //   maxIdleMinutes     以内 → 完全正常
+  //   maxIdleAlertMinutes 以内 → 进程存活、空闲无日志（ok，message 里说明）
+  //   超过               → 疑似卡死，告警
+  const maxIdleAlert = positiveNumber(c.maxIdleAlertMinutes, 360);
+  const serviceName = String(c.serviceName || DEFAULTS.workerHeartbeat.serviceName);
   let st;
   try {
     st = await fsp.stat(logPath);
   } catch (err) {
     if (err && err.code === 'ENOENT') {
       if (!IS_LINUX) return skipped('本机无生产环境：' + logPath + ' 不存在，需要生产环境');
-      return fail('worker 日志不存在：' + logPath, { logPath: logPath });
+      return fail('worker 日志不存在：' + logPath, { logPath: logPath, serviceName: serviceName });
     }
-    return fail('无法读取 worker 日志状态：' + describeError(err), { logPath: logPath });
+    return fail('无法读取 worker 日志状态：' + describeError(err), { logPath: logPath, serviceName: serviceName });
   }
   const idleMinutes = round1((Date.now() - st.mtimeMs) / 60000);
+  // 用 systemd 状态兜底判断「进程是否还活着」（不依赖日志）
+  let serviceState = '';
+  if (IS_LINUX) {
+    const r = await runCmd('systemctl', ['is-active', serviceName], { timeoutMs: 10000 });
+    const out = String(r.stdout || '').trim().split(/\r?\n/)[0];
+    if (['active', 'inactive', 'failed', 'activating', 'deactivating', 'reloading'].indexOf(out) >= 0) {
+      serviceState = out;
+    }
+  }
   const detail = {
     logPath: logPath,
     idleMinutes: idleMinutes,
     maxIdleMinutes: maxIdle,
+    maxIdleAlertMinutes: maxIdleAlert,
+    serviceName: serviceName,
+    serviceState: serviceState || 'unknown',
     mtime: new Date(st.mtimeMs).toISOString(),
     sizeBytes: st.size,
   };
+  if (serviceState === 'inactive' || serviceState === 'failed') {
+    return fail('worker 服务未运行（' + serviceName + '：' + serviceState + '），日志 ' + idleMinutes + ' 分钟未更新', detail);
+  }
+  if (idleMinutes > maxIdleAlert) {
+    return fail(
+      'worker 日志 ' + idleMinutes + ' 分钟未更新（上限 ' + maxIdleAlert + ' 分钟）' + (serviceState ? '，进程状态 ' + serviceState : '') + '，疑似卡死',
+      detail,
+    );
+  }
   if (idleMinutes > maxIdle) {
-    return fail('worker 日志 ' + idleMinutes + ' 分钟未更新（阈值 ' + maxIdle + ' 分钟）', detail);
+    return pass(
+      'worker 进程存活' + (serviceState ? '（' + serviceName + ' ' + serviceState + '）' : '') + '，空闲 ' + idleMinutes + ' 分钟无日志（无任务时不写日志，超过 ' + maxIdleAlert + ' 分钟才告警）',
+      detail,
+    );
   }
   return pass('worker 日志 ' + idleMinutes + ' 分钟前更新（阈值 ' + maxIdle + ' 分钟）', detail);
 }

@@ -213,11 +213,38 @@ run_sql() {
     --default-character-set=utf8mb4 -N -B -e "$1"
 }
 
-create_db() {
-  local name="$1"
-  if ! run_sql "CREATE DATABASE IF NOT EXISTS $name DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;" >/dev/null; then
-    die "创建数据库 $name 失败（检查数据库账号是否有 CREATE 权限）"
+# 容器内 root 凭据：应用账号 fcm 只有自己库的权限，建临时库/删临时库需要 root。
+# root 密码从容器 env MYSQL_ROOT_PASSWORD 读，只在容器内 shell 里展开，不进 docker argv、不进日志。
+have_root_creds() {
+  docker exec "$CONTAINER" sh -c 'test -n "${MYSQL_ROOT_PASSWORD:-}"' >/dev/null 2>&1
+}
+
+run_sql_root() {
+  docker exec -e "MYSQL_PWD=" "$CONTAINER" sh -c 'MYSQL_PWD="${MYSQL_ROOT_PASSWORD:-}" exec mysql -h 127.0.0.1 -P "$1" -u root --default-character-set=utf8mb4 -N -B -e "$2"' sh "$INNER_PORT" "$1"
+}
+
+# 当前 SQL 执行身份：app=应用账号 / root=容器内 root（演练建库后自动切换）
+SQL_AS_ROOT=0
+run_sql_as() {
+  if (( SQL_AS_ROOT == 1 )); then
+    run_sql_root "$1"
+  else
+    run_sql "$1"
   fi
+}
+
+create_db() {
+  local name="$1" sql
+  sql="CREATE DATABASE IF NOT EXISTS $name DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+  if run_sql "$sql" >/dev/null 2>&1; then
+    return 0
+  fi
+  if have_root_creds && run_sql_root "$sql" >/dev/null 2>&1; then
+    SQL_AS_ROOT=1
+    log "提示：账号 $DB_USER 无建库权限，已切换为容器内 root 执行演练（仅影响临时库，生产库不受影响）"
+    return 0
+  fi
+  die "创建数据库 $name 失败：账号 $DB_USER 无 CREATE 权限，容器内 root 凭据也不可用（可用 docker exec $CONTAINER mysql -uroot -p 手工建库并授权）"
 }
 
 resolve_mode() {
@@ -238,9 +265,21 @@ resolve_mode() {
 import_dump() {
   local file="$1" target="$2" mode="$3"
   local -a cmd
-  cmd=(docker exec -i -e "MYSQL_PWD=$DB_PASS" "$CONTAINER" mysql
-    -h 127.0.0.1 -P "$INNER_PORT" -u "$DB_USER" --default-character-set=utf8mb4)
+  if (( SQL_AS_ROOT == 1 )); then
+    # root 分支：mysql 在容器内 sh 里启动，密码取自容器 env，不进 argv
+    cmd=(docker exec -i -e "MYSQL_PWD=" "$CONTAINER" sh -c 'MYSQL_PWD="${MYSQL_ROOT_PASSWORD:-}" exec mysql -h 127.0.0.1 -P "$1" -u root --default-character-set=utf8mb4' sh "$INNER_PORT")
+  else
+    cmd=(docker exec -i -e "MYSQL_PWD=$DB_PASS" "$CONTAINER" mysql
+      -h 127.0.0.1 -P "$INNER_PORT" -u "$DB_USER" --default-character-set=utf8mb4)
+  fi
   if [[ "$mode" == "target-arg" ]]; then
+    if (( SQL_AS_ROOT == 1 )); then
+      # root 分支无法把库名作为位置参数透传（会被 sh -c 吃掉），改为在流前面插一行 USE
+      if ! gunzip -c "$file" | sed -e "1i USE \`$target\`;" | "${cmd[@]}"; then
+        return 1
+      fi
+      return 0
+    fi
     cmd+=("$target")
   fi
   if [[ "$mode" == "rewrite" ]]; then
@@ -257,19 +296,23 @@ import_dump() {
 
 show_overview() {
   local target="$1" cnt list
-  cnt="$(run_sql "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = '$target' AND table_type = 'BASE TABLE';" 2>/dev/null || true)"
+  cnt="$(run_sql_as "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = '$target' AND table_type = 'BASE TABLE';" 2>/dev/null || true)"
   if [[ -z "$cnt" ]]; then
     log "警告：统计表数量失败（可能权限不足），跳过行数概览"
     return 0
   fi
   log "表数量：$cnt"
-  list="$(run_sql "SET SESSION group_concat_max_len = 1048576; SELECT GROUP_CONCAT(CONCAT('SELECT ''', table_name, ''' AS tbl, COUNT(*) AS rows_cnt FROM ', CHAR(96), table_name, CHAR(96)) SEPARATOR ' UNION ALL ') FROM information_schema.tables WHERE table_schema = '$target' AND table_type = 'BASE TABLE';" 2>/dev/null || true)"
+  list="$(run_sql_as "SET SESSION group_concat_max_len = 1048576; SELECT GROUP_CONCAT(CONCAT('SELECT ''', table_name, ''' AS tbl, COUNT(*) AS rows_cnt FROM ', CHAR(96), table_schema, CHAR(96), '.', CHAR(96), table_name, CHAR(96)) SEPARATOR ' UNION ALL ') FROM information_schema.tables WHERE table_schema = '$target' AND table_type = 'BASE TABLE';" 2>/dev/null || true)"
   if [[ -z "$list" || "$list" == "NULL" ]]; then
     log "（库里没有可统计的表）"
     return 0
   fi
   echo "---------------- 每张表行数（精确 COUNT(*)）----------------"
-  docker exec -e "MYSQL_PWD=$DB_PASS" "$CONTAINER" mysql -h 127.0.0.1 -P "$INNER_PORT" -u "$DB_USER" --default-character-set=utf8mb4 -t -e "$list" || log "警告：行数统计失败（表太多或权限不足），不影响导入结果"
+  if (( SQL_AS_ROOT == 1 )); then
+    docker exec -e "MYSQL_PWD=" "$CONTAINER" sh -c 'MYSQL_PWD="${MYSQL_ROOT_PASSWORD:-}" exec mysql -h 127.0.0.1 -P "$1" -u root --default-character-set=utf8mb4 -t -e "$2"' sh "$INNER_PORT" "$list" || log "警告：行数统计失败（表太多或权限不足），不影响导入结果"
+  else
+    docker exec -e "MYSQL_PWD=$DB_PASS" "$CONTAINER" mysql -h 127.0.0.1 -P "$INNER_PORT" -u "$DB_USER" --default-character-set=utf8mb4 -t -e "$list" || log "警告：行数统计失败（表太多或权限不足），不影响导入结果"
+  fi
   echo "-----------------------------------------------------------"
 }
 
@@ -278,9 +321,10 @@ ask_confirm() {
   if [[ -t 0 ]]; then
     printf '%s' "$prompt"
     IFS= read -r ans || ans=""
-  elif [[ -r /dev/tty ]]; then
-    printf '%s' "$prompt" >/dev/tty
-    IFS= read -r ans </dev/tty || ans=""
+  elif { : < /dev/tty; } 2>/dev/null; then
+    # -r /dev/tty 在无控制终端（ssh 非交互）下也返回真，必须真去打开一次才算能问
+    printf '%s' "$prompt" >/dev/tty 2>/dev/null || true
+    IFS= read -r ans </dev/tty 2>/dev/null || ans=""
   else
     printf '%s' "$prompt"
     IFS= read -r ans || ans=""
@@ -296,9 +340,10 @@ ask_exact_yes() {
   if [[ -t 0 ]]; then
     printf '%s' "$prompt"
     IFS= read -r ans || ans=""
-  elif [[ -r /dev/tty ]]; then
-    printf '%s' "$prompt" >/dev/tty
-    IFS= read -r ans </dev/tty || ans=""
+  elif { : < /dev/tty; } 2>/dev/null; then
+    # -r /dev/tty 在无控制终端（ssh 非交互）下也返回真，必须真去打开一次才算能问
+    printf '%s' "$prompt" >/dev/tty 2>/dev/null || true
+    IFS= read -r ans </dev/tty 2>/dev/null || ans=""
   else
     printf '%s' "$prompt"
     IFS= read -r ans || ans=""
@@ -470,18 +515,27 @@ if (( APPLY == 0 )); then
   create_db "$TARGET_DB"
   log "开始导入（gunzip -c 管道，全程不落盘解压；大库可能要几分钟）..."
   if ! import_dump "$FILE" "$TARGET_DB" "$MODE"; then
-    die "演练导入失败：备份可能损坏、账号权限不足或磁盘已满（df -h 确认）。临时库 $TARGET_DB 已保留以便排查"
+    # 应用账号可能对新库没有写权限：有容器内 root 凭据就切过去重试一次
+    if (( SQL_AS_ROOT == 0 )) && have_root_creds; then
+      SQL_AS_ROOT=1
+      log "提示：账号 $DB_USER 导入失败，改用容器内 root 重试（只写临时库 $TARGET_DB）"
+      if ! import_dump "$FILE" "$TARGET_DB" "$MODE"; then
+        die "演练导入失败：备份可能损坏、磁盘已满或 root 也无权限（df -h 确认）。临时库 $TARGET_DB 已保留以便排查"
+      fi
+    else
+      die "演练导入失败：备份可能损坏、账号权限不足或磁盘已满（df -h 确认）。临时库 $TARGET_DB 已保留以便排查"
+    fi
   fi
   show_overview "$TARGET_DB"
   if ask_confirm "是否删除临时库 $TARGET_DB？[y/N] "; then
-    if run_sql "DROP DATABASE IF EXISTS $TARGET_DB;" >/dev/null; then
+    if run_sql_as "DROP DATABASE IF EXISTS $TARGET_DB;" >/dev/null; then
       log "已删除临时库 $TARGET_DB"
     else
-      log "警告：删除临时库失败，请手工执行：docker exec $CONTAINER mysql -uroot -p -e 'DROP DATABASE $TARGET_DB;'"
+      log "警告：删除临时库失败，请手工执行：docker exec -e MYSQL_PWD= $CONTAINER sh -c 'MYSQL_PWD=\"\$MYSQL_ROOT_PASSWORD\" mysql -uroot -e \"DROP DATABASE IF EXISTS $TARGET_DB;\"'"
     fi
   else
     log "已保留临时库 $TARGET_DB（排查用）"
-    log "清理命令：docker exec $CONTAINER mysql -uroot -p -e 'DROP DATABASE IF EXISTS $TARGET_DB;'"
+    log "清理命令：docker exec -e MYSQL_PWD= $CONTAINER sh -c 'MYSQL_PWD=\"\$MYSQL_ROOT_PASSWORD\" mysql -uroot -e \"DROP DATABASE IF EXISTS $TARGET_DB;\"'"
   fi
   log "=== 演练完成：备份可正常导入，生产库未被修改 ==="
   exit 0

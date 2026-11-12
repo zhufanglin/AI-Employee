@@ -16,6 +16,10 @@ const REQ_TIMEOUT_MS = Number(process.env.FCM_REQ_TIMEOUT_MS || 180000);
 // 拉任务/心跳仍用 REQ_TIMEOUT_MS，避免长超时把轮询卡住。
 const TOOL_TIMEOUT_MS = Number(process.env.FCM_TOOL_TIMEOUT_MS || 600000);
 const HEARTBEAT_MS = 30000;
+// 空闲心跳日志：worker 只在有任务时才有日志输出，运维监控无法区分「空闲」与「卡死」。
+// 每 N 毫秒（默认 30 分钟）在空闲时打一行 idle 日志，作为进程存活的心跳证据。
+const IDLE_LOG_MS = Number(process.env.FCM_IDLE_LOG_MS || 1800000);
+let lastIdleLog = 0;
 const MAX_OUTPUT = 200000;
 
 let token = process.env.FCM_TOKEN || "";
@@ -188,6 +192,10 @@ async function heartbeat() {
       method: "POST",
       body: JSON.stringify({ deviceId: DEVICE_ID, executor: "cloud", metadata: { host: process.env.HOSTNAME || "staging", runtime: process.version } }),
     });
+    if (!busy && Date.now() - lastIdleLog >= IDLE_LOG_MS) {
+      lastIdleLog = Date.now();
+      log("idle", { device: DEVICE_ID, uptimeMin: Math.round(process.uptime() / 60), rssMB: Math.round(process.memoryUsage().rss / 1048576) });
+    }
   } catch (e) { log("heartbeat failed", String((e && e.message) || e)); }
 }
 
