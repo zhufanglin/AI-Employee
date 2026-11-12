@@ -138,6 +138,16 @@ export type FcmApi = {
     >
     remove: (p: { cronId: string }) => Promise<CronOpResult<{ deleted: boolean }>>
   }
+  // 员工商城（P44-B1）：浏览 / 时长 / 下单 / 我的订单 / 查单轮询 / 发起支付 / 安装。
+  market: {
+    list: (q?: { keyword?: string; category?: string }) => Promise<MarketOpResult<MarketListData>>
+    durationOptions: () => Promise<MarketOpResult<{ items: DurationOption[] }>>
+    createOrder: (input: { slug: string; durationDays: number }) => Promise<MarketOpResult<CreateOrderResult>>
+    myOrders: () => Promise<MarketOpResult<MyOrdersData>>
+    orderStatus: (orderNo: string) => Promise<MarketOpResult<EmployeeOrder>>
+    payOrder: (orderNo: string) => Promise<MarketOpResult<PayOrderResult>>
+    install: (p: { slug: string; workspacePath?: string }) => Promise<MarketOpResult<MarketInstallResult>>
+  }
   // 战略与人设（P42，见 docs/handoff/P42-原版战略表人设表-逆向.md）
   strategy: {
     get: () => Promise<CronOpResult<StrategyDocView>>
@@ -489,6 +499,81 @@ export type ChatAppendMessage = {
   tokensIn?: number
   tokensOut?: number
   isError?: boolean
+}
+
+// —— 员工商城（P44-B1）——
+// 与 packages/desktop/src/main/market-ops.ts 的返回结构逐字对齐
+export type MarketOpResult<T> = { ok: boolean; data?: T; error?: string }
+
+/** 商城员工卡片：marketplace 未登录时 purchased/installed 等字段缺省 */
+export type MarketEmployee = {
+  id: string
+  slug: string
+  name: string
+  description: string
+  category: string
+  /** 每日单价（积分/天） */
+  price: number
+  priceDisplay: string
+  isBundled: boolean
+  requiredPackage: string | null
+  purchased?: boolean
+  userPurchaseStatus?: 'active' | 'expired' | 'none'
+  userExpiresAt?: string | null
+  installed?: boolean
+  installedExpiresAt?: string | null
+  title?: string
+  avatarEmoji?: string
+}
+
+export type MarketListData = { items: MarketEmployee[]; total: number; categories: string[] }
+
+/** 购买时长：1天 / 周 / 月 / 季度 / 年 */
+export type DurationOption = { label: string; days: number }
+
+/** 员工订单（服务端 EmployeeOrder 表 + status() 的返回） */
+export type EmployeeOrder = {
+  id: string
+  orderNo: string
+  employeeSlug: string
+  durationDays: number
+  pricePerDay: number
+  totalAmount: number
+  payMethod: string
+  /** pending / paid / closed / refunded 等 */
+  status: string
+  expiredAt: string
+  employeeExpiresAt?: string | null
+  paidAt?: string | null
+  wechatTransactionId?: string | null
+  createdAt: string
+  updatedAt?: string
+  /** pending 且超过 30 分钟支付窗口 */
+  expired?: boolean
+}
+
+export type CreateOrderResult = {
+  order: EmployeeOrder
+  employee: { slug: string; name: string; price: number; priceDisplay?: string }
+  amount: number
+  payHint: string
+}
+
+export type PayOrderResult = {
+  orderNo: string
+  amount: number
+  codeUrl: string
+  expiresAt: string
+  mock?: boolean
+}
+
+/** POST /employees/:slug/install 的返回：{ install, employee } */
+export type MarketInstallResult = { install?: any; employee?: MarketEmployee }
+
+export type MyOrdersData = {
+  items: EmployeeOrder[]
+  total: number
+  durationOptions: DurationOption[]
 }
 
 declare global {

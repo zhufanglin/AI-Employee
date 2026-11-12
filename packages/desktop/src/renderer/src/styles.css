@@ -454,3 +454,94 @@ button.ghost.tiny {
   white-space: pre-wrap;
   word-break: break-all;
 }
+/* ---- 员工商城（P44-B1）：搜索 / 卡片网格 / 状态徽标 / 购买模态 / 我的订单 ---- */
+.market-page { position: relative; }
+.market-toolbar { display: flex; flex-direction: column; gap: 10px; margin-bottom: 10px; }
+.market-search { display: flex; align-items: center; gap: 10px; }
+.market-search input { max-width: 420px; }
+.market-search .ghost { flex: 0 0 auto; margin: 0; }
+.market-cats { display: flex; flex-wrap: wrap; gap: 8px; }
+.market-cat {
+  padding: 5px 12px; border-radius: 99px; font-size: 12px;
+  color: var(--muted); background: var(--bg-2); border: 1px solid var(--line);
+}
+.market-cat:hover { color: var(--text); border-color: var(--brand); }
+.market-cat.on { color: #cfe0ff; border-color: #3556a8; background: #1a2440; }
+.market-count { margin: 4px 0 12px; color: var(--muted); font-size: 12px; }
+.market-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
+.market-card {
+  display: flex; flex-direction: column; gap: 8px;
+  padding: 16px; background: var(--bg-2); border: 1px solid var(--line); border-radius: 12px;
+}
+.market-card-head { display: flex; align-items: flex-start; gap: 10px; }
+.market-avatar {
+  flex: 0 0 auto; width: 38px; height: 38px; display: grid; place-items: center;
+  font-size: 20px; border-radius: 10px; background: var(--bg-3);
+}
+.market-card-title { flex: 1; min-width: 0; }
+.market-card-title b { display: block; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.market-card-title .small { margin-top: 2px; }
+.market-badge {
+  flex: 0 0 auto; padding: 2px 8px; border-radius: 99px; font-size: 11px;
+  color: var(--muted); border: 1px solid var(--line); white-space: nowrap;
+}
+.market-badge.is-installed { color: #8be0a6; border-color: #315a42; background: #17281f; }
+.market-badge.is-bought { color: #ffd27c; border-color: #63502b; background: #2e281a; }
+.market-badge.is-expired { color: #ff9d9d; border-color: #62383a; background: #2e2022; }
+.market-badge.is-none { color: var(--muted); }
+.market-desc {
+  margin: 0; min-height: 37px; color: var(--muted); font-size: 12px; line-height: 1.55;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.market-price { color: var(--brand-2); font-size: 13px; font-weight: 600; }
+.market-actions { display: flex; justify-content: flex-end; padding-top: 4px; margin-top: auto; }
+.market-actions .ghost { margin: 0; padding: 7px 12px; font-size: 13px; }
+.market-actions .market-buy-btn { width: auto; margin: 0; padding: 7px 18px; font-size: 13px; }
+.market-orders { margin-top: 26px; }
+.market-orders-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.market-orders-head h3 { margin: 0; font-size: 15px; }
+.market-orders-head .ghost { margin: 0; }
+.market-table { background: var(--bg-2); border: 1px solid var(--line); border-radius: 10px; }
+.market-table th, .market-table td { vertical-align: middle; }
+.market-table .ghost { margin: 0; padding: 5px 10px; font-size: 12px; }
+.market-status { font-size: 11px; }
+.market-status.status-pending { color: #ffd27c; border-color: #63502b; background: #2e281a; }
+.market-status.status-paid { color: #8be0a6; border-color: #315a42; background: #17281f; }
+.market-status.status-closed, .market-status.status-refunded { color: var(--muted); }
+.market-status.status-amount_mismatch { color: #ff9d9d; border-color: #62383a; background: #2e2022; }
+
+/* 购买模态：遮罩 + 面板 + 二维码 */
+.market-modal-mask {
+  position: fixed; inset: 0; z-index: 50; display: grid; place-items: center;
+  padding: 24px; background: rgba(6, 8, 12, .72);
+}
+.market-modal {
+  width: 440px; max-width: 100%; max-height: 90vh; overflow-y: auto;
+  background: var(--bg-2); border: 1px solid var(--line); border-radius: 14px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, .45);
+}
+.market-modal-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 16px 18px; border-bottom: 1px solid var(--line);
+}
+.market-modal-head h3 { margin: 0; font-size: 15px; }
+.market-modal-head .ghost { margin: 0; padding: 6px 10px; font-size: 12px; }
+.market-modal-body { padding: 16px 18px 18px; }
+.market-form-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 8px 0; border-bottom: 1px dashed var(--line); font-size: 13px;
+}
+.market-form-row > span { color: var(--muted); font-size: 12px; }
+.market-form-row .market-duration { width: 180px; padding: 8px 10px; }
+.market-total b { color: var(--brand-2); font-size: 16px; }
+.market-modal-body .primary { width: 100%; margin-top: 14px; }
+.market-modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 14px; }
+.market-modal-actions .ghost { margin: 0; }
+.market-modal-actions .market-buy-btn { width: auto; margin: 0; }
+.market-qr-wrap { display: grid; place-items: center; padding: 6px 0 10px; }
+.market-qr { padding: 6px; border-radius: 10px; background: #fff; }
+.market-sum { margin: 0 0 4px; font-size: 14px; }
+.market-sum b { color: var(--brand-2); }
+.market-pay-wait { margin-top: 10px; color: var(--muted); font-size: 12px; }
+.market-modal-body .link { display: inline-block; margin-top: 10px; }
+

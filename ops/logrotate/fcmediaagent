@@ -19,7 +19,8 @@
 # 轮转规则：
 #   - 目录：/opt/fcmediaagent/logs/*.log（当前为 api.log、worker.log、backup.log、
 #     monitor.log；后续新增 *.log 自动纳入）
-#   - 每天检查一次；单文件超过 100M 时也会提前轮转（maxsize，可能一天转多次）
+#   - 每天检查一次；检查时单文件超过 100M 也会轮转（maxsize）
+#     注意：logrotate.timer 每天只唤醒一次，maxsize 不会自动提高检查频率
 #   - 保留 14 份；.1 暂不压缩（delaycompress），从 .2 起 gzip 压缩
 #   - 空文件不轮转（notifempty）；文件不存在不报错（missingok）
 #   - Ubuntu 的 logrotate.timer 每天自动触发，不需要额外加 cron

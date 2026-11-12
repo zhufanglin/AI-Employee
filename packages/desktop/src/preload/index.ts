@@ -112,6 +112,17 @@ const api = {
     update: (input: { cronId: string; enabled?: boolean; cronExpr?: string; timezone?: string }) => ipcRenderer.invoke('cron:update', input),
     remove: (p: { cronId: string }) => ipcRenderer.invoke('cron:delete', p)
   },
+  // 员工商城（P44-B1）：浏览 / 购买时长 / 下单 / 我的订单 / 查单轮询 / 发起支付 / 安装。
+  // 全部返回 { ok: true, data } | { ok: false, error }，error 已是中文。
+  market: {
+    list: (q?: { keyword?: string; category?: string }) => ipcRenderer.invoke('market:list', q || {}),
+    durationOptions: () => ipcRenderer.invoke('market:duration-options'),
+    createOrder: (input: { slug: string; durationDays: number }) => ipcRenderer.invoke('market:create-order', input),
+    myOrders: () => ipcRenderer.invoke('market:my-orders'),
+    orderStatus: (orderNo: string) => ipcRenderer.invoke('market:order-status', { orderNo }),
+    payOrder: (orderNo: string) => ipcRenderer.invoke('market:pay-order', { orderNo }),
+    install: (p: { slug: string; workspacePath?: string }) => ipcRenderer.invoke('market:install', p)
+  },
   // 战略与人设（P42）：老板填一份战略长文 + 一张人设表，员工接活时按岗位读取。
   strategy: {
     get: () => ipcRenderer.invoke('strategy:get'),

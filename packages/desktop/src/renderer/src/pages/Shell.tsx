@@ -4,6 +4,7 @@ import Credits from './Credits'
 import Settings from './Settings'
 import Gateway from './Gateway'
 import EmployeeOffice from './EmployeeOffice'
+import Market from './Market'
 import Memory from './Memory'
 import Strategy from './Strategy'
 import PlatformPublish from './PlatformPublish'
@@ -16,6 +17,7 @@ import { Model } from '../types'
 type Tab =
   | 'chat'
   | 'employees'
+  | 'market'
   | 'digital'
   | 'voice'
   | 'image'
@@ -59,6 +61,7 @@ export default function Shell({ user, config, onLogout }: { user: any; config: a
         <nav>
           <button className={tab === 'chat' ? 'on' : ''} onClick={() => setTab('chat')}>💬 对话</button>
           <button className={tab === 'employees' ? 'on' : ''} onClick={() => setTab('employees')}>🧑‍💻 员工办公区</button>
+          <button className={tab === 'market' ? 'on' : ''} onClick={() => setTab('market')}>🛒 员工商城</button>
           <button className={tab === 'digital' ? 'on' : ''} onClick={() => setTab('digital')}>🎬 数字人</button>
           <button className={tab === 'voice' ? 'on' : ''} onClick={() => setTab('voice')}>🎙️ 音色克隆</button>
           <div className="nav-group">
@@ -101,6 +104,7 @@ export default function Shell({ user, config, onLogout }: { user: any; config: a
       <main className="content">
         {tab === 'chat' && <Chat models={models} onBalance={(n) => setBalance(n)} />}
         {tab === 'employees' && <EmployeeOffice />}
+        {tab === 'market' && <Market onGoOffice={() => setTab('employees')} />}
         {tab === 'digital' && <MediaStudio mode="digital" />}
         {tab === 'voice' && <MediaStudio mode="voice" />}
         <div hidden={tab !== 'image'}><MediaCreation mode="image" onBalance={setBalance} /></div>

@@ -8,6 +8,7 @@ import { initUpdater, updateStatus, checkForUpdates, downloadUpdate, quitAndInst
 import { PlatformManager } from './platform'
 import { registerFileOps } from './file-ops'
 import { registerCronOps } from './cron-ops'
+import { registerMarketOps } from './market-ops'
 import { registerStrategyOps } from './strategy-ops'
 import { registerAsarUpdate } from './asar-update'
 import { installConsoleFileLog, registerLogOps } from './log-ops'
@@ -514,6 +515,8 @@ function registerIpc() {
   registerFileOps(ipcMain, { root: workspaceRoot })
   // 员工定时任务（P27）：客户端直接调服务端 cron 接口，列表/新建/删除。
   registerCronOps(ipcMain, { api })
+  // 员工商城（P44-B1）：列表 / 购买时长 / 下单 / 我的订单 / 查单轮询 / 发起支付 / 安装。
+  registerMarketOps(ipcMain, { api })
   // 战略与人设（P42）：老板填一份战略长文 + 一张人设表，员工接活时按岗位读取。
   registerStrategyOps(ipcMain, { api })
   // asar 热更新（P43 P1-6）：只替换安装目录 resources/app.asar，替代 6–13 分钟的整包 NSIS 安装。
