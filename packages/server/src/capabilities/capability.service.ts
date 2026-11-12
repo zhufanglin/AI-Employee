@@ -13,6 +13,7 @@ import { descriptors as fileDescriptors, handlers as fileHandlers } from "./capa
 import { descriptors as docDescriptors, handlers as docHandlers } from "./capabilities/docs";
 import { descriptors as docWriteDescriptors, handlers as docWriteHandlers } from "./capabilities/docs-write";
 import { descriptors as mediaDescriptors, handlers as mediaHandlers } from "./capabilities/media-tools";
+import { descriptors as asrDescriptors, handlers as asrHandlers } from "./capabilities/asr";
 import { descriptors as visionDescriptors, buildVisionHandlers } from "./capabilities/vision";
 import { descriptors as employeeDescriptors, buildEmployeeHandlers } from "./capabilities/employee-tools";
 import { descriptors as memoryDescriptors, buildMemoryHandlers } from "./capabilities/memory-tools";
@@ -28,7 +29,7 @@ import { descriptor as platformMetricsDescriptor, handler as platformMetricsHand
 @Injectable()
 export class CapabilityService {
   private readonly logger = new Logger(CapabilityService.name);
-  private readonly descriptors: CapabilityDescriptor[] = [webExtractDescriptor, webBatchDescriptor, ...contentDescriptors, ...customerDescriptors, ...llmDescriptors, searchDescriptor, ...fileDescriptors, ...docDescriptors, ...docWriteDescriptors, ...mediaDescriptors, ...visionDescriptors, ...employeeDescriptors, ...memoryDescriptors, ...memoryMaintenanceDescriptors, ...platformDescriptors, platformMetricsDescriptor];
+  private readonly descriptors: CapabilityDescriptor[] = [webExtractDescriptor, webBatchDescriptor, ...contentDescriptors, ...customerDescriptors, ...llmDescriptors, searchDescriptor, ...fileDescriptors, ...docDescriptors, ...docWriteDescriptors, ...mediaDescriptors, ...asrDescriptors, ...visionDescriptors, ...employeeDescriptors, ...memoryDescriptors, ...memoryMaintenanceDescriptors, ...platformDescriptors, platformMetricsDescriptor];
   private readonly handlers: Record<string, CapabilityHandler>;
 
   constructor(private readonly prisma: PrismaService, private readonly toolapi: ToolapiService, private readonly providers: ProvidersService) {
@@ -43,8 +44,9 @@ export class CapabilityService {
       ...docHandlers,
       ...docWriteHandlers,
       ...mediaHandlers,
+      ...asrHandlers,
       ...buildVisionHandlers(providers),
-      ...buildEmployeeHandlers(prisma),
+      ...buildEmployeeHandlers(prisma, toolapi),
       ...buildMemoryHandlers(prisma, providers),
       ...buildMemoryMaintenanceHandlers(prisma, providers),
       ...buildPlatformHandlers(),

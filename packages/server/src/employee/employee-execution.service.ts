@@ -35,11 +35,43 @@ export class EmployeeExecutionService {
     return rows.map((row) => ({ ...row, effectiveStatus: row.lastSeenAt.getTime() >= cutoff ? row.status : "offline" }));
   }
 
-  async claimCloudTasks(userId: string, limitRaw?: string | number) {
+  /** 单次 pull 最多认领的条数，与执行器 FCM_WORKER_CONCURRENCY 的上限（4）保持一致 */
+  private static readonly CLAIM_LIMIT_MAX = 4;
+
+  /** 归一化 excludeUserIds：只保留非空字符串并去重限量，防止异常入参把查询撑大 */
+  private static parseExcludeUserIds(raw: unknown): string[] {
+    if (!Array.isArray(raw)) return [];
+    const seen = new Set<string>();
+    for (const item of raw) {
+      if (typeof item !== "string") continue;
+      const id = item.trim();
+      if (id) seen.add(id);
+      if (seen.size >= 50) break;
+    }
+    return Array.from(seen);
+  }
+
+  /**
+   * 云端执行器认领任务。
+   * 并发池模式下执行器会传入 excludeUserIds（已在跑任务的用户），服务端直接过滤掉这些用户的任务，
+   * 保证同一账号同时只有一条任务在跑；不传时行为与旧的单循环拉取完全一致。
+   */
+  async claimCloudTasks(userId: string, limitRaw?: string | number, excludeUserIdsRaw?: unknown) {
     await this.employees.recoverStalledTasks(userId);
-    const limit = Math.min(3, Math.max(1, Number(limitRaw) || 1));
+    const limit = Math.min(EmployeeExecutionService.CLAIM_LIMIT_MAX, Math.max(1, Number(limitRaw) || 1));
+    const excludedUserIds = EmployeeExecutionService.parseExcludeUserIds(excludeUserIdsRaw);
     const now = new Date();
-    const candidates = await this.prisma.employeeTask.findMany({ where: { userId, executor: "cloud", status: "queued", runAt: { lte: now } }, orderBy: { runAt: "asc" }, take: limit, select: { id: true, outputMeta: true } });
+    const candidates = await this.prisma.employeeTask.findMany({
+      where: {
+        userId: excludedUserIds.length ? { notIn: excludedUserIds } : userId,
+        executor: "cloud",
+        status: "queued",
+        runAt: { lte: now },
+      },
+      orderBy: { runAt: "asc" },
+      take: limit,
+      select: { id: true, outputMeta: true },
+    });
     const ids = candidates.map((row) => row.id);
     if (!ids.length) return { items: [], count: 0 };
     const claimed: string[] = [];

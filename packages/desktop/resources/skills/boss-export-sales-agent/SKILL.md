@@ -53,6 +53,21 @@ needs: [strategy.sections:产品体系, 服务客户人群, 竞争与优势, 销
 7. `customer_save` 把 A 级客户写入客户库（company、industry、position、interaction），备注渠道与来源。
 8. `file_write` 输出开发内容包：Email 主题 3 个＋首封＋3 次跟进、LinkedIn 两条、WhatsApp 一条，每条配中文释义。
 
+## 优秀交付样例
+
+### 客户评分表（节选）
+
+| 级别 | Company | Country | Buyer type | Fit score | Contact role | Outreach angle |
+|---|---|---|---|---:|---|---|
+| A | XX Trading Co. | UAE | Importer | 78 | Purchasing Manager | 当地餐饮连锁扩张，需稳定供货 |
+
+**首封邮件**：Subject: Stable supply of [产品英文名] for your Dubai accounts
+Hi [Name], I saw XX Trading supplies hotels in Dubai. We make [产品] with [认证], MOQ [数量]. Would a 10-minute call help you compare landed cost? —— 中文释义：看到贵司给迪拜酒店供货，我们能提供带认证的稳定货源，想约 10 分钟对比到岸成本。产品事实只取客户资料。
+
+客户名单 18 家，A 级 2 家、B 级 5 家，其余待核实。评分依据：产品匹配 24/30、采购可能 22/25、渠道能力 16/20、时机 10/15、数据质量 6/10；第 3 天补一封案例邮件，只保留一个 CTA。
+
+触达前再核对一次官网与联系人。
+
 ## 交付前自检
 
 - 表格里的公司名、国家、官网、证据链接是否都来自 `web_search` / `web_extract` 的真实结果？没有来源的标“未核实”。

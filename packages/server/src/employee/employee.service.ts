@@ -301,7 +301,7 @@ export class EmployeeService {
       where.status = query.status;
     }
     if (query.employeeId) where.employeeId = query.employeeId;
-    const [rows, total] = await Promise.all([
+    const [rows, total, queuedRows] = await Promise.all([
       this.prisma.employeeTask.findMany({
         where,
         orderBy: { createdAt: "desc" },
@@ -309,9 +309,22 @@ export class EmployeeService {
         take: limit,
       }),
       this.prisma.employeeTask.count({ where }),
+      // P46 排队位置：同一用户所有 queued 任务按入队时间升序，只取 id 用来算序号
+      this.prisma.employeeTask.findMany({
+        where: { userId, status: "queued" },
+        orderBy: { createdAt: "asc" },
+        select: { id: true },
+      }),
     ]);
+    const queuePositions = new Map<string, number>();
+    queuedRows.forEach((item, index) => queuePositions.set(item.id, index + 1));
+    const items = await this.attachArtifacts(rows);
     return {
-      items: await this.attachArtifacts(rows),
+      items: items.map((item: any) => ({
+        ...item,
+        // P46 只读字段：queued 任务在本用户队列中的位置（从 1 开始），其余状态为 null
+        queuePosition: item.status === "queued" ? queuePositions.get(item.id) ?? null : null,
+      })),
       total,
       page,
       limit,

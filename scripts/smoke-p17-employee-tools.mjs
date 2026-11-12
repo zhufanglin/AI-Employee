@@ -146,10 +146,10 @@ async function dispatch(store, params, userId = USER) {
 }
 
 // ---------- 能力清单 ----------
-await check("descriptors 恰好包含 6 个能力且命名正确", () => {
+await check("descriptors 恰好包含 7 个能力且命名正确", () => {
   const names = tools.descriptors.map((d) => d.name);
   // cron_update 只服务桌面端启停/改时间（P43），刻意不进 worker 白名单。
-  assert.deepEqual(names, ["employee_dispatch", "employee_task_status", "cron_create", "cron_list", "cron_update", "cron_delete"]);
+  assert.deepEqual(names, ["employee_dispatch", "team_run", "employee_task_status", "cron_create", "cron_list", "cron_update", "cron_delete"]);
   for (const d of tools.descriptors) {
     assert.equal(typeof d.title, "string");
     assert.equal(typeof d.category, "string");

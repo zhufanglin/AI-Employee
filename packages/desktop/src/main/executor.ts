@@ -20,6 +20,12 @@ interface TaskRow {
 
 const POLL_MS = Number(process.env.FCM_EXECUTOR_POLL_MS || 8000)
 const MAX_OUTPUT_CHARS = 200_000
+// 本机执行器并发度：默认 2（客户端是普通办公机，再高会被模型调用与文件读写拖慢）
+const CONCURRENCY = (() => {
+  const raw = Number(process.env.FCM_EXECUTOR_CONCURRENCY || 2)
+  if (!Number.isFinite(raw) || raw < 1) return 2
+  return Math.min(4, Math.floor(raw))
+})()
 
 function str(v: any, fallback = ''): string {
   return typeof v === 'string' && v.trim() ? v.trim() : fallback
@@ -33,16 +39,19 @@ function list(v: any): string[] {
 /** 本机员工执行器：拉取端上执行的 queued 任务 -> 调模型产出 -> 回写 awaiting_approval */
 export class TaskExecutor {
   private timer: NodeJS.Timeout | null = null
-  private busy = false
   private lastRun: { at: string; taskId?: string; ok: boolean; error?: string } | null = null
   private employees = new Map<string, any>()
   private employeesAt = 0
   private startedAt: string | null = null
+  /** 正在跑的任务数（含「已领到、正等同一员工空闲」） */
+  private inFlight = 0
+  /** employeeId -> 该员工当前任务的 Promise：同一员工同时只跑 1 条 */
+  private readonly inFlightByEmployee = new Map<string, Promise<void>>()
 
   constructor(private readonly deps: ExecutorDeps) {}
 
   status() {
-    return { running: !!this.timer, busy: this.busy, startedAt: this.startedAt, lastRun: this.lastRun, pollMs: POLL_MS }
+    return { running: !!this.timer, busy: this.inFlight > 0, inFlight: this.inFlight, concurrency: CONCURRENCY, startedAt: this.startedAt, lastRun: this.lastRun, pollMs: POLL_MS }
   }
 
   start() {
@@ -161,64 +170,100 @@ export class TaskExecutor {
     return { ...out, content, file, model }
   }
 
+  /** 领到一条任务后立刻占住槽位开跑（并行，同员工串行），不阻塞其它槽位 */
+  private startTask(task: TaskRow) {
+    const employeeId = str(task.employeeId)
+    const previous = employeeId ? this.inFlightByEmployee.get(employeeId) : undefined
+    this.inFlight += 1
+    const promise = (async () => {
+      if (previous) {
+        this.log('wait-employee', { taskId: task.id, employeeId, inFlight: this.inFlight })
+        try { await previous } catch { /* 前一条失败不影响本条 */ }
+      }
+      await this.runOne(task)
+    })()
+    if (employeeId) this.inFlightByEmployee.set(employeeId, promise)
+    promise.catch(() => {}).finally(() => {
+      this.inFlight -= 1
+      if (employeeId && this.inFlightByEmployee.get(employeeId) === promise) this.inFlightByEmployee.delete(employeeId)
+    })
+  }
+
+  /** 一轮调度：只在有空闲槽位时领取；领到的任务丢进并发池 */
   async tick(): Promise<any> {
-    if (this.busy) return { skipped: 'busy' }
     if (!this.deps.getToken()) return { skipped: 'no-token' }
-    this.busy = true
+    const free = CONCURRENCY - this.inFlight
+    if (free <= 0) return { skipped: 'busy', inFlight: this.inFlight }
+    let pulled: any
     try {
-      const pulled = await this.deps.api('/employee-tasks/pull?limit=1')
-      const task: TaskRow | undefined = pulled?.items?.[0]
-      if (!task) return { idle: true }
-      this.log('claimed', { taskId: task.id, title: task.title })
-      const claimToken = task.outputMeta?.claimToken
-      if (!claimToken) throw new Error('任务缺少领取凭据')
-      const abort = new AbortController()
-      const taskHeartbeat = setInterval(() => {
-        this.deps.api('/employee-execution/tasks/' + encodeURIComponent(task.id) + '/heartbeat', { method: 'POST', body: JSON.stringify({ claimToken }) })
-          .catch((e: any) => { if (/领取已失效/.test(String(e?.message || e))) abort.abort() })
-      }, 30000)
-      try {
-        const out = await this.execute(task, abort.signal)
-        await this.deps.api('/employee-tasks/' + encodeURIComponent(task.id), {
-          method: 'PATCH',
-          body: JSON.stringify({
-            status: 'awaiting_approval',
-            claimToken,
-            outputKind: 'text',
-            outputText: out.content.slice(0, MAX_OUTPUT_CHARS),
-            outputPath: out.file,
-            outputMeta: { ...(task.outputMeta || {}), executor: 'desktop', model: out.model, usage: out.usages, steps: out.steps, media: out.media, finishedAt: new Date().toISOString() },
-            artifacts: [
-              { kind: 'text', text: out.content.slice(0, 20000), mime: 'text/plain' },
-              { kind: 'file', path: out.file, mime: 'text/markdown' },
-              ...(out.files || []).map((f: any) => ({ kind: 'workspace-file', path: f.key, text: f.name, mime: 'application/octet-stream' })),
-              ...out.media.filter((m: any) => m.url).map((m: any) => ({ kind: m.kind, path: m.url, mime: m.kind === 'image' ? 'image/*' : 'video/*' }))
-            ]
-          })
-        })
-        this.lastRun = { at: new Date().toISOString(), taskId: task.id, ok: true }
-        this.log('done', { taskId: task.id })
-        return { ok: true, taskId: task.id }
-      } catch (e: any) {
-        const message = String(e?.message || e).slice(0, 500)
-        this.lastRun = { at: new Date().toISOString(), taskId: task.id, ok: false, error: message }
-        try {
-          await this.deps.api('/employee-tasks/' + encodeURIComponent(task.id), {
-            method: 'PATCH',
-            body: JSON.stringify({ status: 'failed', claimToken, error: message, outputMeta: { ...(task.outputMeta || {}), executor: 'desktop', failedAt: new Date().toISOString(), ...(e?.partial || {}) }, artifacts: (e?.partial?.media || []).filter((m: any) => m.url).map((m: any) => ({ kind: m.kind, path: m.url, mime: m.kind === 'image' ? 'image/*' : 'video/*' })) })
-          })
-        } catch (e2: any) {
-          this.log('report-failed', { taskId: task.id, error: String(e2?.message || e2) })
-        }
-        this.log('task-failed', { taskId: task.id, error: message })
-        return { ok: false, taskId: task.id, error: message }
-      } finally { clearInterval(taskHeartbeat) }
+      pulled = await this.deps.api('/employee-tasks/pull?limit=' + Math.min(free, 4))
     } catch (e: any) {
       this.lastRun = { at: new Date().toISOString(), ok: false, error: String(e?.message || e) }
       this.log('poll-failed: ' + String(e?.message || e))
       return { ok: false, error: String(e?.message || e) }
+    }
+    const items: TaskRow[] = Array.isArray(pulled?.items) ? pulled.items : []
+    if (!items.length) return { idle: true }
+    let started = 0
+    for (const task of items) {
+      if (this.inFlight >= CONCURRENCY) break
+      // 同一员工同时只跑一条：避免两个任务抢同一份工作区/记忆
+      if (str(task.employeeId) && this.inFlightByEmployee.has(str(task.employeeId))) continue
+      this.startTask(task)
+      started += 1
+    }
+    return started ? { started, inFlight: this.inFlight } : { skipped: 'all-employees-busy' }
+  }
+
+  private async runOne(task: TaskRow): Promise<any> {
+    const claimToken = task.outputMeta?.claimToken
+    if (!claimToken) {
+      this.log('claim-error', { taskId: task.id, error: '任务缺少领取凭据' })
+      return { ok: false, taskId: task.id, error: '任务缺少领取凭据' }
+    }
+    this.log('claimed', { taskId: task.id, title: task.title, inFlight: this.inFlight })
+    const abort = new AbortController()
+    const taskHeartbeat = setInterval(() => {
+      this.deps.api('/employee-execution/tasks/' + encodeURIComponent(task.id) + '/heartbeat', { method: 'POST', body: JSON.stringify({ claimToken }) })
+        .catch((e: any) => { if (/领取已失效/.test(String(e?.message || e))) abort.abort() })
+    }, 30000)
+    try {
+      const out = await this.execute(task, abort.signal)
+      await this.deps.api('/employee-tasks/' + encodeURIComponent(task.id), {
+        method: 'PATCH',
+        body: JSON.stringify({
+          status: 'awaiting_approval',
+          claimToken,
+          outputKind: 'text',
+          outputText: out.content.slice(0, MAX_OUTPUT_CHARS),
+          outputPath: out.file,
+          outputMeta: { ...(task.outputMeta || {}), executor: 'desktop', model: out.model, usage: out.usages, steps: out.steps, media: out.media, finishedAt: new Date().toISOString() },
+          artifacts: [
+            { kind: 'text', text: out.content.slice(0, 20000), mime: 'text/plain' },
+            { kind: 'file', path: out.file, mime: 'text/markdown' },
+            ...(out.files || []).map((f: any) => ({ kind: 'workspace-file', path: f.key, text: f.name, mime: 'application/octet-stream' })),
+            ...out.media.filter((m: any) => m.url).map((m: any) => ({ kind: m.kind, path: m.url, mime: m.kind === 'image' ? 'image/*' : 'video/*' }))
+          ]
+        })
+      })
+      this.lastRun = { at: new Date().toISOString(), taskId: task.id, ok: true }
+      this.log('done', { taskId: task.id, inFlight: this.inFlight })
+      return { ok: true, taskId: task.id }
+    } catch (e: any) {
+      const message = String(e?.message || e).slice(0, 500)
+      this.lastRun = { at: new Date().toISOString(), taskId: task.id, ok: false, error: message }
+      try {
+        await this.deps.api('/employee-tasks/' + encodeURIComponent(task.id), {
+          method: 'PATCH',
+          body: JSON.stringify({ status: 'failed', claimToken, error: message, outputMeta: { ...(task.outputMeta || {}), executor: 'desktop', failedAt: new Date().toISOString(), ...(e?.partial || {}) }, artifacts: (e?.partial?.media || []).filter((m: any) => m.url).map((m: any) => ({ kind: m.kind, path: m.url, mime: m.kind === 'image' ? 'image/*' : 'video/*' })) })
+        })
+      } catch (e2: any) {
+        this.log('report-failed', { taskId: task.id, error: String(e2?.message || e2) })
+      }
+      this.log('task-failed', { taskId: task.id, error: message })
+      return { ok: false, taskId: task.id, error: message }
     } finally {
-      this.busy = false
+      clearInterval(taskHeartbeat)
     }
   }
 }

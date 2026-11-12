@@ -116,6 +116,18 @@ if ($Smoke) {
     & $node "scripts\smoke-p45-report.mjs"
     $script:code = $LASTEXITCODE
   }
+  Step "smoke: P46 语音转写能力" {
+    & $node "scripts\smoke-p46-asr.mjs"
+    $script:code = $LASTEXITCODE
+  }
+  Step "smoke: P46 团队编排能力" {
+    & $node "scripts\smoke-p46-team.mjs"
+    $script:code = $LASTEXITCODE
+  }
+  Step "smoke: P46 并发调度" {
+    & $node "scripts\smoke-p46-concurrency.mjs"
+    $script:code = $LASTEXITCODE
+  }
   Step "smoke: W2" {
     & $node "scripts\smoke-w2.mjs"
     $script:code = $LASTEXITCODE
@@ -259,6 +271,8 @@ Step "smoke: T-19 员工执行器" {
     & $node "scripts\check-publish-resilience.mjs"
     if ($LASTEXITCODE -ne 0) { $script:code = $LASTEXITCODE; return }
     & $node "scripts\check-desktop-p45.mjs"
+    if ($LASTEXITCODE -ne 0) { $script:code = $LASTEXITCODE; return }
+    & $node "scripts\check-desktop-p46.mjs"
     $script:code = $LASTEXITCODE
   }
 }

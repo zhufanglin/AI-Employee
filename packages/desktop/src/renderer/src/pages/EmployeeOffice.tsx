@@ -6,6 +6,124 @@ const STATUS: Record<string, string> = {
   needs_input: '等待补充信息', awaiting_approval: '待验收'
 }
 
+/** 员工开工前必读的企业资料文件名（服务端 ensureWorkspaceSeed 会播种同名模板） */
+const PROFILE_FILE = '企业基础资料.md'
+
+/**
+ * 企业资料里需要用户亲手填的 6 项。
+ * sections 是模板里对应的小节标题关键词；fields 是小节里的条目标签（「- 主营产品或服务：」这种），
+ * 因为模板里很多关键词只出现在条目行、不出现在 Markdown 标题里，判定必须两边都看；hint 说明「该填什么」。
+ */
+type ProfileSpec = { key: string; label: string; hint: string; sections: string[]; fields: string[] }
+const PROFILE_SPECS: ProfileSpec[] = [
+  {
+    key: 'brand', label: '公司/品牌名', hint: '企业或品牌的对外名称，例如「杭州某某科技有限公司」',
+    sections: ['品牌介绍', '企业/品牌名称'], fields: ['企业/品牌名称', '品牌名称', '公司名称']
+  },
+  {
+    key: 'business', label: '主营业务', hint: '主营产品或服务，以及价格带、利润来源',
+    sections: ['企业与产品'], fields: ['主营产品或服务', '所在行业', '核心价格带', '主要利润来源']
+  },
+  {
+    key: 'customer', label: '目标客户', hint: '是 B2B 还是 B2C，客户身份、规模、最常见需求与顾虑',
+    sections: ['目标客户'], fields: ['目标客户身份', '典型行业', '最常见需求', '主要决策人', '平均成交周期']
+  },
+  {
+    key: 'advantage', label: '核心优势', hint: '客户为什么选你、有哪些已验证的案例和数据',
+    sections: ['竞争与优势'], fields: ['客户为什么选择我们', '已验证案例与数据', '主要同行', '核心优势']
+  },
+  {
+    key: 'script', label: '话术口径', hint: '跟进频率、可接受的优惠边界、不能承诺的话术',
+    sections: ['销售与私域', '话术口径'], fields: ['可接受的优惠边界', '销售跟进频率', '线索阶段定义', '话术口径']
+  },
+  {
+    key: 'output', label: '输出偏好', hint: '语气、输出语言、每次默认给几个方案',
+    sections: ['输出偏好'], fields: ['语气', '输出语言', '每次默认给几个方案']
+  }
+]
+
+/** 小节正文里出现这些占位符、或冒号后面只有这些字，都算没填 */
+const PROFILE_PLACEHOLDER = /^(（请填写）|\(请填写\)|请填写|待填写|待补充|待完善|TODO|todo|TBD)$/
+/** 只有大片空行的小节正文超过这个字符数，按「没填」处理（模板小节本身就比较长） */
+const EMPTY_SECTION_CHARS = 200
+/** Markdown 标题行：## 企业与产品 / ### 目标客户 … */
+const PROFILE_HEADING = /^\s{0,3}(#{1,6})\s*(.+?)\s*$/
+
+/** 取某个小节（标题包含 keyword）的正文；找不到该小节返回 null */
+function profileSectionBody(text: string, keyword: string): string | null {
+  const lines = text.split(/\r?\n/)
+  let start = -1
+  let level = 0
+  for (let i = 0; i < lines.length; i += 1) {
+    const matched = PROFILE_HEADING.exec(lines[i])
+    if (!matched) continue
+    const current = matched[1].length
+    if (start < 0) {
+      if (matched[2].replace(/[\s*#]/g, '').includes(keyword)) { start = i + 1; level = current }
+    } else if (current <= level) {
+      return lines.slice(start, i).join('\n')
+    }
+  }
+  return start >= 0 ? lines.slice(start).join('\n') : null
+}
+
+/** 把一行整理成「用户真正写下的内容」：去掉条目符号、占位符和只有键名没有值的写法 */
+function profileLineValue(raw: string): string {
+  const line = raw.trim().replace(/^[-*+]\s*/, '').trim()
+  if (!line) return ''
+  if (PROFILE_PLACEHOLDER.test(line)) return ''
+  const colon = Math.max(line.indexOf('：'), line.indexOf(':'))
+  if (colon >= 0) {
+    const value = line.slice(colon + 1).trim()
+    if (!value || PROFILE_PLACEHOLDER.test(value)) return ''
+    return value
+  }
+  return line
+}
+
+/** 某一项是否已填：没有对应小节 / 还有「（请填写）」占位 / 去掉空行后不足 2 个字，都算没填 */
+function profileSectionFilled(body: string | null): boolean {
+  if (!body) return false
+  const content = body.split(/\r?\n/).map(profileLineValue).join('').replace(/[\s\u3000]/g, '')
+  if (body.length > EMPTY_SECTION_CHARS && !content) return false
+  return content.length >= 2
+}
+
+/** 某个条目（例如「- 主营产品或服务：」）冒号后面是否写了内容；只写了占位符或括号里的提示都算没填 */
+function profileFieldFilled(text: string, label: string): boolean {
+  for (const raw of text.split(/\r?\n/)) {
+    const line = raw.trim().replace(/^[-*+]\s*/, '').replace(/\*\*/g, '')
+    const index = line.indexOf(label)
+    if (index < 0) continue
+    const tail = line.slice(index + label.length)
+    const colon = Math.max(tail.indexOf('：'), tail.indexOf(':'))
+    const value = (colon >= 0 ? tail.slice(colon + 1) : tail).trim()
+    if (!value || PROFILE_PLACEHOLDER.test(value)) continue
+    if (!value.replace(/[*\s]/g, '')) continue
+    return true
+  }
+  return false
+}
+
+/**
+ * 单项是否已填：先看模板条目有没有写内容；
+ * 用户把整段改写成自由文本时（小节里一个条目标签都不剩），再按小节正文兜底。
+ */
+function profileSpecFilled(text: string, spec: ProfileSpec): boolean {
+  if (spec.fields.some((label) => profileFieldFilled(text, label))) return true
+  const body = spec.sections.map((keyword) => profileSectionBody(text, keyword)).find((item) => item !== null) ?? null
+  if (!body) return false
+  if (spec.fields.some((label) => body.includes(label))) return false
+  return profileSectionFilled(body)
+}
+
+/** 按 6 项把资料正文判一遍 */
+function judgeProfile(text: string) {
+  const filled = PROFILE_SPECS.map((spec) => profileSpecFilled(text, spec))
+  const done = filled.filter(Boolean).length
+  return { filled, done, total: PROFILE_SPECS.length, missing: PROFILE_SPECS.filter((_, index) => !filled[index]) }
+}
+
 export default function EmployeeOffice() {
   const [catalog, setCatalog] = useState<any[]>([])
   const [installed, setInstalled] = useState<any[]>([])
@@ -21,6 +139,9 @@ export default function EmployeeOffice() {
   const [apiOrigin, setApiOrigin] = useState('')
   const [attachments, setAttachments] = useState<any[]>([])
   const [library, setLibrary] = useState<any[]>([])
+  const [profileText, setProfileText] = useState<string | null>(null)
+  const [profilePath, setProfilePath] = useState('')
+  const [profileOpen, setProfileOpen] = useState(true)
 
   useEffect(() => {
     let active = true
@@ -42,6 +163,22 @@ export default function EmployeeOffice() {
     try { const r = await (window as any).fcm.workspace.list(50); setLibrary(r?.items || []) } catch { /* 忽略 */ }
   }, [])
 
+  // 企业资料完整度：优先读客户端工作区里的同名文件（files:* 只在本地工作区目录内可读）；
+  // 读不到内容时卡片降级成「该填什么」的引导，不谎报进度。
+  const refreshProfile = useCallback(async () => {
+    const files = (window as any).fcm?.files
+    if (!files?.list) { setProfileText(null); setProfilePath(''); return }
+    try {
+      const listed = await files.list({})
+      if (!listed?.ok) return
+      const hit = (listed.items || []).find((item: any) => !item.isDir && item.name === PROFILE_FILE)
+      if (!hit?.path) { setProfileText(null); setProfilePath(''); return }
+      setProfilePath(String(hit.path))
+      const read = await files.read({ path: hit.path, maxBytes: 200000 })
+      setProfileText(read?.ok ? String(read.text || '') : null)
+    } catch { /* 本地工作区不可用时静默降级 */ }
+  }, [])
+
   const refresh = useCallback(async () => {
     setError('')
     try {
@@ -49,6 +186,7 @@ export default function EmployeeOffice() {
         window.fcm.employees.catalog(), window.fcm.employees.mine(), window.fcm.employeeTasks.list('?limit=50')
       ])
       void refreshLibrary()
+      void refreshProfile()
       const employees = c.items || []
       const mine = m.items || []
       setCatalog(employees)
@@ -58,7 +196,7 @@ export default function EmployeeOffice() {
         ? current
         : mine.find((item: any) => item.install?.effectiveEnabled)?.slug || '')
     } catch (e: any) { setError(e?.message || '加载员工数据失败') }
-  }, [refreshLibrary])
+  }, [refreshLibrary, refreshProfile])
 
   useEffect(() => { void refresh() }, [refresh])
 
@@ -87,6 +225,9 @@ export default function EmployeeOffice() {
   }, [catalog, query])
   const installedIds = new Set(installed.filter((e) => e.install?.effectiveEnabled).map((e) => e.slug))
   const teamMembers = TEAM.map((slug) => catalog.find((e) => e.slug === slug)).filter(Boolean)
+  // 资料完整度：有正文才判 6 项；读不到正文时保持 null，卡片按引导态展示
+  const profileJudge = useMemo(() => (profileText ? judgeProfile(profileText) : null), [profileText])
+  const profileInWorkspace = library.some((file: any) => file?.name === PROFILE_FILE)
 
   async function act(fn: () => Promise<any>, message?: string) {
     setBusy(true); setError(''); setNotice('')
@@ -134,6 +275,38 @@ export default function EmployeeOffice() {
     }, `已删除 ${file.name}`)
   }
 
+  /** 一键打开本地资料文件用系统默认编辑器修改 */
+  async function openProfileFile() {
+    const files = (window as any).fcm?.files
+    if (!files?.open || !profilePath) return
+    setError('')
+    try {
+      const result = await files.open({ path: profilePath })
+      if (result?.error) setError(String(result.error))
+      else setNotice('已用系统默认编辑器打开《企业基础资料.md》，改完保存即可')
+    } catch (e: any) { setError(e?.message || '打开文件失败') }
+  }
+
+  /** 复制资料文件路径：本地副本给绝对路径，只有服务端副本时给工作区内的相对位置 */
+  async function copyProfilePath() {
+    const text = profilePath || '工作区/' + PROFILE_FILE
+    try {
+      await navigator.clipboard.writeText(text)
+      setError('')
+      setNotice('已复制路径：' + text)
+    } catch { setError('复制失败，请手动记录路径：' + text) }
+  }
+
+  /** 下载服务端工作区里的资料文件，填好后重新上传同名文件即可替换 */
+  async function downloadProfileFile() {
+    const file = library.find((item: any) => item?.name === PROFILE_FILE)
+    if (!file) { setError('工作区里还没有《企业基础资料.md》，请先点「上传填好的同名文件」放一份进来'); return }
+    await act(async () => {
+      await (window as any).fcm.workspace.download({ key: file.key, name: file.name })
+      void refreshProfile()
+    }, '已下载《企业基础资料.md》，把 6 项填好后上传同名文件即可替换')
+  }
+
   function composedText() {
     const base = input.trim()
     if (!attachments.length) return base
@@ -169,6 +342,45 @@ export default function EmployeeOffice() {
     </header>
     {error && <div className="error office-alert">{error}</div>}
     {notice && <div className="office-notice">{notice}</div>}
+
+    {/* P46 企业资料完整度：员工开工前会先读这份资料，先让用户知道该填什么 */}
+    {profileJudge && profileJudge.done === profileJudge.total
+      ? <section className="office-block profile-card profile-card-done">
+          <p className="profile-done">资料已完整，员工产出会贴合你的业务</p>
+        </section>
+      : <section className="office-block profile-card">
+          <div className="profile-card-head">
+            <div>
+              <h3>企业资料完整度</h3>
+              <p className="muted small">员工每次开工前都会先读《企业基础资料.md》；填得越全，产出越贴合你的业务。</p>
+            </div>
+            <button className="ghost" onClick={() => setProfileOpen((value) => !value)}>{profileOpen ? '收起' : '展开'}</button>
+          </div>
+          <div className="profile-progress">
+            <span className="profile-progress-text">{profileJudge ? <>已填 {profileJudge.done}/{PROFILE_SPECS.length}</> : '未读到资料内容'}</span>
+            <span className="profile-progress-bar"><i style={{ width: `${profileJudge ? Math.round((profileJudge.done / PROFILE_SPECS.length) * 100) : 0}%` }} /></span>
+          </div>
+          {profileOpen && <>
+            <div className="profile-field-list">
+              {PROFILE_SPECS.map((spec, index) => {
+                const filled = !!(profileJudge && profileJudge.filled[index])
+                return <div className={filled ? 'profile-field filled' : 'profile-field'} key={spec.key}>
+                  <b>{filled ? '已填' : '待填'} · {spec.label}</b>
+                  <span className="muted small">{filled ? '已填写' : spec.hint}</span>
+                </div>
+              })}
+            </div>
+            <p className="profile-missing">还缺这些：{(profileJudge ? profileJudge.missing : PROFILE_SPECS).map((spec) => spec.label).join('、')}</p>
+            <p className="profile-hint">{profileText ? '资料已读到，按上面 6 项补齐即可。' : profileInWorkspace ? '工作区里已有这份文件，但当前版本读不到它的内容：请下载后核对 6 项是否填全，填好再上传同名文件覆盖。' : '还没有《企业基础资料.md》：先上传一份填好的（或下载模板填写），否则员工只能按通用模板写。'}</p>
+            <div className="profile-actions">
+              {!!profilePath && <button className="primary office-button" disabled={busy} onClick={() => void openProfileFile()}>一键打开资料文件编辑</button>}
+              {profileInWorkspace && <button className="ghost" disabled={busy} onClick={() => void downloadProfileFile()}>下载《企业基础资料.md》</button>}
+              <button className="ghost" disabled={busy} onClick={() => void pickFiles()}>上传填好的同名文件</button>
+              <button className="link" onClick={() => void copyProfilePath()}>复制路径</button>
+            </div>
+            <p className="muted small">路径：{profilePath || '工作区/' + PROFILE_FILE}</p>
+          </>}
+        </section>}
 
     <section className="team-panel">
       <div className="office-section-head"><div><h3>获客成交团队</h3><p>线索发现 → 客户分层 → 销售跟进建议</p></div>
@@ -253,6 +465,11 @@ export default function EmployeeOffice() {
           <div className="task-top"><div><b>{task.title}</b><div className="muted">{emp?.name || '员工'} · {task.createdAt ? new Date(task.createdAt).toLocaleString() : ''}</div></div>
             <span className={`pill status-${task.status}`}>{STATUS[task.status] || task.status}</span>
           </div>
+          {task.status === 'queued' && <p className="queue-hint">
+            {typeof task.queuePosition === 'number' && task.queuePosition > 1
+              ? `排队中，前面还有 ${task.queuePosition - 1} 个任务`
+              : '排队中，前面没有别的任务，马上开始'}
+          </p>}
           {task.outputText && <pre className="task-output">{task.outputText}</pre>}
           {task.error && <div className="task-error">{task.error}</div>}
           {!!task.artifacts?.length && <div className="artifact-list">{task.artifacts.map((a: any) => {

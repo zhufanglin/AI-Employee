@@ -1,6 +1,7 @@
 import { BadRequestException } from "@nestjs/common";
 import { CronTime } from "cron";
 import type { CapabilityContext, CapabilityDescriptor, CapabilityHandler } from "../capability.types";
+import type { ToolapiService } from "../../toolapi/toolapi.service";
 
 /**
  * 员工派活 + 定时任务能力（P17）。
@@ -26,6 +27,20 @@ export const descriptors: CapabilityDescriptor[] = [
       input: "必填，交给该员工的需求",
       title: "可选，任务标题，默认「员工名 · 派活」",
       parentEmployeeSlug: "可选，当前员工 slug；与目标 slug 相同会被拒绝",
+      wait: "可选，是否等任务到终态，默认 false",
+      maxWaitSeconds: "可选，wait=true 时最长等待秒数，默认 0（按 60 秒处理），上限 300",
+    },
+  },
+  {
+    name: "team_run",
+    title: "团队协作编排",
+    category: "employee",
+    description: "一次把 1-5 条需求派给多个已安装的 AI 员工，等它们全部到终态（或超时）后，可汇总成一段中文结论",
+    params: {
+      jobs: "必填，任务数组，1-5 条；每条形如 { employeeSlug: string, input: string, title?: string }",
+      maxWaitSeconds: "可选，最长等待秒数，默认 180，上限 300",
+      aggregate: "可选，是否由模型汇总成中文结论，默认 true",
+      parentEmployeeSlug: "可选，当前员工 slug；与任一目标 slug 相同会被拒绝",
     },
   },
   {
@@ -78,6 +93,15 @@ export const descriptors: CapabilityDescriptor[] = [
 ];
 
 const TASK_CONCURRENCY_LIMIT = 5;
+const TEAM_RUN_MAX_JOBS = 5;
+const TEAM_RUN_POLL_MS = 3000;
+const TEAM_SUMMARY_WAIT_DEFAULT = 180;
+const DISPATCH_WAIT_FALLBACK = 60;
+const WAIT_MAX_SECONDS = 300;
+const DISPATCH_OUTPUT_LIMIT = 1200;
+const TEAM_OUTPUT_LIMIT = 800;
+/** 终态：等待人工确认也算干完了，继续等也不会再变 */
+const TERMINAL_TASK_STATUS = new Set(["awaiting_approval", "succeeded", "failed"]);
 
 interface EmployeeRow {
   id: string;
@@ -158,6 +182,107 @@ function requireString(value: unknown, message: string): string {
   return value.trim();
 }
 
+/** 秒数入参统一校验：缺省取 fallback，非法拒绝，超过上限按上限截断 */
+function requireSeconds(value: unknown, name: string, fallback: number, max: number): number {
+  if (value === undefined || value === null) return fallback;
+  const seconds = Number(value);
+  if (!Number.isFinite(seconds) || seconds < 0) throw new BadRequestException(name + " 不合法");
+  return Math.min(max, seconds);
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, Math.max(0, ms)));
+}
+
+function isTerminal(status: unknown): boolean {
+  return typeof status === "string" && TERMINAL_TASK_STATUS.has(status);
+}
+
+function taskOutput(value: unknown, max: number): string {
+  return String(value ?? "").slice(0, max);
+}
+
+function mechanicalSummary(items: Array<{ employeeSlug: string; status: string; outputText: string }>): string {
+  const succeeded = items.filter((item) => item.status === "succeeded").length;
+  const failed = items.filter((item) => item.status === "failed").length;
+  const pending = items.length - succeeded - failed;
+  const head =
+    "【团队协作汇总】本批共 " + items.length + " 个任务：成功 " + succeeded + " 个、失败 " + failed + " 个、未完成 " + pending + " 个。";
+  const body = items
+    .map((item, index) => {
+      const text = item.outputText.trim() ? item.outputText.trim() : "（暂无产出）";
+      return index + 1 + ". " + item.employeeSlug + "（" + item.status + "）：" + text;
+    })
+    .join("\n");
+  return head + "\n" + body;
+}
+
+/**
+ * 用现有文本生成路径把多员工产出汇总成 300-600 字结论。
+ * 模型不可用（未绑手机号、未配置模型、上游失败）时退回机械拼接，不能让整个 team_run 失败。
+ */
+async function summarizeTeamRun(
+  toolapi: ToolapiService | undefined,
+  phone: string | null,
+  items: Array<{ employeeSlug: string; status: string; outputText: string }>,
+): Promise<string> {
+  const hasOutput = items.some((item) => item.outputText.trim());
+  if (!hasOutput) return mechanicalSummary(items);
+  try {
+    if (!toolapi || !phone) throw new Error("缺少模型调用条件");
+    const blocks = items
+      .map((item, index) =>
+        [
+          index + 1 + ". 员工：" + item.employeeSlug,
+          "状态：" + item.status,
+          "产出：" + (item.outputText.trim() || "（暂无产出）"),
+        ].join("\n"),
+      )
+      .join("\n\n");
+    const prompt =
+      "你是团队协作的汇总助手。下面是多位 AI 员工执行同一批任务的结果。请用 300-600 字中文写一段结论：" +
+      "先给整体结论，再分别说明每位员工的关键产出，最后给出可执行的下一步建议。" +
+      "只依据下面出现的内容，不要编造未出现的事实。\n\n" +
+      blocks;
+    const text = await toolapi.aiText(phone, prompt);
+    if (typeof text === "string" && text.trim()) return text.trim();
+  } catch {
+    // 模型失败不打断团队编排，下面退回机械拼接
+  }
+  return mechanicalSummary(items);
+}
+
+/** 轮询单条任务直到终态或超时，返回最后一次读到的任务行 */
+async function waitForOneTask(prisma: any, task: TaskRow, maxWaitSeconds: number) {
+  const startedAt = Date.now();
+  const deadline = startedAt + maxWaitSeconds * 1000;
+  let current = task;
+  while (!isTerminal(current.status) && Date.now() < deadline) {
+    await sleep(Math.min(TEAM_RUN_POLL_MS, deadline - Date.now()));
+    const fresh = (await prisma.employeeTask.findUnique({ where: { id: current.id } })) as TaskRow | null;
+    if (fresh) current = fresh;
+  }
+  return { task: current, timedOut: !isTerminal(current.status), elapsedMs: Date.now() - startedAt };
+}
+
+/** 批量轮询：所有任务到终态或总超时，返回 taskId → 最新任务行 */
+async function waitForTasks(prisma: any, taskIds: string[], maxWaitSeconds: number) {
+  const startedAt = Date.now();
+  const deadline = startedAt + maxWaitSeconds * 1000;
+  const byId = new Map<string, TaskRow>();
+  const load = async () => {
+    const rows = (await prisma.employeeTask.findMany({ where: { id: { in: taskIds } } })) as TaskRow[];
+    for (const row of rows) byId.set(row.id, row);
+  };
+  await load();
+  const allDone = () => taskIds.every((id) => isTerminal(byId.get(id)?.status));
+  while (!allDone() && Date.now() < deadline) {
+    await sleep(Math.min(TEAM_RUN_POLL_MS, deadline - Date.now()));
+    await load();
+  }
+  return { byId, timedOut: !allDone(), elapsedMs: Date.now() - startedAt };
+}
+
 async function requireEmployee(prisma: any, slug: string): Promise<EmployeeRow> {
   const emp = (await prisma.aiEmployee.findUnique({ where: { slug } })) as EmployeeRow | null;
   if (!emp || !emp.isActive) throw new BadRequestException("员工不存在或已下架");
@@ -200,12 +325,17 @@ function publicEmployee(emp: EmployeeRow | null | undefined): { slug: string; na
   return { slug: emp?.slug ?? "", name: emp?.name ?? "" };
 }
 
-export function buildEmployeeHandlers(prisma: any): Record<string, CapabilityHandler> {
+export function buildEmployeeHandlers(prisma: any, toolapi?: ToolapiService): Record<string, CapabilityHandler> {
   return {
     employee_dispatch: async (ctx: CapabilityContext) => {
       const { userId, params } = ctx;
       const employeeSlug = requireString(params.employeeSlug, "employeeSlug 必填");
       const input = requireString(params.input, "input 必填");
+      if (params.wait !== undefined && typeof params.wait !== "boolean") {
+        throw new BadRequestException("wait 不合法");
+      }
+      const wait = params.wait === true;
+      const maxWaitSeconds = requireSeconds(params.maxWaitSeconds, "maxWaitSeconds", 0, WAIT_MAX_SECONDS);
       const emp = await requireEmployee(prisma, employeeSlug);
       if (params.parentEmployeeSlug !== undefined && params.parentEmployeeSlug !== null) {
         const parentSlug = requireString(params.parentEmployeeSlug, "parentEmployeeSlug 不合法");
@@ -223,7 +353,7 @@ export function buildEmployeeHandlers(prisma: any): Record<string, CapabilityHan
         typeof params.title === "string" && params.title.trim()
           ? params.title.trim()
           : emp.name + " · 派活";
-      const task = await prisma.employeeTask.create({
+      const task = (await prisma.employeeTask.create({
         data: {
           userId,
           employeeId: emp.id,
@@ -232,13 +362,125 @@ export function buildEmployeeHandlers(prisma: any): Record<string, CapabilityHan
           status: "queued",
           executor,
         },
-      });
-      return {
+      })) as TaskRow;
+      const base = {
         taskId: task.id,
         employee: publicEmployee(emp),
         status: task.status,
         executor,
       };
+      if (!wait) return base;
+      // wait=true 但没给秒数时按 60 秒处理，避免默认值 0 变成「立刻超时」的无效等待
+      const waited = await waitForOneTask(prisma, task, maxWaitSeconds > 0 ? maxWaitSeconds : DISPATCH_WAIT_FALLBACK);
+      return {
+        ...base,
+        status: waited.task.status,
+        outputText: taskOutput(waited.task.outputText, DISPATCH_OUTPUT_LIMIT),
+        error: waited.task.error ?? null,
+        timedOut: waited.timedOut,
+        elapsedMs: waited.elapsedMs,
+      };
+    },
+
+    // 团队编排：一次校验并创建多条派活任务，等齐后可选模型汇总；单条失败只影响校验阶段，
+    // 一旦任务创建成功就尽量返回全部结果（超时也返回已有产出，不让整个能力打挂）。
+    team_run: async (ctx: CapabilityContext) => {
+      const { userId, phone, params } = ctx;
+      const rawJobs = params.jobs;
+      if (!Array.isArray(rawJobs) || rawJobs.length < 1 || rawJobs.length > TEAM_RUN_MAX_JOBS) {
+        throw new BadRequestException("jobs 必填，需提供 1-5 条任务");
+      }
+      if (params.aggregate !== undefined && typeof params.aggregate !== "boolean") {
+        throw new BadRequestException("aggregate 不合法");
+      }
+      const aggregate = params.aggregate !== false;
+      const maxWaitSeconds = requireSeconds(
+        params.maxWaitSeconds,
+        "maxWaitSeconds",
+        TEAM_SUMMARY_WAIT_DEFAULT,
+        WAIT_MAX_SECONDS,
+      );
+      let parentSlug: string | null = null;
+      if (params.parentEmployeeSlug !== undefined && params.parentEmployeeSlug !== null) {
+        parentSlug = requireString(params.parentEmployeeSlug, "parentEmployeeSlug 不合法");
+      }
+
+      // 先逐条校验，任何一条不合法都不创建任务，避免半批派活留下脏数据
+      const prepared: Array<{ emp: EmployeeRow; input: string; title: string; executor: string }> = [];
+      for (let index = 0; index < rawJobs.length; index += 1) {
+        const job = rawJobs[index];
+        if (!job || typeof job !== "object" || Array.isArray(job)) {
+          throw new BadRequestException("第 " + (index + 1) + " 条任务格式不合法");
+        }
+        const employeeSlug = requireString(job.employeeSlug, "第 " + (index + 1) + " 条任务 employeeSlug 必填");
+        const input = requireString(job.input, "第 " + (index + 1) + " 条任务 input 必填");
+        const emp = await requireEmployee(prisma, employeeSlug);
+        if (parentSlug !== null && parentSlug === emp.slug) {
+          throw new BadRequestException("不能给自己派活");
+        }
+        await requireRunnable(prisma, userId, emp);
+        const title =
+          typeof job.title === "string" && job.title.trim()
+            ? job.title.trim()
+            : emp.name + " · 团队协作";
+        prepared.push({
+          emp,
+          input,
+          title,
+          executor: emp.cliRequirement === "required" ? "desktop" : "cloud",
+        });
+      }
+
+      // 配额按本批总量检查：已有排队/执行中的任务 + 本批条数不能超过上限
+      const active = await prisma.employeeTask.count({
+        where: { userId, status: { in: ["queued", "running"] } },
+      });
+      if (active + prepared.length > TASK_CONCURRENCY_LIMIT) {
+        throw new BadRequestException("派活过于频繁，请等当前任务完成");
+      }
+
+      const created: Array<{ taskId: string; employeeSlug: string; title: string }> = [];
+      for (const item of prepared) {
+        const task = (await prisma.employeeTask.create({
+          data: {
+            userId,
+            employeeId: item.emp.id,
+            title: item.title,
+            input: item.input,
+            status: "queued",
+            executor: item.executor,
+          },
+        })) as TaskRow;
+        created.push({ taskId: task.id, employeeSlug: item.emp.slug, title: item.title });
+      }
+
+      const waited = await waitForTasks(
+        prisma,
+        created.map((item) => item.taskId),
+        maxWaitSeconds,
+      );
+      const results = created.map((item) => {
+        const row = waited.byId.get(item.taskId);
+        return {
+          employeeSlug: item.employeeSlug,
+          taskId: item.taskId,
+          status: row?.status ?? "queued",
+          outputText: taskOutput(row?.outputText, TEAM_OUTPUT_LIMIT),
+        };
+      });
+      const done = results.filter((item) => isTerminal(item.status)).length;
+      const data: Record<string, unknown> = {
+        ok: true,
+        created: created.length,
+        done,
+        timedOut: waited.timedOut,
+        elapsedMs: waited.elapsedMs,
+        results,
+      };
+      if (aggregate) {
+        data.summary = await summarizeTeamRun(toolapi, phone, results);
+      }
+      return data;
     },
 
     employee_task_status: async (ctx: CapabilityContext) => {

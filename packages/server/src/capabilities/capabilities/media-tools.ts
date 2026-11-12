@@ -568,3 +568,6 @@ export const handlers = {
     }
   },
 } as Record<string, CapabilityHandler>;
+
+/** 供 transcribe（asr.ts）等能力复用：临时目录、源解析（工作区/公网 URL + SSRF 守卫）、探测、ffmpeg 执行。 */
+export { ensureTempDir, ffmpegBinary, prepareSource, probeMedia, runBinary };

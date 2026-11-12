@@ -545,4 +545,29 @@ button.ghost.tiny {
 .market-sum b { color: var(--brand-2); }
 .market-pay-wait { margin-top: 10px; color: var(--muted); font-size: 12px; }
 .market-modal-body .link { display: inline-block; margin-top: 10px; }
+/* P46 企业资料完整度卡片：进度条 + 6 项清单 + 操作区 */
+.profile-card { background: var(--bg-2); border: 1px solid var(--line); border-radius: 12px; padding: 16px; }
+.profile-card-done { border-color: #315a42; background: #17281f; }
+.profile-card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.profile-card-head h3 { margin: 0 0 4px; font-size: 15px; }
+.profile-card-head p { margin: 0; }
+.profile-card-head .ghost { margin: 0; padding: 6px 12px; font-size: 12px; }
+.profile-progress { display: flex; align-items: center; gap: 10px; margin-top: 12px; }
+.profile-progress-text { font-size: 13px; font-weight: 600; color: var(--brand-2); white-space: nowrap; }
+.profile-progress-bar { flex: 1; height: 6px; border-radius: 999px; background: var(--bg-3); border: 1px solid var(--line); overflow: hidden; }
+.profile-progress-bar i { display: block; height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--brand), #8be0a6); transition: width .3s ease; }
+.profile-field-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 8px; margin-top: 12px; }
+.profile-field { display: flex; flex-direction: column; gap: 2px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg-3); }
+.profile-field b { font-size: 13px; font-weight: 600; }
+.profile-field .muted.small { margin-top: 0; line-height: 1.5; }
+.profile-field.filled { border-color: #315a42; background: #17281f; }
+.profile-field.filled b { color: #8be0a6; }
+.profile-missing { margin: 12px 0 0; color: #ffd27c; font-size: 13px; }
+.profile-hint { margin: 8px 0 0; color: var(--muted); font-size: 12px; line-height: 1.6; }
+.profile-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 12px; }
+.profile-actions .primary, .profile-actions .ghost { width: auto; margin: 0; padding: 8px 14px; font-size: 13px; }
+.profile-done { margin: 0; color: #8be0a6; font-size: 14px; font-weight: 600; }
+/* P46 队列位置提示 */
+.queue-hint { margin: 8px 0 0; color: #ffd27c; font-size: 12px; }
+
 
