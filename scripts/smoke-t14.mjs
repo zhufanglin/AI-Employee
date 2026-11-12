@@ -178,7 +178,7 @@ const noAuth = await api("GET", "/admin/site-config");
 ok("GET site-config without token -> 401", noAuth.status === 401, noAuth.status);
 const normalPhone = process.env.SMOKE_PHONE || "138" + String(Date.now()).slice(-8);
 const userTok = await api("POST", "/auth/sms/send", { body: { phone: normalPhone } });
-const userLogin = await api("POST", "/auth/sms/login", { body: { phone: normalPhone, code: userTok.json?.devCode } });
+const userLogin = await api("POST", "/auth/sms/login", { body: { phone: normalPhone, code: userTok.json?.devCode, consent: { version: "2026-11-12", crossBorder: true, source: "smoke" } } });
 const userDenied = await api("GET", "/admin/site-config", { token: userLogin.json?.accessToken });
 ok("GET site-config as normal user -> 403", userDenied.status === 403, userDenied.status);
 

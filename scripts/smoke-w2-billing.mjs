@@ -16,7 +16,7 @@ const j = async (p, o = {}) => {
 // 每次换成新手机号，避免 60 秒短信频控与旧账号脏数据影响冒烟可重复性
 const phone = process.env.SMOKE_PHONE || "139" + String(Date.now()).slice(-8);
 const send = await j("/auth/sms/send", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ phone }) });
-const login = await j("/auth/sms/login", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ phone, code: send.devCode }) });
+const login = await j("/auth/sms/login", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ phone, code: send.devCode, consent: { version: "2026-11-12", crossBorder: true, source: "smoke" } }) });
 const userId = login.user.id;
 // 人为制造：额度用完 + 5 积分
 await prisma.user.update({ where: { id: userId }, data: { credits: 5 } });

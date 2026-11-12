@@ -70,6 +70,14 @@ export default function Login({ config, onLogin }: { config: any; onLogin: (u: a
         </form>
 
         <p className="foot">首次使用将自动创建账号 · 每月赠送 {config?.freeMonthlyQuota ?? 10} 次免费额度</p>
+
+        {/* P45-6：登录页协议行（合规要求：注册/登录入口必须可就近查看协议与隐私政策） */}
+        <p className="muted small" style={{ textAlign: 'center', marginTop: 10, lineHeight: 1.7 }}>
+          登录即表示你已阅读并同意
+          <a href="#" onClick={(e) => { e.preventDefault(); window.fcm.legal.open('terms') }}>《用户协议》</a>
+          <a href="#" onClick={(e) => { e.preventDefault(); window.fcm.legal.open('privacy') }}>《隐私政策》</a>
+          <a href="#" onClick={(e) => { e.preventDefault(); window.fcm.legal.open('aigc') }}>《AI 生成内容标识说明》</a>
+        </p>
       </div>
     </div>
   )

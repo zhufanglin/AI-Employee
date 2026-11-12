@@ -25,7 +25,7 @@ async function health() {
 async function login(phone) {
   const send = await j("/auth/sms/send", { method: "POST", body: JSON.stringify({ phone }) });
   const code = send.body.devCode;
-  const res = await j("/auth/sms/login", { method: "POST", body: JSON.stringify({ phone, code }) });
+  const res = await j("/auth/sms/login", { method: "POST", body: JSON.stringify({ phone, code, consent: { version: "2026-11-12", crossBorder: true, source: "smoke" } }) });
   return { token: res.body.accessToken, id: res.body.user?.id, phone };
 }
 const out = { steps: [] };

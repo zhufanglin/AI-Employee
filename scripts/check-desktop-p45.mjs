@@ -23,6 +23,7 @@ const types = read(path.join(desktop, 'renderer', 'src', 'types.ts'))
 const appTsx = read(path.join(desktop, 'renderer', 'src', 'App.tsx'))
 const gate = read(path.join(desktop, 'renderer', 'src', 'pages', 'LegalGate.tsx'))
 const settings = read(path.join(desktop, 'renderer', 'src', 'pages', 'Settings.tsx'))
+const login = read(path.join(desktop, 'renderer', 'src', 'pages', 'Login.tsx'))
 
 let checks = 0
 let failed = 0
@@ -74,6 +75,34 @@ check('App.tsx 版本不一致才拦截', /meta\.version !== s\.legalAcceptedVer
 check('App.tsx 先渲染 LegalGate 再进主界面', appTsx.indexOf('if (legal) return <LegalGate') > -1 && appTsx.indexOf('if (legal) return <LegalGate') < appTsx.indexOf('<Shell'))
 check('设置页有「关于与合规」卡片', settings.includes('关于与合规') && settings.includes('legal.meta'))
 check('设置页可重新同意当前版本', settings.includes('legal.accept'))
+
+// ---- P45-2 个人信息跨境「单独同意」 ----
+check('main 存跨境单独同意开关', main.includes('legalCrossBorderAccepted'))
+check('闸门有独立跨境勾选', gate.includes('crossBorder') && gate.includes('我单独同意'))
+check('闸门未勾跨境不可继续', /disabled=\{[^}]*!crossBorder/.test(gate))
+check('login 上报 consent 载荷', /consent:\s*consentPayload\(\)/.test(main) && main.includes('function consentPayload'))
+check('settings:get 返回跨境同意', main.includes('legalCrossBorderAccepted:'))
+check('types 的 settings 含跨境同意', types.includes('legalCrossBorderAccepted'))
+
+// ---- P45-6 登录页协议行 ----
+check('登录页有协议行', login.includes('登录即表示') && login.includes("legal.open('terms')") && login.includes("legal.open('privacy')"))
+
+// ---- 服务端同意落库 ----
+const authService = read(path.join(server, 'auth', 'auth.service.ts'))
+const authDto = read(path.join(server, 'auth', 'auth.dto.ts'))
+const authCtrl = read(path.join(server, 'auth', 'auth.controller.ts'))
+const schema = read(path.join(root, 'packages', 'server', 'prisma', 'schema.prisma'))
+check('schema 有 ConsentRecord 表', /model ConsentRecord/.test(schema) && schema.includes('@@map("ConsentRecord")'))
+check('同一用户同文档同版本唯一', /@@unique\(\[userId, docKey, version\]\)/.test(schema))
+check('main 的 legal:accept 会即时上报', main.includes("'/auth/consent'") && /await api\('\/auth\/consent'/.test(main))
+check('main 返回 recorded 标记', /legalCrossBorderAccepted:\s*!!settings\.legalCrossBorderAccepted,\s*recorded/.test(main))
+check('types 的 accept 返回 recorded', types.includes('recorded?: boolean'))
+check('服务端有 POST /auth/consent', /@Post\("consent"\)/.test(authCtrl) && authCtrl.includes('async recordConsent'))
+check('新账号强制同意', authService.includes('assertConsentForNewAccount') && authService.includes('AUTH_REQUIRE_CONSENT'))
+check('跨境单独同意独立记录', authService.includes('"cross-border"'))
+check('重复同意幂等（忽略 P2002）', authService.includes('P2002'))
+check('DTO 有 ConsentDto', authDto.includes('class ConsentDto') && authDto.includes('crossBorder'))
+check('控制器带 ip/userAgent', authCtrl.includes('withClientMeta'))
 
 if (failed) {
   console.error('P45 desktop check FAILED (' + checks + ' checks, ' + failed + ' failed)')

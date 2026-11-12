@@ -92,7 +92,7 @@ async function login() {
     const sent = await call("/auth/sms/send", { method: "POST", body: JSON.stringify({ phone: PHONE }) });
     const code = sent.body && (sent.body.devCode || (sent.body.data && sent.body.data.devCode));
     if (code) {
-      const res = await call("/auth/sms/login", { method: "POST", body: JSON.stringify({ phone: PHONE, code }) });
+      const res = await call("/auth/sms/login", { method: "POST", body: JSON.stringify({ phone: PHONE, code, consent: { version: "2026-11-12", crossBorder: true, source: "smoke" } }) });
       const access = res.body && (res.body.accessToken || res.body.token || (res.body.data && res.body.data.accessToken));
       if (access) { token = access; return true; }
     }
@@ -106,6 +106,12 @@ if (!(await login())) {
   bad("登录", "拿不到 devCode 或 token（本地需 DEV_RETURN_SMS_CODE=true）");
 } else {
   ok("登录成功");
+
+  // P45-2：已登录用户重新同意 → POST /auth/consent 立刻落库（同版本重复调用幂等，created=0）
+  const c1 = await call("/auth/consent", { method: "POST", body: JSON.stringify({ consent: { version: "2026-11-12", crossBorder: true, source: "smoke" } }) });
+  check("POST /auth/consent 成功", c1.status < 300 && !!c1.body, "status=" + c1.status + " body=" + JSON.stringify(c1.body).slice(0, 120));
+  const c2 = await call("/auth/consent", { method: "POST", body: JSON.stringify({ consent: { version: "2026-11-12", crossBorder: true, source: "smoke" } }) });
+  check("重复同意幂等（created=0）", c2.status < 300 && Number(c2.body && c2.body.created) === 0, "body=" + JSON.stringify(c2.body).slice(0, 120));
 
   const market = await call("/employees/marketplace");
   const items = (market.body && (market.body.items || market.body.data)) || [];

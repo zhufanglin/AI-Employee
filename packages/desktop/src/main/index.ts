@@ -29,7 +29,17 @@ const LEGAL_FALLBACK_DOCS = [
   { key: 'aigc', title: 'AI 生成内容标识说明', updatedAt: LEGAL_FALLBACK_VERSION }
 ]
 
-type Settings = { apiBase: string; token?: string; user?: any; onboarded?: boolean; legalAcceptedVersion?: string }
+type Settings = {
+  apiBase: string; token?: string; user?: any; onboarded?: boolean
+  /** 已同意的法律文本版本（P45） */
+  legalAcceptedVersion?: string
+  /**
+   * 个人信息跨境传输的「单独同意」（P45）。
+   * 与 legalAcceptedVersion 分开存：跨境传输按《个人信息保护法》第三十九条必须单独取得同意，
+   * 不能靠同意通用条款推定；服务端据此写 ConsentRecord(docKey='cross-border')。
+   */
+  legalCrossBorderAccepted?: boolean
+}
 
 let settings: Settings = { apiBase: DEFAULT_API_BASE }
 let win: BrowserWindow | null = null
@@ -379,7 +389,8 @@ function registerIpc() {
     hasToken: !!settings.token,
     onboarded: !!settings.onboarded,
     // P45 合规：客户端记录用户同意的条款版本；版本号变了（协议更新）会重新弹一次同意
-    legalAcceptedVersion: settings.legalAcceptedVersion || ''
+    legalAcceptedVersion: settings.legalAcceptedVersion || '',
+    legalCrossBorderAccepted: !!settings.legalCrossBorderAccepted
   }))
   ipcMain.handle('settings:set-api-base', (_e, apiBase: string) => { settings.apiBase = apiBase; saveSettings(); return true })
 
@@ -394,10 +405,23 @@ function registerIpc() {
       return { ok: false, version: LEGAL_FALLBACK_VERSION, docs: LEGAL_FALLBACK_DOCS, error: String(e?.message || e) }
     }
   })
-  ipcMain.handle('legal:accept', (_e, version: string) => {
-    settings.legalAcceptedVersion = String(version || LEGAL_FALLBACK_VERSION)
+  ipcMain.handle('legal:accept', async (_e, version: string | { version?: string; crossBorder?: boolean }) => {
+    const payload = typeof version === 'string' ? { version, crossBorder: false } : (version || {})
+    settings.legalAcceptedVersion = String(payload.version || LEGAL_FALLBACK_VERSION)
+    settings.legalCrossBorderAccepted = !!payload.crossBorder
     saveSettings()
-    return { ok: true, legalAcceptedVersion: settings.legalAcceptedVersion }
+    // P45：已登录用户改版后重新同意时立刻落库（首次启动那条会在登录时上报）。
+    // 失败不阻断用户（离线也要能继续用），但会记日志，下次登录会再补记一次。
+    let recorded = false
+    if (settings.token) {
+      try {
+        await api('/auth/consent', { method: 'POST', body: JSON.stringify({ consent: consentPayload() }) })
+        recorded = true
+      } catch (e: any) {
+        console.error('[legal] 同意记录上报失败（不影响使用）：' + String(e?.message || e))
+      }
+    }
+    return { ok: true, legalAcceptedVersion: settings.legalAcceptedVersion, legalCrossBorderAccepted: !!settings.legalCrossBorderAccepted, recorded }
   })
   ipcMain.handle('legal:open', async (_e, key: string) => {
     const path = '/legal/' + String(key || 'terms').replace(/[^a-z-]/gi, '')
@@ -409,11 +433,22 @@ function registerIpc() {
 
   ipcMain.handle('auth:sms-send', (_e, phone: string) => api('/auth/sms/send', { method: 'POST', auth: false, body: JSON.stringify({ phone }) }))
   ipcMain.handle('auth:sms-login', async (_e, p: { phone: string; code: string }) => {
-    const r = await api('/auth/sms/login', { method: 'POST', auth: false, body: JSON.stringify(p) })
+    const r = await api('/auth/sms/login', { method: 'POST', auth: false, body: JSON.stringify({ ...p, consent: consentPayload() }) })
     settings.token = r.accessToken; settings.user = r.user; saveSettings(); return r
   })
+  /**
+   * P45：登录时把「已同意」的版本与跨境单独同意一起上报，服务端写 ConsentRecord。
+   * 首次登录自动建号时服务端会强制要求该载荷（AUTH_REQUIRE_CONSENT 默认开启）。
+   */
+  function consentPayload() {
+    return {
+      version: settings.legalAcceptedVersion || LEGAL_FALLBACK_VERSION,
+      crossBorder: !!settings.legalCrossBorderAccepted,
+      source: 'desktop'
+    }
+  }
   ipcMain.handle('auth:password-login', async (_e, p: { username: string; password: string }) => {
-    const r = await api('/auth/login', { method: 'POST', auth: false, body: JSON.stringify(p) })
+    const r = await api('/auth/login', { method: 'POST', auth: false, body: JSON.stringify({ account: p.username, password: p.password, consent: consentPayload() }) })
     settings.token = r.accessToken; settings.user = r.user; saveSettings(); return r
   })
   ipcMain.handle('auth:logout', async () => {

@@ -126,7 +126,7 @@ async function login() {
     const sent = await call("/auth/sms/send", { method: "POST", body: JSON.stringify({ phone: PHONE }) });
     const code = sent.body && (sent.body.devCode || (sent.body.data && sent.body.data.devCode));
     if (code) {
-      const res = await call("/auth/sms/login", { method: "POST", body: JSON.stringify({ phone: PHONE, code }) });
+      const res = await call("/auth/sms/login", { method: "POST", body: JSON.stringify({ phone: PHONE, code, consent: { version: "2026-11-12", crossBorder: true, source: "smoke" } }) });
       const access = res.body && (res.body.accessToken || res.body.token || (res.body.data && res.body.data.accessToken));
       if (access) { token = access; return true; }
     }

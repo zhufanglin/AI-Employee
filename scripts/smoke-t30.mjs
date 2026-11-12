@@ -27,7 +27,7 @@ async function login(phone) {
   const send = await j("/auth/sms/send", { method: "POST", body: JSON.stringify({ phone }) });
   const code = send.body.devCode;
   if (!code) throw new Error("短信未返回 devCode：" + JSON.stringify(send.body));
-  const res = await j("/auth/sms/login", { method: "POST", body: JSON.stringify({ phone, code }) });
+  const res = await j("/auth/sms/login", { method: "POST", body: JSON.stringify({ phone, code, consent: { version: "2026-11-12", crossBorder: true, source: "smoke" } }) });
   if (!res.body.accessToken) throw new Error("登录失败：" + JSON.stringify(res.body));
   return { token: res.body.accessToken, id: res.body.user?.id, phone };
 }

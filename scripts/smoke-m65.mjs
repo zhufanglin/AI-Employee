@@ -19,7 +19,7 @@ const out = {};
 if (!(await health())) { console.log("SERVER NOT UP"); process.exit(1); }
 const send = await j("/auth/sms/send", { method: "POST", body: JSON.stringify({ phone }) });
 const code = send.body.devCode;
-const login = await j("/auth/sms/login", { method: "POST", body: JSON.stringify({ phone, code }) });
+const login = await j("/auth/sms/login", { method: "POST", body: JSON.stringify({ phone, code, consent: { version: "2026-11-12", crossBorder: true, source: "smoke" } }) });
 const token = login.body.accessToken;
 out.login = { status: login.status, user: login.body.user?.phone };
 const auth = { authorization: "Bearer " + token };

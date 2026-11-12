@@ -19,6 +19,12 @@ const FALLBACK: LegalDocMeta[] = [
  */
 export default function LegalGate({ version, docs, onAccepted }: Props) {
   const [checked, setChecked] = useState(false)
+  /**
+   * 个人信息跨境传输的「单独同意」（P45-2）。
+   * 《个人信息保护法》第三十九条要求向境外提供个人信息必须单独取得同意，
+   * 所以这里不是并进上面那条勾选，而是独立一项，且不勾就不能继续。
+   */
+  const [crossBorder, setCrossBorder] = useState(false)
   const [busy, setBusy] = useState(false)
   const list = docs && docs.length > 0 ? docs : FALLBACK
   const [opened, setOpened] = useState<Record<string, boolean>>({})
@@ -35,7 +41,7 @@ export default function LegalGate({ version, docs, onAccepted }: Props) {
   async function accept() {
     setBusy(true)
     try {
-      await window.fcm.legal.accept(version)
+      await window.fcm.legal.accept({ version, crossBorder })
       onAccepted()
     } finally {
       setBusy(false)
@@ -76,9 +82,22 @@ export default function LegalGate({ version, docs, onAccepted }: Props) {
           </span>
         </label>
 
+        <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, margin: '14px 0 0', cursor: 'pointer' }}>
+          <input
+            type="checkbox"
+            checked={crossBorder}
+            onChange={(e) => setCrossBorder(e.target.checked)}
+            style={{ width: 'auto', marginTop: 3 }}
+          />
+          <span className="muted">
+            我单独同意：为提供 AI 员工服务，将我的手机号、对话与任务内容传输至位于中华人民共和国境外的服务器
+            （阿里云美国弗吉尼亚）处理。《隐私政策》第四节列明了处理目的、方式与境外接收方。
+          </span>
+        </label>
+
         <div className="onboard-actions">
           <button className="ghost" onClick={() => window.fcm.window.close()}>退出</button>
-          <button disabled={!checked || busy} onClick={accept}>
+          <button disabled={!checked || !crossBorder || busy} onClick={accept}>
             {busy ? '保存中…' : '同意并继续'}
           </button>
         </div>

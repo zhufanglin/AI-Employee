@@ -9,7 +9,7 @@ const json = async (path, init = {}) => {
 };
 const phone = '139' + String(Date.now()).slice(-8);
 const sent = await json('/auth/sms/send', { method: 'POST', body: JSON.stringify({ phone }) });
-const logged = await json('/auth/sms/login', { method: 'POST', body: JSON.stringify({ phone, code: sent.body.devCode }) });
+const logged = await json('/auth/sms/login', { method: 'POST', body: JSON.stringify({ phone, code: sent.body.devCode, consent: { version: "2026-11-12", crossBorder: true, source: "smoke" } }) });
 assert.ok(logged.body.accessToken);
 const headers = { authorization: 'Bearer ' + logged.body.accessToken };
 const install = await json('/employees/boss-lead-radar/install', { method: 'POST', headers, body: '{}' });

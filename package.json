@@ -1,7 +1,7 @@
 {
   "name": "fcmediaagent-replica",
   "private": true,
-  "version": "0.1.26",
+  "version": "0.1.27",
   "description": "中科元晟 AI 员工 复刻版（NestJS + Prisma + Electron + openclaw 网关）",
   "workspaces": [
     "packages/*"

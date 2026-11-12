@@ -20,7 +20,7 @@ async function j(path, init = {}) {
 const post = (p, token, obj) => j(p, { method: "POST", headers: { "content-type": "application/json", authorization: token ? "Bearer " + token : "" }, body: JSON.stringify(obj) });
 
 const sent = await post("/auth/sms/send", "", { phone });
-const login = await post("/auth/sms/login", "", { phone, code: sent.body?.devCode });
+const login = await post("/auth/sms/login", "", { phone, code: sent.body?.devCode, consent: { version: "2026-11-12", crossBorder: true, source: "smoke" } });
 const token = login.body?.accessToken || login.body?.token;
 const userId = login.body?.user?.id;
 check("login", !!token, { phone });

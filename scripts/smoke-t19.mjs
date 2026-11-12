@@ -17,7 +17,7 @@ const j = async (p, opts = {}) => {
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 async function login(phone) {
   const send = await j("/auth/sms/send", { method: "POST", body: JSON.stringify({ phone }) });
-  const res = await j("/auth/sms/login", { method: "POST", body: JSON.stringify({ phone, code: send.body.devCode }) });
+  const res = await j("/auth/sms/login", { method: "POST", body: JSON.stringify({ phone, code: send.body.devCode, consent: { version: "2026-11-12", crossBorder: true, source: "smoke" } }) });
   return { token: res.body.accessToken, id: res.body.user?.id };
 }
 const results = [];

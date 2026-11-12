@@ -26,7 +26,7 @@ console.log("1) sms/send:", JSON.stringify(send));
 const login = await j("/auth/sms/login", {
   method: "POST",
   headers: { "content-type": "application/json" },
-  body: JSON.stringify({ phone, code: send.devCode }),
+  body: JSON.stringify({ phone, code: send.devCode, consent: { version: "2026-11-12", crossBorder: true, source: "smoke" } }),
 });
 const token = login.accessToken;
 const auth = { authorization: "Bearer " + token, "content-type": "application/json" };

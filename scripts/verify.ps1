@@ -108,6 +108,10 @@ if ($Smoke) {
     & $node "scripts\smoke-legal.mjs"
     $script:code = $LASTEXITCODE
   }
+  Step "smoke: P45 同意记录（含跨境单独同意）" {
+    & $node "scripts\smoke-p45-consent.mjs"
+    $script:code = $LASTEXITCODE
+  }
   Step "smoke: W2" {
     & $node "scripts\smoke-w2.mjs"
     $script:code = $LASTEXITCODE

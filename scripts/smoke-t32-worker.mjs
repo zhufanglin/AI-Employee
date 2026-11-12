@@ -11,7 +11,7 @@ const req = async (path, init = {}) => {
 };
 const phone = '139' + String(Date.now()).slice(-8);
 const sent = await req('/auth/sms/send', { method: 'POST', body: JSON.stringify({ phone }) });
-const login = await req('/auth/sms/login', { method: 'POST', body: JSON.stringify({ phone, code: sent.body.devCode }) });
+const login = await req('/auth/sms/login', { method: 'POST', body: JSON.stringify({ phone, code: sent.body.devCode, consent: { version: "2026-11-12", crossBorder: true, source: "smoke" } }) });
 const token = login.body.accessToken;
 assert.ok(token);
 const headers = { authorization: 'Bearer ' + token };

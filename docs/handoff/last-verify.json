@@ -1,5 +1,5 @@
 ﻿{
-    "at":  "2026-11-12T15:57:04.2952483+08:00",
+    "at":  "2026-11-12T18:37:09.4492179+08:00",
     "ok":  true,
     "failed":  0,
     "steps":  [
@@ -7,31 +7,31 @@
                       "name":  "server tsc",
                       "ok":  true,
                       "exit":  0,
-                      "seconds":  6
+                      "seconds":  9
                   },
                   {
                       "name":  "desktop electron-vite build",
                       "ok":  true,
                       "exit":  0,
-                      "seconds":  6
+                      "seconds":  5
                   },
                   {
                       "name":  "server restart (fresh dist, kill stale :3000)",
                       "ok":  true,
                       "exit":  0,
-                      "seconds":  18
+                      "seconds":  55
                   },
                   {
                       "name":  "unit: 员工工具循环 JSON 容错",
                       "ok":  true,
                       "exit":  0,
-                      "seconds":  1
+                      "seconds":  0
                   },
                   {
                       "name":  "unit: web_extract SSRF 守卫",
                       "ok":  true,
                       "exit":  0,
-                      "seconds":  2
+                      "seconds":  1
                   },
                   {
                       "name":  "smoke: T-11 渠道加解密骨架",
@@ -43,37 +43,43 @@
                       "name":  "smoke: T-11 个人微信入站链路",
                       "ok":  true,
                       "exit":  0,
-                      "seconds":  8
+                      "seconds":  7
                   },
                   {
                       "name":  "smoke: T-11 渠道结果回推",
                       "ok":  true,
                       "exit":  0,
-                      "seconds":  14
+                      "seconds":  3
                   },
                   {
                       "name":  "smoke: T-11 长结果页（全文链接）",
                       "ok":  true,
                       "exit":  0,
-                      "seconds":  2
+                      "seconds":  1
                   },
                   {
                       "name":  "smoke: P45 合规文本（协议/隐私/AIGC 标识）",
                       "ok":  true,
                       "exit":  0,
-                      "seconds":  1
+                      "seconds":  0
+                  },
+                  {
+                      "name":  "smoke: P45 同意记录（含跨境单独同意）",
+                      "ok":  true,
+                      "exit":  0,
+                      "seconds":  2
                   },
                   {
                       "name":  "smoke: W2",
                       "ok":  true,
                       "exit":  0,
-                      "seconds":  33
+                      "seconds":  24
                   },
                   {
                       "name":  "smoke: W2 计费隔离",
                       "ok":  true,
                       "exit":  0,
-                      "seconds":  3
+                      "seconds":  4
                   },
                   {
                       "name":  "smoke: M6.5",
@@ -103,43 +109,43 @@
                       "name":  "smoke: P43 对话持久化与会话列表",
                       "ok":  true,
                       "exit":  0,
-                      "seconds":  63
+                      "seconds":  64
                   },
                   {
                       "name":  "smoke: P43 P1 剩余 7 条（配置接库/热更新/日志/驳回重跑）",
                       "ok":  true,
                       "exit":  0,
-                      "seconds":  0
+                      "seconds":  1
                   },
                   {
                       "name":  "smoke: P43 员工到期自动扫描",
                       "ok":  true,
                       "exit":  0,
-                      "seconds":  0
+                      "seconds":  1
                   },
                   {
                       "name":  "smoke: T-12 支付与后台",
                       "ok":  true,
                       "exit":  0,
-                      "seconds":  1
+                      "seconds":  3
                   },
                   {
                       "name":  "smoke: T-08 套餐与订单",
                       "ok":  true,
                       "exit":  0,
-                      "seconds":  1
+                      "seconds":  3
                   },
                   {
                       "name":  "smoke: T-14 管理端扩展",
                       "ok":  true,
                       "exit":  0,
-                      "seconds":  2
+                      "seconds":  4
                   },
                   {
                       "name":  "smoke: T-29 运营后台",
                       "ok":  true,
                       "exit":  0,
-                      "seconds":  0
+                      "seconds":  1
                   },
                   {
                       "name":  "smoke: T-19 员工执行器",
@@ -157,7 +163,7 @@
                       "name":  "smoke: T-33 媒体成本护栏（模拟上游）",
                       "ok":  true,
                       "exit":  0,
-                      "seconds":  2
+                      "seconds":  4
                   },
                   {
                       "name":  "smoke: 媒体任务取消与退款",
@@ -175,7 +181,7 @@
                       "name":  "smoke: T-28 本地能力层",
                       "ok":  true,
                       "exit":  0,
-                      "seconds":  44
+                      "seconds":  63
                   }
               ]
 }

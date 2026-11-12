@@ -40,6 +40,7 @@ model User {
   monthlyUsages         UserMonthlyUsage[]
   packageGrants         UserPackageGrant[]
   executionNodes        EmployeeExecutionNode[]
+  consentRecords        ConsentRecord[]
 }
 
 model Session {
@@ -920,5 +921,27 @@ model ChatMessage {
 
   @@index([sessionId, createdAt])
   @@map("ChatMessage")
+}
+
+/// P45：法律文本同意记录（含个人信息跨境传输的单独同意）
+/// - docKey：terms / privacy / aigc / cross-border
+/// - 同一用户同一文档同一版本只记一次（唯一键），换版本会新增一条
+model ConsentRecord {
+  id        String   @id @default(cuid())
+  userId    String
+  /// terms | privacy | aigc | cross-border
+  docKey    String   @db.VarChar(32)
+  /// 法律文本版本，例如 2026-11-12
+  version   String   @db.VarChar(32)
+  /// 同意时的场景：sms-login | register | password-login | settings
+  source    String   @db.VarChar(32)
+  ip        String?  @db.VarChar(64)
+  userAgent String?  @db.VarChar(255)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, docKey, version])
+  @@index([userId, createdAt])
+  @@map("ConsentRecord")
 }
 

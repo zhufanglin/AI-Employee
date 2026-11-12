@@ -13,6 +13,8 @@ export type FcmApi = {
       onboarded?: boolean
       /** P45：客户端记住的已同意条款版本（与 legal.meta().version 比对） */
       legalAcceptedVersion?: string
+      /** P45-2：个人信息跨境传输的单独同意（不含在通用条款同意里） */
+      legalCrossBorderAccepted?: boolean
     }>
     setApiBase: (v: string) => Promise<boolean>
     markOnboarded: () => Promise<boolean>
@@ -24,7 +26,13 @@ export type FcmApi = {
   /** P45 合规文本：服务端 /api/legal 的版本与目录 */
   legal: {
     meta: () => Promise<LegalMetaResult>
-    accept: (version: string) => Promise<{ ok: boolean; legalAcceptedVersion: string }>
+    accept: (p: string | { version?: string; crossBorder?: boolean }) => Promise<{
+      ok: boolean
+      legalAcceptedVersion: string
+      legalCrossBorderAccepted: boolean
+      /** P45-2：是否已同步写入服务端 ConsentRecord（未登录或离线时为 false） */
+      recorded?: boolean
+    }>
     open: (key: LegalDocKey) => Promise<{ ok: boolean; url: string }>
   }
   // 客户端更新：状态推送走 onStatus，用户在设置页手动检查/下载/安装。
