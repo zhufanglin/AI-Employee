@@ -173,7 +173,8 @@ form label { display: block; margin: 14px 0 6px; color: var(--muted); font-size:
 .page-card .row { margin-top: 14px; }
 .page-card .row .primary { width: auto; margin-top: 0; }
 .field span { display: block; color: var(--muted); font-size: 12px; margin: 12px 0 6px; }
-.field input, .field select { width: 100%; }
+.field input, .field select, .field textarea { width: 100%; }
+.field textarea { resize: vertical; min-height: 88px; }
 .notice { padding: 10px 12px; border-radius: 8px; margin: 10px 0; font-size: 13px; }
 .notice.ok { color: #a6f3c1; background: #152c25; border: 1px solid #27543f; }
 .notice.err { color: #ffb4b4; background: #2e1f22; border: 1px solid #60323a; }

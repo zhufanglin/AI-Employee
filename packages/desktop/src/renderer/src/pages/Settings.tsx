@@ -39,6 +39,12 @@ export default function Settings({ config }: { config: any }) {
   const [legalMeta, setLegalMeta] = useState<{ ok: boolean; version: string; docs: Array<{ key: string; title: string; updatedAt: string }> } | null>(null)
   const [legalAccepted, setLegalAccepted] = useState('')
   const [legalNotice, setLegalNotice] = useState<Notice>(null)
+  // P45-4：举报与投诉表单
+  const [reportCategory, setReportCategory] = useState('ai-content')
+  const [reportContent, setReportContent] = useState('')
+  const [reportContact, setReportContact] = useState('')
+  const [reportBusy, setReportBusy] = useState(false)
+  const [reportNotice, setReportNotice] = useState<Notice>(null)
 
   useEffect(() => {
     window.fcm.info().then((i) => { setInfo(i); setApiBase(i.apiBase) })
@@ -240,6 +246,77 @@ export default function Settings({ config }: { config: any }) {
         </div>
         <p className="muted small" style={{ marginTop: 10 }}>
           运营主体：中科元晟智科人工智能科技有限公司 · 客服 support@fcmediaagent.com
+        </p>
+      </section>
+
+      <section className="settings-card">
+        <div className="settings-card-head">
+          <h3>举报与投诉</h3>
+          <p>发现 AI 生成内容违规、侵权、隐私泄露或计费问题，可在这里提交；我们会在 3 个工作日内核实处理。</p>
+        </div>
+        <div className="field">
+          <label>举报类别</label>
+          <select value={reportCategory} onChange={(e) => setReportCategory(e.target.value)}>
+            <option value="ai-content">AI 生成内容违规（涉政/涉黄/暴力/虚假信息等）</option>
+            <option value="illegal">违法违规信息</option>
+            <option value="copyright">侵权投诉（著作权/商标/肖像）</option>
+            <option value="privacy">个人信息与隐私泄露</option>
+            <option value="billing">计费与积分问题</option>
+            <option value="bug">功能故障</option>
+            <option value="other">其他</option>
+          </select>
+        </div>
+        <div className="field" style={{ marginTop: 12 }}>
+          <label>详细说明</label>
+          <textarea
+            rows={4}
+            maxLength={2000}
+            placeholder="请描述具体情况（5–2000 字）：涉及哪个员工、哪个任务、什么内容、发生时间…"
+            value={reportContent}
+            onChange={(e) => setReportContent(e.target.value)}
+          />
+        </div>
+        <div className="field" style={{ marginTop: 12 }}>
+          <label>联系方式（选填）</label>
+          <input
+            maxLength={120}
+            placeholder="手机号或邮箱，便于回访"
+            value={reportContact}
+            onChange={(e) => setReportContact(e.target.value)}
+          />
+        </div>
+        {reportNotice && <div className={'notice ' + reportNotice.kind}>{reportNotice.text}</div>}
+        <div className="row" style={{ marginTop: 12 }}>
+          <button
+            className="primary"
+            disabled={reportBusy || reportContent.trim().length < 5}
+            onClick={async () => {
+              setReportBusy(true)
+              setReportNotice(null)
+              try {
+                const r = await window.fcm.legal.report({
+                  category: reportCategory,
+                  content: reportContent.trim(),
+                  contact: reportContact.trim()
+                })
+                if (r.ok) {
+                  setReportNotice({ kind: 'ok', text: (r.message || '已收到你的举报') + (r.id ? '（工单号 ' + r.id + '）' : '') })
+                  setReportContent('')
+                } else {
+                  setReportNotice({ kind: 'err', text: '提交失败：' + (r.error || '未知错误') })
+                }
+              } catch (e: any) {
+                setReportNotice({ kind: 'err', text: '提交失败：' + (e?.message || e) })
+              } finally {
+                setReportBusy(false)
+              }
+            }}
+          >
+            {reportBusy ? '提交中…' : '提交举报'}
+          </button>
+        </div>
+        <p className="muted small" style={{ marginTop: 10 }}>
+          紧急或涉及人身安全的内容，请同时通过 support@fcmediaagent.com 联系客服。
         </p>
       </section>
 

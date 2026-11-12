@@ -3,6 +3,9 @@ export type LegalDocKey = 'terms' | 'privacy' | 'aigc'
 export type LegalDocMeta = { key: string; title: string; updatedAt: string }
 export type LegalMetaResult = { ok: boolean; version: string; docs: LegalDocMeta[]; error?: string }
 
+/** P45-4：举报与投诉提交结果 */
+export type LegalReportResult = { ok: boolean; id?: string; message?: string; error?: string }
+
 export type FcmApi = {
   info: () => Promise<{ version: string; platform: string; electron: string; apiBase: string }>
   settings: {
@@ -34,6 +37,8 @@ export type FcmApi = {
       recorded?: boolean
     }>
     open: (key: LegalDocKey) => Promise<{ ok: boolean; url: string }>
+    /** P45-4：提交举报与投诉（无需登录，登录时服务端会自动关联账号） */
+    report: (p: { category?: string; content?: string; contact?: string; targetUrl?: string }) => Promise<LegalReportResult>
   }
   // 客户端更新：状态推送走 onStatus，用户在设置页手动检查/下载/安装。
   update: {

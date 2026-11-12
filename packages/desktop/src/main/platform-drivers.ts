@@ -76,6 +76,12 @@ export interface PlatformDriver {
    * 文字在封闭 shadowRoot 里搜不到，元素本身占满底部一条，必须按比例点右侧「发布」。
    */
   submitPoint?: { x: number; y: number }
+  /**
+   * P45-3：《人工智能生成合成内容标识办法》要求发布端主动声明 AI 生成内容。
+   * 各平台声明控件文案不同（抖音在「作品声明」里、小红书叫「笔记含AI生成内容」、视频号叫「内容由AI生成」），
+   * 按文本匹配点选；找不到只是跳过，绝不因此让发布失败。
+   */
+  aiDeclarationTexts: string[]
 }
 
 export const DRIVERS: Record<PlatformId, PlatformDriver> = {
@@ -98,7 +104,8 @@ export const DRIVERS: Record<PlatformId, PlatformDriver> = {
     commentItems: ['.comment-item', '[class*="comment-item"]', '[class*="CommentItem"]', '[class*="comment-list"] [class*="item"]'],
     commentReplyButton: ['text=回复', '[class*="reply"]', 'button[class*="reply"]', '.comment-reply-btn'],
     commentReplyInput: ['textarea[placeholder*="回复"]', '[contenteditable="true"]', 'textarea', '.comment-input textarea'],
-    commentSendButton: ['text=发送', 'text=回复', 'button[class*="send"]', '.comment-send-btn']
+    commentSendButton: ['text=发送', 'text=回复', 'button[class*="send"]', '.comment-send-btn'],
+    aiDeclarationTexts: ['内容由AI生成', '由AI生成', '内容为AI生成', 'AI生成']
   },
   xiaohongshu: {
     name: '小红书',
@@ -120,7 +127,8 @@ export const DRIVERS: Record<PlatformId, PlatformDriver> = {
     commentItems: ['.comment-item', '[class*="comment-item"]', '[class*="CommentItem"]', '[class*="comment"] [class*="item"]'],
     commentReplyButton: ['text=回复', '[class*="reply"]', 'button[class*="reply"]', '.reply-btn'],
     commentReplyInput: ['textarea[placeholder*="回复"]', '[contenteditable="true"]', 'textarea', '[class*="reply"] textarea'],
-    commentSendButton: ['text=发送', 'text=回复', 'button[class*="send"]', '[class*="reply"] button[class*="primary"]']
+    commentSendButton: ['text=发送', 'text=回复', 'button[class*="send"]', '[class*="reply"] button[class*="primary"]'],
+    aiDeclarationTexts: ['笔记含AI生成内容', '含AI生成内容', 'AI生成']
   },
   shipinhao: {
     name: '视频号',
@@ -153,7 +161,8 @@ export const DRIVERS: Record<PlatformId, PlatformDriver> = {
     },
     commentReplyButton: ['text=回复', '.action-item', '[class*="reply"]', 'button[class*="reply"]'],
     commentReplyInput: ['textarea.create-input', 'textarea[placeholder*="回复"]', 'textarea', '[contenteditable="true"]'],
-    commentSendButton: ['.create-ft .tag-wrap.primary', 'text=评论', '.weui-desktop-btn_primary', 'button[class*="send"]']
+    commentSendButton: ['.create-ft .tag-wrap.primary', 'text=评论', '.weui-desktop-btn_primary', 'button[class*="send"]'],
+    aiDeclarationTexts: ['内容由AI生成', '由AI生成', 'AI生成']
   }
 }
 

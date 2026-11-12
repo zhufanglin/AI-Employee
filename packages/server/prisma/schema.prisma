@@ -945,3 +945,29 @@ model ConsentRecord {
   @@map("ConsentRecord")
 }
 
+
+/// P45-4：举报与投诉工单（AI 生成内容违规、侵权、个人信息、计费、功能故障等）
+/// - 不建外键到 User：未登录用户/匿名举报也要能落库，只尽力记录 userId
+model ReportTicket {
+  id          String   @id @default(cuid())
+  userId      String?
+  /// ai-content | illegal | copyright | privacy | billing | bug | other
+  category    String   @db.VarChar(32)
+  content     String   @db.Text
+  contact     String?  @db.VarChar(120)
+  targetUrl   String?  @db.VarChar(500)
+  /// desktop | web | api
+  source      String   @db.VarChar(32) @default("api")
+  ip          String?  @db.VarChar(64)
+  userAgent   String?  @db.VarChar(255)
+  /// open | resolved | rejected
+  status      String   @db.VarChar(16) @default("open")
+  handledBy   String?  @db.VarChar(64)
+  handledNote String?  @db.VarChar(500)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([status, createdAt])
+  @@index([userId, createdAt])
+  @@map("ReportTicket")
+}

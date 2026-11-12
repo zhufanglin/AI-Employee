@@ -104,6 +104,23 @@ check('重复同意幂等（忽略 P2002）', authService.includes('P2002'))
 check('DTO 有 ConsentDto', authDto.includes('class ConsentDto') && authDto.includes('crossBorder'))
 check('控制器带 ip/userAgent', authCtrl.includes('withClientMeta'))
 
+// ---- P45-4 举报与投诉入口 ----
+const reportSvc = read(path.join(server, 'legal', 'report.service.ts'))
+const reportAdmin = read(path.join(server, 'legal', 'report-admin.controller.ts'))
+const smokeReport = read(path.join(root, 'scripts', 'smoke-p45-report.mjs'))
+check('schema 有 ReportTicket 表', /model ReportTicket/.test(schema) && schema.includes('@@map("ReportTicket")'))
+check('工单表不建 User 外键（支持匿名）', !/user\s+User\s+@relation/.test((schema.match(/model ReportTicket \{[\s\S]*?\n\}/) || [''])[0]))
+check('服务端有 7 类举报类别', reportSvc.includes('"ai-content"') && reportSvc.includes('"copyright"') && reportSvc.includes('CATEGORIES'))
+check('服务端有 IP 限流', reportSvc.includes('RATE_LIMIT_MAX') && reportSvc.includes('TOO_MANY_REQUESTS'))
+check('服务端有管理端处理接口', reportAdmin.includes('@Controller("admin/reports")') && reportAdmin.includes('resolve'))
+check('legal 模块注册举报服务与后台控制器', serverModule.includes('ReportService') && serverModule.includes('ReportAdminController'))
+check('main 有 legal:report IPC', main.includes("'legal:report'") && main.includes("'/legal/report'"))
+check('preload 暴露 legal.report', /report:\s*\(p:/.test(preload) && preload.includes("'legal:report'"))
+check('types 有 LegalReportResult', types.includes('LegalReportResult') && /report:\s*\(p:/.test(types))
+check('设置页有「举报与投诉」入口', settings.includes('举报与投诉') && settings.includes('legal.report'))
+check('举报类别与 submission 表单齐全', ['ai-content', 'copyright', 'privacy', 'billing', 'other'].every((k) => settings.includes('value="' + k + '"')))
+check('举报冒烟脚本存在', smokeReport.includes('REPORT SMOKE') && smokeReport.includes('ReportService'))
+
 if (failed) {
   console.error('P45 desktop check FAILED (' + checks + ' checks, ' + failed + ' failed)')
   process.exit(1)

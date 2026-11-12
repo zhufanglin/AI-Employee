@@ -431,6 +431,23 @@ function registerIpc() {
     return { ok: true, url }
   })
 
+  // P45-4：举报与投诉。公开接口（未登录也能提交），有 token 时服务端会自动关联账号。
+  ipcMain.handle('legal:report', async (_e, payload: { category?: string; content?: string; contact?: string; targetUrl?: string }) => {
+    try {
+      const body = {
+        category: String(payload?.category || ''),
+        content: String(payload?.content || ''),
+        contact: String(payload?.contact || ''),
+        targetUrl: String(payload?.targetUrl || ''),
+        source: 'desktop'
+      }
+      const r = await api('/legal/report', { method: 'POST', auth: !!settings.token, body: JSON.stringify(body) })
+      return { ok: true, id: String(r?.id || ''), message: String(r?.message || '已收到你的举报') }
+    } catch (e: any) {
+      return { ok: false, error: String(e?.message || e) }
+    }
+  })
+
   ipcMain.handle('auth:sms-send', (_e, phone: string) => api('/auth/sms/send', { method: 'POST', auth: false, body: JSON.stringify({ phone }) }))
   ipcMain.handle('auth:sms-login', async (_e, p: { phone: string; code: string }) => {
     const r = await api('/auth/sms/login', { method: 'POST', auth: false, body: JSON.stringify({ ...p, consent: consentPayload() }) })

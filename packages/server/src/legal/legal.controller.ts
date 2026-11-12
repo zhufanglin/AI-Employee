@@ -1,8 +1,9 @@
-import { Controller, Get, NotFoundException, Param, Query, Res } from "@nestjs/common";
+import { Body, Controller, Get, NotFoundException, Param, Post, Query, Req, Res } from "@nestjs/common";
 import type { Response } from "express";
 import { Public } from "../common/decorators";
 import { LEGAL_DOCS, LEGAL_VERSION, OPERATOR, legalIndex } from "./legal.pages";
 import type { LegalDoc } from "./legal.pages";
+import { ReportService } from "./report.service";
 
 /**
  * 合规文本公开页（P45 合规基线）
@@ -27,6 +28,16 @@ const PAGE_STYLE = [
   ".nav a{color:#3b7cff;text-decoration:none;margin-right:12px;}",
   ".foot{margin-top:18px;font-size:12px;color:#a8adb4;line-height:1.9;}",
 ].join("");
+
+/** 取真实客户端 IP：生产在 nginx 后面，优先 X-Forwarded-For 第一段 */
+function clientIp(req: any): string {
+  const headers = (req && req.headers) || {};
+  const fwd = String(headers["x-forwarded-for"] || "").split(",")[0].trim();
+  if (fwd) return fwd;
+  const real = String(headers["x-real-ip"] || "").trim();
+  if (real) return real;
+  return String((req && req.ip) || "");
+}
 
 function esc(s: string): string {
   return String(s ?? "")
@@ -96,6 +107,8 @@ function renderDoc(doc: LegalDoc): string {
 
 @Controller("legal")
 export class LegalController {
+  constructor(private readonly reports: ReportService) {}
+
   /** 目录 + 版本号（客户端用它判断是否需要重新弹同意） */
   @Public()
   @Get()
@@ -104,6 +117,29 @@ export class LegalController {
       return { ...legalIndex(), docs: LEGAL_DOCS };
     }
     return legalIndex();
+  }
+
+  /** 举报类别清单（桌面端「举报与投诉」下拉用） */
+  @Public()
+  @Get("report/categories")
+  reportCategories() {
+    return { categories: this.reports.categories() };
+  }
+
+  /**
+   * 举报与投诉提交（P45-4）。
+   * 必须 @Public：未登录用户、被侵权人、审核机构都要能提交；有 token 时自动带上 userId。
+   * 限流：同一 IP 每小时 10 次（进程内计数）。
+   */
+  @Public()
+  @Post("report")
+  async report(@Body() body: any, @Req() req: any) {
+    const user = req && req.user;
+    return this.reports.submit(body || {}, {
+      userId: user && user.id,
+      ip: clientIp(req),
+      userAgent: req && req.headers ? String(req.headers["user-agent"] || "") : "",
+    });
   }
 
   @Public()

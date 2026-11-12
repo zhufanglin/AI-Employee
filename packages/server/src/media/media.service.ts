@@ -6,6 +6,7 @@ import OSS from "ali-oss";
 import { CreditsService } from "../billing/credits.service";
 import { PrismaService } from "../prisma/prisma.service";
 import { env } from "../common/env";
+import { applyAigcWatermark, watermarkEnabled, watermarkOutputExt } from "./watermark";
 
 class ProviderRejectedError extends BadGatewayException {}
 
@@ -264,21 +265,43 @@ export class MediaService {
       const buffer = Buffer.from(await response.arrayBuffer());
       if (!buffer.length) return null;
       const rawExt = (url.split(/[?#]/)[0].split(".").pop() || "mp4").replace(/[^a-z0-9]/gi, "").slice(0, 5) || "mp4";
+      // P45-1：归档前烧「AI生成」显式标识（水印失败一律返回原文件，不让用户丢结果）。
+      let body: Buffer = buffer;
+      let outputExt = rawExt;
+      let watermark: { watermarked: boolean; text: string | null; reason?: string } | null = null;
+      if (watermarkEnabled()) {
+        const marked = await applyAigcWatermark(buffer, rawExt);
+        body = marked.buffer;
+        outputExt = watermarkOutputExt(rawExt);
+        watermark = { watermarked: marked.watermarked, text: marked.text, ...(marked.watermarked ? {} : { reason: marked.reason }) };
+        if (!marked.watermarked && marked.reason) console.warn(`[media] AIGC 显式标识未应用 task=${taskId} reason=${marked.reason}`);
+      }
+      const contentType =
+        outputExt === "mp4" ? "video/mp4"
+          : outputExt === "png" ? "image/png"
+            : outputExt === "jpg" || outputExt === "jpeg" ? "image/jpeg"
+              : outputExt === "webp" ? "image/webp"
+                : (response.headers.get("content-type") || "application/octet-stream");
+      const ossHeaders = { "Content-Type": contentType, "Content-Disposition": "inline" };
       const client = this.ossClient();
       if (client) {
         try {
-          const objectKey = `media/auto/${taskId}.${rawExt}`;
-          const result = await client.put(objectKey, buffer, { headers: { "Content-Type": response.headers.get("content-type") || "application/octet-stream", "Content-Disposition": "inline" } });
-          return { url: result.url || null, bytes: buffer.length, sourceUrl: url };
+          const objectKey = `media/auto/${taskId}.${outputExt}`;
+          // 隐式标识（P45-1）：对象元数据里带 AI 生成标记，便于平台侧追踪。
+          const result = await client.put(objectKey, body, {
+            headers: ossHeaders,
+            meta: { "aigc-generated": "true", "aigc-watermark": watermark?.watermarked ? "1" : "0" },
+          });
+          return { url: result.url || null, bytes: body.length, sourceUrl: url, watermark };
         } catch (ossError) {
           console.error("[media] OSS archive failed, fallback to local:", ossError instanceof Error ? ossError.message : ossError);
         }
       }
       const dir = join(process.cwd(), "uploads", "media");
       await mkdir(dir, { recursive: true });
-      const file = `${taskId}.${rawExt}`;
-      await writeFile(join(dir, file), buffer);
-      return { url: `${publicBase}/uploads/media/${file}`, bytes: buffer.length, sourceUrl: url };
+      const file = `${taskId}.${outputExt}`;
+      await writeFile(join(dir, file), body);
+      return { url: `${publicBase}/uploads/media/${file}`, bytes: body.length, sourceUrl: url, watermark };
     } catch {
       return null;
     }
@@ -492,7 +515,7 @@ export class MediaService {
       const data: any = { status: fields.providerStatus, ...fields };
       if (archived) {
         data.resultUrl = archived.url;
-        data.resultMeta = { ...(fields.resultMeta as any), archivedBytes: archived.bytes, sourceUrl: archived.sourceUrl };
+        data.resultMeta = { ...(fields.resultMeta as any), archivedBytes: archived.bytes, sourceUrl: archived.sourceUrl, ...(archived.watermark ? { watermark: archived.watermark } : {}) };
       }
       await this.prisma.mediaTaskRecord.updateMany({ where: { id: task.id, status: { not: "FAILED" } }, data });
       if (fields.providerStatus === "SUCCESS") await this.settleSuccess(task, fields);
@@ -521,7 +544,7 @@ export class MediaService {
       const archived = await this.archiveResult(taskId, fields.resultUrl);
       if (archived) {
         data.resultUrl = archived.url;
-        data.resultMeta = { ...(fields.resultMeta as any), archivedBytes: archived.bytes, sourceUrl: archived.sourceUrl };
+        data.resultMeta = { ...(fields.resultMeta as any), archivedBytes: archived.bytes, sourceUrl: archived.sourceUrl, ...(archived.watermark ? { watermark: archived.watermark } : {}) };
       }
     }
     await this.prisma.mediaTaskRecord.updateMany({ where: { id: task.id, status: { not: "FAILED" } }, data });

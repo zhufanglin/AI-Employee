@@ -456,3 +456,7 @@ ode scripts/coord.mjs done T-40 --agent codex --note ...，并回一条 msg 给 
 - 2026-11-12T08:00:28.953Z | dsh-lead | CLAIM | T-70 T-70
 - 2026-11-12T08:00:29.924Z | dsh-lead | SAVE | T-70 服务端 legal 模块上线生产；桌面 LegalGate 同意闸门；market 商城页；publish-resilience；prod-regression timer；verify GREEN 29 步
 - 2026-11-12T08:00:30.475Z | dsh-lead | DONE | T-70 T-70 —— 完成
+- 2026-11-12T10:40:46.269Z | dsh-lead | ADD | T-71 
+- 2026-11-12T10:42:26.118Z | dsh-lead | ADD | T-72 P45-2 合规：同意落库/跨境单独同意/登录页协议行/日志留存180天/已登录即时落库 + 0.1.27 发布
+- 2026-11-12T10:42:54.280Z | dsh-lead | CLAIM | T-72 P45-2 合规：同意落库/跨境单独同意/登录页协议行/日志留存180天/已登录即时落库 + 0.1.27 发布
+- 2026-11-12T10:42:54.794Z | dsh-lead | DONE | T-72 P45-2 合规：同意落库/跨境单独同意/登录页协议行/日志留存180天/已登录即时落库 + 0.1.27 发布 —— VERIFY GREEN (P45 50 checks / consent 10 / p43 +2)；0.1.27 已发布安装；git e473455

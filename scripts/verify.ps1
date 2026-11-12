@@ -112,6 +112,10 @@ if ($Smoke) {
     & $node "scripts\smoke-p45-consent.mjs"
     $script:code = $LASTEXITCODE
   }
+  Step "smoke: P45-4 举报与投诉工单" {
+    & $node "scripts\smoke-p45-report.mjs"
+    $script:code = $LASTEXITCODE
+  }
   Step "smoke: W2" {
     & $node "scripts\smoke-w2.mjs"
     $script:code = $LASTEXITCODE

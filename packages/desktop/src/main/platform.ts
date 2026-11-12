@@ -526,6 +526,35 @@ const IMMEDIATE_SCRIPT =
   ' return { ok: true, detail: "未找到定时发布入口，按平台默认立即发布" };' +
   '})()'
 
+// P45-3：勾选「内容由 AI 生成」声明（《人工智能生成合成内容标识办法》第九条）。
+// 各平台控件文案/结构不同，按文本长度取最短的可见命中项（容器会把整段声明说明带进来）。
+function aiDeclareScript(texts: string[]) {
+  return (
+    '(() => {' +
+    VISIBLE_FN +
+    ' const wanted = ' + JSON.stringify(texts.map((t) => String(t).replace(/\s+/g, ''))) + ';' +
+    ' const norm = (el) => (el.textContent || "").replace(/\\s+/g, "");' +
+    ' const nodes = Array.from(document.querySelectorAll("label, [role=\\"checkbox\\"], input[type=\\"checkbox\\"], .semi-checkbox, .checkbox, div, span, button, li"));' +
+    ' const candidates = nodes.filter((el) => {' +
+    '   if (!__visible(el)) return false;' +
+    '   const t = norm(el);' +
+    '   if (!t || t.length > 40) return false;' +
+    '   return wanted.some((w) => t.indexOf(w) >= 0);' +
+    ' });' +
+    ' if (!candidates.length) return { ok: false, reason: "未找到声明入口" };' +
+    ' candidates.sort((a, b) => norm(a).length - norm(b).length);' +
+    ' const el = candidates[0];' +
+    ' const label = norm(el).slice(0, 30);' +
+    ' const input = el.querySelector ? el.querySelector("input[type=\\"checkbox\\"]") : null;' +
+    ' if (input && input.checked) return { ok: true, detail: "声明已是勾选状态：" + label };' +
+    ' el.scrollIntoView({ block: "center" });' +
+    ' const box = el.closest ? el.closest("label") : null;' +
+    ' (box || el).click();' +
+    ' return { ok: true, detail: "已勾选：" + label };' +
+    '})()'
+  )
+}
+
 // 发布结果探针：成功提示 + 作品链接
 function outcomeScript(hints: string[]) {
   return (
@@ -2208,6 +2237,18 @@ export class PlatformManager {
     return probe
   }
 
+  /**
+   * P45-3：尽力勾选「内容由 AI 生成」声明。
+   * 失败/找不到只返回说明文字，绝不 throw——声明缺失属于合规提醒，不该把已经填好的发布整条打断。
+   */
+  private async markAiDeclaration(win: BrowserWindow, driver: PlatformDriver): Promise<string> {
+    const texts = Array.isArray(driver.aiDeclarationTexts) ? driver.aiDeclarationTexts : []
+    if (!texts.length) return '该平台暂无 AI 生成声明入口，已跳过'
+    const r = await this.attachAndEval<any>(win, aiDeclareScript(texts)).catch(() => null)
+    if (r && r.ok) return String(r.detail || '已勾选 AI 生成声明')
+    return '未找到 AI 生成声明入口（' + String((r && r.reason) || '页面未渲染') + '），已在正文里保留 AI 说明'
+  }
+
   private async doPublish(
     platform: string,
     input: PublishInput,
@@ -2306,6 +2347,9 @@ export class PlatformManager {
       await run('填写正文', async () => {
         return this.fillField(w, platform, '正文', driver.contentInput, body)
       })
+
+      // P45-3：AI 生成内容必须声明。找不到声明入口不算失败（平台改版/本来就无入口），只记一条步骤。
+      await run('AI 生成声明', async () => this.markAiDeclaration(w, driver), false)
 
       await run(
         '定时发布',

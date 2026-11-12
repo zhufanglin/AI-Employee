@@ -1,7 +1,7 @@
 {
   "project": "中科元晟 AI员工 0.4.29 完全复刻",
   "version": 1,
-  "updatedAt": "2026-11-12T08:00:30.465Z",
+  "updatedAt": "2026-11-12T10:42:54.734Z",
   "phase": "P10（先能用三件事）派工完成，看板 29/33",
   "phaseGoal": "用户要求先能用、定价后置：T-31 桌面端出图出片 / T-32 员工多步干活 / T-33 成本护栏 已派 Codex；dsh-lead 推主线（生产可用性收口 + 复核），T-11 渠道仍 blocked(env)。",
   "owners": {
@@ -3643,6 +3643,46 @@
       },
       "finishedAt": "2026-11-12T08:00:30.464Z",
       "result": "完成"
+    },
+    {
+      "id": "T-71",
+      "title": "",
+      "status": "todo",
+      "owner": null,
+      "scope": [],
+      "accept": "",
+      "blockedBy": [],
+      "createdAt": "2026-11-12T10:40:46.244Z",
+      "history": []
+    },
+    {
+      "id": "T-72",
+      "title": "P45-2 合规：同意落库/跨境单独同意/登录页协议行/日志留存180天/已登录即时落库 + 0.1.27 发布",
+      "status": "done",
+      "owner": "dsh-lead",
+      "scope": [],
+      "accept": "",
+      "blockedBy": [],
+      "createdAt": "2026-11-12T10:42:26.091Z",
+      "history": [
+        {
+          "at": "2026-11-12T10:42:54.270Z",
+          "by": "dsh-lead",
+          "what": "claim"
+        },
+        {
+          "at": "2026-11-12T10:42:54.734Z",
+          "by": "dsh-lead",
+          "what": "done: VERIFY GREEN (P45 50 checks / consent 10 / p43 +2)；0.1.27 已发布安装；git e473455"
+        }
+      ],
+      "lease": {
+        "at": "2026-11-12T10:42:54.260Z",
+        "heartbeat": "2026-11-12T10:42:54.269Z",
+        "reason": null
+      },
+      "finishedAt": "2026-11-12T10:42:54.721Z",
+      "result": "VERIFY GREEN (P45 50 checks / consent 10 / p43 +2)；0.1.27 已发布安装；git e473455"
     }
   ],
   "primary": "dsh-lead",

@@ -47,7 +47,8 @@ const api = {
   legal: {
     meta: () => ipcRenderer.invoke('legal:meta'),
     accept: (version: string | { version?: string; crossBorder?: boolean }) => ipcRenderer.invoke('legal:accept', version),
-    open: (key: 'terms' | 'privacy' | 'aigc') => ipcRenderer.invoke('legal:open', key)
+    open: (key: 'terms' | 'privacy' | 'aigc') => ipcRenderer.invoke('legal:open', key),
+    report: (p: { category?: string; content?: string; contact?: string; targetUrl?: string }) => ipcRenderer.invoke('legal:report', p)
   },
   models: () => ipcRenderer.invoke('compute:models'),
   credits: {

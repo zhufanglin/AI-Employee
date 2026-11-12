@@ -35,7 +35,7 @@ async function api(path, opts = {}) {
 
 function logout() { state.token = ''; localStorage.removeItem(TOKEN_KEY); render(); }
 
-const NAV = [['overview','概览'],['orders','订单'],['users','用户'],['packages','积分套餐'],['codes','兑换码'],['employees','AI 员工'],['pricing','模型与媒体定价'],['site','站点配置']];
+const NAV = [['overview','概览'],['orders','订单'],['users','用户'],['packages','积分套餐'],['codes','兑换码'],['employees','AI 员工'],['pricing','模型与媒体定价'],['reports','举报工单'],['site','站点配置']];
 const STATUS_LABEL = { pending: '待支付', paid: '已支付', expired: '已过期', amount_mismatch: '金额异常', closed: '已关闭' };
 const TAG = (s) => ({ paid: 'ok', pending: 'warn', amount_mismatch: 'bad', expired: 'bad', closed: '' }[s] || '');
 
@@ -53,8 +53,8 @@ function bindShell() {
   const l = $('[data-act="logout"]'); if (l) l.onclick = logout;
 }
 
-const VIEWS = { overview: viewOverview, orders: viewOrders, users: viewUsers, packages: viewPackages, codes: viewCodes, employees: viewEmployees, pricing: viewPricing, site: viewSite };
-const BINDS = { overview: bindOverview, orders: bindOrders, users: bindUsers, packages: bindPackages, codes: bindCodes, employees: bindEmployees, pricing: bindPricing, site: bindSite };
+const VIEWS = { overview: viewOverview, orders: viewOrders, users: viewUsers, packages: viewPackages, codes: viewCodes, employees: viewEmployees, pricing: viewPricing, reports: viewReports, site: viewSite };
+const BINDS = { overview: bindOverview, orders: bindOrders, users: bindUsers, packages: bindPackages, codes: bindCodes, employees: bindEmployees, pricing: bindPricing, reports: bindReports, site: bindSite };
 
 async function render() {
   const app = $('#app');
@@ -367,6 +367,47 @@ async function bindSite() {
     try { await api('/admin/ai-api-config', { method: 'PUT', body: JSON.stringify(collectForm(a.closest('.panel'))) }); toast('AI 接口已保存', 'ok'); }
     catch (e) { toast(e.message, 'err'); }
   };
+}
+
+/* ---------- 举报工单（P45-4） ---------- */
+const REPORT_STATUS_LABEL = { open: '待处理', resolved: '已处理', rejected: '已驳回' };
+const REPORT_STATUS_TAG = (s) => ({ open: 'warn', resolved: 'ok', rejected: 'bad' }[s] || '');
+
+async function viewReports() {
+  const status = state.reportStatus || 'open';
+  const r = await api('/admin/reports?status=' + encodeURIComponent(status) + '&limit=100');
+  const tabs = [['open', '待处理'], ['resolved', '已处理'], ['rejected', '已驳回'], ['all', '全部']]
+    .map(([k, label]) => '<button class="sm' + (status === k ? ' primary' : '') + '" data-rstatus="' + k + '">' + label + '</button>').join('');
+  const rows = (r.items || []).map((it) => '<tr>'
+    + '<td class="mono">' + esc(it.id) + '</td>'
+    + '<td>' + esc(it.categoryLabel || it.category) + '</td>'
+    + '<td style="max-width:420px">' + esc(String(it.content || '').slice(0, 300)) + (String(it.content || '').length > 300 ? '…' : '') + '</td>'
+    + '<td class="mono">' + esc(it.userId || '（匿名）') + '</td>'
+    + '<td>' + esc(it.contact || '') + '</td>'
+    + '<td>' + esc(it.source || '') + '</td>'
+    + '<td><span class="tag ' + REPORT_STATUS_TAG(it.status) + '">' + esc(REPORT_STATUS_LABEL[it.status] || it.status) + '</span></td>'
+    + '<td>' + esc(String(it.createdAt || '').replace('T', ' ').slice(0, 19)) + '</td>'
+    + '<td class="ops">' + (it.status === 'open'
+      ? '<button class="sm primary" data-resolve="' + esc(it.id) + '" data-to="resolved">标记已处理</button>'
+        + '<button class="sm danger" data-resolve="' + esc(it.id) + '" data-to="rejected">驳回</button>'
+      : '<span class="muted">' + esc(it.handledBy || '') + (it.handledNote ? '：' + esc(it.handledNote) : '') + '</span>')
+    + '</td></tr>').join('');
+  return '<h2>举报工单</h2><p class="sub">来源 /api/legal/report（客户端「设置 → 举报与投诉」与对外公开接口）；待处理 ' + r.openCount + ' 条，当前筛选 ' + r.total + ' 条</p>'
+    + '<div class="toolbar">' + tabs + '</div>'
+    + '<div class="panel"><table><thead><tr><th>工单号</th><th>类别</th><th>说明</th><th>提交人</th><th>联系方式</th><th>来源</th><th>状态</th><th>提交时间</th><th>操作</th></tr></thead><tbody>'
+    + (rows || '<tr><td colspan="9" class="empty">没有工单</td></tr>') + '</tbody></table></div>';
+}
+
+async function bindReports() {
+  document.querySelectorAll('[data-rstatus]').forEach((b) => b.onclick = () => { state.reportStatus = b.dataset.rstatus; render(); });
+  document.querySelectorAll('[data-resolve]').forEach((b) => b.onclick = async () => {
+    const note = prompt('处理说明（可留空，会记入工单）：') || '';
+    try {
+      await api('/admin/reports/' + encodeURIComponent(b.dataset.resolve) + '/resolve', { method: 'POST', body: JSON.stringify({ status: b.dataset.to, handledBy: 'admin', handledNote: note }) });
+      toast(b.dataset.to === 'resolved' ? '已标记处理' : '已驳回', 'ok');
+      render();
+    } catch (e) { toast(e.message, 'err'); }
+  });
 }
 
 render();
