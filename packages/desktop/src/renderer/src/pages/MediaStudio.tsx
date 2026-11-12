@@ -193,9 +193,10 @@ export default function MediaStudio({ mode }: { mode: 'digital' | 'voice' }) {
             <input type="file" accept="audio/*" onChange={(e) => pickAudio(e.target.files?.[0])} />
           </label>
           <div className="row">
-            <button className="primary" disabled={!!busy} onClick={submitClone}>提交克隆</button>
+            <button className="primary" disabled onClick={submitClone}>提交克隆</button>
             <button className="ghost" onClick={reload}>刷新状态</button>
           </div>
+          <p className="muted small">音色合成暂未开放：上游不返回可核对的音频时长，为避免多扣积分，体验版先关闭提交。需要开通请联系管理员。</p>
           {audioValue && <div className="muted small">样本：{audioValue}</div>}
         </section>
       )}

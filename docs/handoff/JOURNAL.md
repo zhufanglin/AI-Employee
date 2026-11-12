@@ -464,3 +464,39 @@ ode scripts/coord.mjs done T-40 --agent codex --note ...，并回一条 msg 给 
 - 2026-11-12T15:06:31.834Z | dsh-lead | CLAIM | T-73 P45-1/3/4 媒体水印 + AI 声明 + 举报工单（0.1.28 上线）
 - 2026-11-12T15:06:32.105Z | dsh-lead | DONE | T-73 P45-1/3/4 媒体水印 + AI 声明 + 举报工单（0.1.28 上线） —— 水印+AI声明+举报工单全部上线：smoke 26/30、check-desktop-p45 62、verify GREEN、0.1.28 发布+安装、生产 P45E_DEPLOY_DONE（REPORT_POST=201 ADMIN_LIST=200 ADMIN_RESOLVE=200）、生产水印真实生效（YMAX 208 vs 16）、桌面真机提交举报 ok
 - 2026-11-12T15:06:32.386Z | dsh-lead | DONE | T-71  —— 误建空白任务，关闭
+- 2026-11-12T17:19:47.000Z | dsh-lead | ADD | T-74 P46 语音转写(ASR)+并发+team_run编排+企业资料引导（0.1.29 上线）
+- 2026-11-12T17:20:19.448Z | dsh-lead | CLAIM | T-74 P46 语音转写(ASR)+并发+team_run编排+企业资料引导（0.1.29 上线）
+- 2026-11-12T17:20:19.624Z | dsh-lead | DONE | T-74 P46 语音转写(ASR)+并发+team_run编排+企业资料引导（0.1.29 上线） —— transcribe 生产实测 19s/13.47s 文本逐字正确; team_run 生产 created1 done1 15.0s; worker 并发 2/2, 桌面并发 2; 资料卡+queuePosition; verify GREEN; 0.1.29 已发布安装(VERSION=0.1.29, 资料卡在); P46_DEPLOY_DONE
+- 2026-11-12T18:25:05.346Z | dsh-lead | ADD | T-75 T-75 遗落功能对照：原版0.4.29 vs 复刻0.1.29，功能层遗漏表（codex）
+- 2026-11-12T18:25:45.155Z | dsh-lead | MSG->codex | T-75 已派给你（看板 owner=codex）。任务书：docs/handoff/T-75-遗落功能对照-任务书.md。一句话：对照原版 0.4.29（只读证据在 C:\Users\30290\Desktop\部署文件\_extract\ 下的 server1027 / renderer_0429_strings.txt / main_0429_strings.txt / skills17）与复刻 0.1.29（本仓库 packages/* + docs/fidelity-matrix.md + docs/handoff/P43-*），产出功能层遗漏表 docs/handoff/T-75-遗落功能表.md，五层（界面 / 服务端能力 / 员工域 / 计费后台 / 渠道自动化），每条要带原版证据（文件:行或字符串表行号）+ 复刻现状 + 判定（真实遗漏|部分实现|替代实现|有意裁剪|待确认）+ 优先级 P0-P2 + 预估人日 + 建议动作，并给 Top10 摘要和与 P43 的差异说明。注意：订阅/会员、飞书、本地GPU数字人、火山密钥页、recorder、tads、clawhub、workflow 编辑器、D-01/02/03 已批准偏差都不用记（任务书第5节有完整排除清单）。只读分析不改代码不碰生产不碰 .env；每 20-30 分钟 coord save T-75 --agent codex；90 分钟预算，跑不完先交 Top60 行；完成后 coord done T-75 --agent codex 再 coord msg dsh-lead 告诉我。
+- 2026-11-12T18:36:53.096Z | codex | CLAIM | T-75 T-75 遗落功能对照：原版0.4.29 vs 复刻0.1.29，功能层遗漏表（codex）
+- 2026-11-12T18:38:40.874Z | codex | SAVE | T-75 已确认任务范围与排除项，核对 P43 与现有商城/会话/工具清单；发现本地 indextts 拦截与生产验收记录冲突，列待核实。
+- 2026-11-12T18:44:14.048Z | codex | SAVE | T-75 已覆盖五层 60 条，逐行附两侧源码证据；17 个技能均与原文不同，2 个附属脚本哈希一致；发现 doc_write 未登记任务产物及额度日期旧误判。
+- 2026-11-12T18:45:51.157Z | codex | SAVE | T-75 交付 60 项五层对照及 Top10，逐项索引、数量唯一性与两侧路径检查通过；server/desktop TypeScript --noEmit 均通过。verify.ps1 会读取 packages/server/.env，与 T-75 不碰 .env 的明确要求冲突，未运行。
+- 2026-11-12T18:45:51.268Z | codex | BLOCK | T-75 reason=other 报告已完成并通过静态文档检查和两端类型检查；scripts/verify.ps1 会主动读取 packages/server/.env，任务书明确禁止碰 .env；按不绿不 done 保持阻塞，需无密钥正式验证入口。
+- 2026-11-12T18:45:51.372Z | codex | MSG->dsh-lead | T-75 报告内容已完成 docs/handoff/T-75-遗落功能表.md：五层 60 条与 Top10，证据索引及两端 TS noEmit 检查通过。注意 17 技能文档均已改写、两个技能脚本哈希一致；doc_write 不自动登记任务产物；本地 indextts 禁止与生产记录冲突；quota 下月日期此前误报。T-75 因 verify.ps1 会读取 .env，而任务书禁止碰 .env，按不绿不 done 标记 blocked(other)，请提供不触碰 .env 的正式验证入口。
+- 2026-11-12T18:48:36.787Z | codex | SAVE | T-75 隔离临时副本（排除 .env 和 secrets，引用仓库依赖）运行原 scripts/verify.ps1，服务端 tsc 与桌面构建 VERIFY GREEN；报告 60 条静态证据检查及双端 noEmit 通过。
+- 2026-11-12T18:48:36.968Z | codex | DONE | T-75 T-75 遗落功能对照：原版0.4.29 vs 复刻0.1.29，功能层遗漏表（codex） —— 完成 60 项五层遗落功能表、Top10 与索引；原 verify.ps1 在不含 .env 的隔离源码副本 GREEN（默认构建验证，非生产或运行时验收）。
+- 2026-11-12T18:48:37.111Z | codex | MSG->dsh-lead | T-75 完成并 done：docs/handoff/T-75-遗落功能表.md；五层 60 项及 Top10、证据索引，包含 17 技能资产来源与当前实现的限制。已在不含 .env/secrets 的隔离源码副本运行原 verify.ps1 默认模式，服务端 tsc/桌面构建 GREEN；未运行 Smoke 或生产验收。
+- 2026-11-12T20:08:35.876Z | dsh-lead | ADD | T-76 T-76 T-75复核A组修复：产物登记/退出确认/渠道降级提示/toolapi兜底/音色克隆置灰/过程可见
+- 2026-11-12T20:09:31.688Z | dsh-lead | MSG->codex | T-76 已派给你（owner=codex，status=todo）。任务书：docs/handoff/T-76-修复任务书.md —— 先读它，再读 docs/handoff/T-75-遗落功能表-复核.md。
+
+先说清上轮误会：任务书里「不碰 .env」我写歧义了，本意只禁三件事——改 .env/secrets、把密钥或密码的值写进文件或日志、把 .env 提交进 git。**跑 scripts/verify.ps1 -Smoke、起本地 API、让 verify 读 .env 都是允许的**，不要再绕隔离副本，本轮直接在仓库里跑全量 verify 到 GREEN。
+
+六条任务（细节在任务书，全部要做）：
+A1 产物统一登记（最高优先）：packages/worker/tool-loop.mjs:173 只认 file_write，doc_write / transcribe / media_process 的产出不进任务产物。三种返回形态我已核对：doc_write 顶层 {key,name}（docs-write.ts:313,321）、transcribe 嵌套 result.file（asr.ts:235）、media_process 走 saveWorkspaceFile（media-tools.ts:436-441）。抽 collectFiles(result) 归一化 + 按 key 去重，artifact 保持 {kind:'workspace-file',path:key,name}，下载走既有鉴权。配 scripts/smoke-p47-artifacts.mjs。
+A2 退出登录二次确认：packages/desktop/src/renderer/src/pages/Shell.tsx:100 直连 onLogout，加内联确认或 window.confirm，不加依赖。
+A3 渠道未绑定可见提示：packages/server/src/channels/dispatcher.service.ts:125-132 现在只回「已收到」。改文案为「已收到，但你的微信/企微账号还没绑定员工，请在电脑端打开「渠道网关」完成绑定，绑定后重新发一次需求。」+ 结构化 warn（channel/fromUser/msgId/reason:'unbound'）。不改绑定逻辑、不新增接口。配 smoke-p47-channel-degrade.mjs。
+A4 toolapi 兜底标记：packages/server/src/toolapi/toolapi.service.ts:69,108 生成失败返回固定文案，用户会误以为是个性化建议。加 degraded:true + 文案前缀「（模板兜底，非个性化生成：本次模型调用失败）」，消费端别吞标记。配冒烟。
+A5 音色克隆按安全默认置灰：media.service.ts:316 对 indextts 直接 400（T-33 计费护栏），但桌面入口还能点。改 packages/desktop/src/renderer/src/pages/MediaStudio.tsx：voice 模式提交按钮置灰 + 说明「音色合成暂未开放：上游不返回可核对的音频时长，为避免多扣积分，体验版先关闭提交。需要开通请联系管理员。」服务端 400 保留，不要去改计费口径或打开 indextts。
+A6 UI-01 先核实再动手：steps 已随 outputMeta 上传（cloud-executor.mjs:194），查桌面任务详情/对话是否渲染 outputMeta.steps。有 → 不改代码，note 说明位置和行号；没有 → 任务详情加可折叠「执行过程」（tool/durationMs/success，失败红字）。
+
+硬约束：禁改 .env/secrets 值、禁碰生产机（47.85.46.165 / 8.163.59.118）、禁改 prisma/schema.prisma 或新建迁移、禁 bump 版本（0.1.30 我打包）、禁改 packages/desktop/src/main/platform*.ts（真机校准过）。每 20-30 分钟 coord save T-76 --agent codex --note --next。做完写 docs/handoff/P47-产物登记与体验修复.md（每条：改了什么、验证命令与结果、已知限制），然后 coord done T-76 + coord msg dsh-lead。每条必须有可复跑证据，不接受只改文档。
+- 2026-11-12T20:11:51.251Z | codex | CLAIM | T-76 T-76 T-75复核A组修复：产物登记/退出确认/渠道降级提示/toolapi兜底/音色克隆置灰/过程可见
+- 2026-11-12T20:13:22.792Z | codex | SAVE | T-76 已完成六项初版：多类型产物去重、退出确认、未绑定提示、兜底标记、音色按钮禁用、任务步骤折叠展示；审查中纠正渠道创建失败提示。
+- 2026-11-12T20:17:20.273Z | codex | MSG->dsh-lead | T-76 审查发现任务书指定的“渠道网关完成绑定”目前可能误导：Gateway.tsx 仅网关启停/日志，无绑定界面；dispatcher 依赖 CHANNEL_OWNER_USER_ID 或公众号 openid。按任务书未新增接口/改变绑定逻辑，交付中会明确限制，建议另派绑定界面或改成联系管理员的提示。
+- 2026-11-12T20:17:56.616Z | codex | SAVE | T-76 专项冒烟 A1/A3/A4 与 UI 静态检查通过，双端类型检查通过；全量 verify -Smoke 正在执行，发现网关页无绑定入口，已通知 lead 并在文案增加联系管理员。
+- 2026-11-12T20:19:52.440Z | codex | SAVE | T-76 第一轮 verify -Smoke GREEN；审查发现企微/公众号控制器丢弃后台返回，补未绑定主动推送并在无绑定界面时提示联系管理员，专项测试重跑通过。
+- 2026-11-12T20:24:04.219Z | codex | SAVE | T-76 六项代码审查完成；四个专项冒烟、双端 noEmit 和最终 verify -Smoke GREEN。企微/公众号异步未绑定回推已测；网关页缺绑定入口，文案补联系管理员并已通知 lead。
+- 2026-11-12T20:24:04.319Z | codex | DONE | T-76 T-76 T-75复核A组修复：产物登记/退出确认/渠道降级提示/toolapi兜底/音色克隆置灰/过程可见 —— 六项修复、逐项审查、P47 四个专项冒烟、双端 noEmit 和 verify -Smoke GREEN；绑定入口缺失与真实端到端限制见 P47 文档。
+- 2026-11-12T20:24:04.415Z | codex | MSG->dsh-lead | T-76 已完成并 done：六项修复及 P47 文档 docs/handoff/P47-产物登记与体验修复.md，四个专项测试、双端 noEmit、最终 verify -Smoke GREEN。审查修复了企微/公众号异步 ACK 丢弃未绑定提示：现主动推送，个人微信不重复。渠道网关实际没有绑定入口，已在提示补充联系管理员，请另行安排；未跑真实微信或付费 doc_write 端到端，文档附手工步骤。

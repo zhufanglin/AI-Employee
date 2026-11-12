@@ -128,6 +128,22 @@ if ($Smoke) {
     & $node "scripts\smoke-p46-concurrency.mjs"
     $script:code = $LASTEXITCODE
   }
+  Step "smoke: P47 产物登记" {
+    & $node "scripts\smoke-p47-artifacts.mjs"
+    $script:code = $LASTEXITCODE
+  }
+  Step "smoke: P47 渠道降级提示" {
+    & $node "scripts\smoke-p47-channel-degrade.mjs"
+    $script:code = $LASTEXITCODE
+  }
+  Step "smoke: P47 toolapi 兜底标记" {
+    & $node "scripts\smoke-p47-toolapi.mjs"
+    $script:code = $LASTEXITCODE
+  }
+  Step "smoke: P47 桌面体验修复" {
+    & $node "scripts\smoke-p47-ui.mjs"
+    $script:code = $LASTEXITCODE
+  }
   Step "smoke: W2" {
     & $node "scripts\smoke-w2.mjs"
     $script:code = $LASTEXITCODE

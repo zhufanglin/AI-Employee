@@ -1,0 +1,15 @@
+import assert from 'node:assert/strict';
+import { createRequire } from 'node:module';
+const require = createRequire(import.meta.url);
+const { ToolapiService } = require('../packages/server/dist/toolapi/toolapi.service');
+const saved = [];
+const prisma = { potentialCustomer: { findMany: async () => [{ id: '1', phone: 'demo', wechatNickname: 'demo' }, { id: '2', phone: 'demo', wechatNickname: 'demo2' }] }, todayCommunication: { create: async ({ data }) => { saved.push(data); return data; }, findMany: async () => saved } };
+const service = new ToolapiService(prisma, {});
+service.aiText = async () => '[{"index":1,"strategy":"个性化建议"}]';
+const rows = await service.generateTodayCommunications('demo');
+assert.equal(rows[0].degraded, false); assert.equal(rows[1].degraded, true);
+assert.match(rows[1].communicationStrategy, /模板兜底，非个性化生成/);
+assert.equal((await service.queryTodayCommunications({ phone: 'demo' }))[1].degraded, true);
+service.aiText = async () => { throw new Error('fixture failure'); };
+const failed = await service.generateTodayCommunications('demo'); assert.ok(failed.every((r) => r.degraded));
+console.log('P47 toolapi partial/failed model fallback and persisted label PASS');

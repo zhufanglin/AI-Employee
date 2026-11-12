@@ -55,3 +55,11 @@
 - [x] 2026-11-07T07:33:13.393Z | from codex | T-44 完成：file_write 不再返回公开地址，新上传 OSS 对象请求 private ACL，员工写出文件登记为 workspace-file 并通过桌面鉴权下载；专项回归、P11/P12 和 verify GREEN。getBucketACL 只读调用返回 ResponseError，未能核验桶/历史对象；OSS 上传失败会退到本地，请生产核实 ACL 和存储持久化。未部署。
 
 - [x] 2026-11-07T07:48:11.775Z | from codex | OSS 只读核验更新：本机直连解析至 VPN fake-IP 并超时；使用本机代理 127.0.0.1:12001 后，通过签名请求 getBucketACL 得到 OSS AccessDenied（非仅网络问题）。当前配置身份无权读取桶 ACL，历史对象与实际公开性仍未知。未修改桶、对象或密钥。请生产侧由桶所属账号核验 ACL/策略并反馈。
+
+- [ ] 2026-11-12T18:45:51.370Z | from codex | T-75 报告内容已完成 docs/handoff/T-75-遗落功能表.md：五层 60 条与 Top10，证据索引及两端 TS noEmit 检查通过。注意 17 技能文档均已改写、两个技能脚本哈希一致；doc_write 不自动登记任务产物；本地 indextts 禁止与生产记录冲突；quota 下月日期此前误报。T-75 因 verify.ps1 会读取 .env，而任务书禁止碰 .env，按不绿不 done 标记 blocked(other)，请提供不触碰 .env 的正式验证入口。
+
+- [ ] 2026-11-12T18:48:37.109Z | from codex | T-75 完成并 done：docs/handoff/T-75-遗落功能表.md；五层 60 项及 Top10、证据索引，包含 17 技能资产来源与当前实现的限制。已在不含 .env/secrets 的隔离源码副本运行原 verify.ps1 默认模式，服务端 tsc/桌面构建 GREEN；未运行 Smoke 或生产验收。
+
+- [ ] 2026-11-12T20:17:20.272Z | from codex | T-76 审查发现任务书指定的“渠道网关完成绑定”目前可能误导：Gateway.tsx 仅网关启停/日志，无绑定界面；dispatcher 依赖 CHANNEL_OWNER_USER_ID 或公众号 openid。按任务书未新增接口/改变绑定逻辑，交付中会明确限制，建议另派绑定界面或改成联系管理员的提示。
+
+- [ ] 2026-11-12T20:24:04.412Z | from codex | T-76 已完成并 done：六项修复及 P47 文档 docs/handoff/P47-产物登记与体验修复.md，四个专项测试、双端 noEmit、最终 verify -Smoke GREEN。审查修复了企微/公众号异步 ACK 丢弃未绑定提示：现主动推送，个人微信不重复。渠道网关实际没有绑定入口，已在提示补充联系管理员，请另行安排；未跑真实微信或付费 doc_write 端到端，文档附手工步骤。

@@ -471,6 +471,7 @@ export default function EmployeeOffice() {
               : '排队中，前面没有别的任务，马上开始'}
           </p>}
           {task.outputText && <pre className="task-output">{task.outputText}</pre>}
+          {Array.isArray(task.outputMeta?.steps) && task.outputMeta.steps.length > 0 && <details><summary>执行过程</summary><ol>{task.outputMeta.steps.map((step: any, index: number) => <li key={index} style={step.success === false ? { color: '#d33' } : undefined}>{String(step.tool || '未知工具')} · {Number(step.durationMs) || 0} ms · {step.success === false ? '失败' : '成功'}{step.success === false && step.error ? '：' + String(step.error) : ''}</li>)}</ol></details>}
           {task.error && <div className="task-error">{task.error}</div>}
           {!!task.artifacts?.length && <div className="artifact-list">{task.artifacts.map((a: any) => {
             const url = ['image', 'video'].includes(a.kind) ? mediaUrl(a.url || a.path) : ''

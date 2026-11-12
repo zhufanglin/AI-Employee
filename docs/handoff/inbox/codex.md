@@ -69,3 +69,19 @@ ode scripts/coord.mjs done T-40 --agent codex --note ...，并回一条 msg 给 
 写作用域互不重叠：我只动 packages/server/src/capabilities/**、packages/worker/tool-loop.mjs、scripts/smoke-p11-tools.mjs、scripts/verify.ps1、.env.example。你不要碰这些。
 
 - [ ] 2026-11-07T05:33:59.260Z | from dsh-lead | P11 工具第一批已完成并通过生产验收（能力清单 10 项、file_write->OSS->file_read 往返通、web_search 未配key明确报错）。桌面 0.1.2 已发布到 updates.fcmediaagent.com（sha512 fySWUYUo...）。T-40（P11-A F2 缺口分级与取舍）仍是 todo 未认领，请回复能否今天交付；若你忙，我改为自己接手。
+
+- [ ] 2026-11-12T18:25:45.124Z | from dsh-lead | T-75 已派给你（看板 owner=codex）。任务书：docs/handoff/T-75-遗落功能对照-任务书.md。一句话：对照原版 0.4.29（只读证据在 C:\Users\30290\Desktop\部署文件\_extract\ 下的 server1027 / renderer_0429_strings.txt / main_0429_strings.txt / skills17）与复刻 0.1.29（本仓库 packages/* + docs/fidelity-matrix.md + docs/handoff/P43-*），产出功能层遗漏表 docs/handoff/T-75-遗落功能表.md，五层（界面 / 服务端能力 / 员工域 / 计费后台 / 渠道自动化），每条要带原版证据（文件:行或字符串表行号）+ 复刻现状 + 判定（真实遗漏|部分实现|替代实现|有意裁剪|待确认）+ 优先级 P0-P2 + 预估人日 + 建议动作，并给 Top10 摘要和与 P43 的差异说明。注意：订阅/会员、飞书、本地GPU数字人、火山密钥页、recorder、tads、clawhub、workflow 编辑器、D-01/02/03 已批准偏差都不用记（任务书第5节有完整排除清单）。只读分析不改代码不碰生产不碰 .env；每 20-30 分钟 coord save T-75 --agent codex；90 分钟预算，跑不完先交 Top60 行；完成后 coord done T-75 --agent codex 再 coord msg dsh-lead 告诉我。
+
+- [ ] 2026-11-12T20:09:31.678Z | from dsh-lead | T-76 已派给你（owner=codex，status=todo）。任务书：docs/handoff/T-76-修复任务书.md —— 先读它，再读 docs/handoff/T-75-遗落功能表-复核.md。
+
+先说清上轮误会：任务书里「不碰 .env」我写歧义了，本意只禁三件事——改 .env/secrets、把密钥或密码的值写进文件或日志、把 .env 提交进 git。**跑 scripts/verify.ps1 -Smoke、起本地 API、让 verify 读 .env 都是允许的**，不要再绕隔离副本，本轮直接在仓库里跑全量 verify 到 GREEN。
+
+六条任务（细节在任务书，全部要做）：
+A1 产物统一登记（最高优先）：packages/worker/tool-loop.mjs:173 只认 file_write，doc_write / transcribe / media_process 的产出不进任务产物。三种返回形态我已核对：doc_write 顶层 {key,name}（docs-write.ts:313,321）、transcribe 嵌套 result.file（asr.ts:235）、media_process 走 saveWorkspaceFile（media-tools.ts:436-441）。抽 collectFiles(result) 归一化 + 按 key 去重，artifact 保持 {kind:'workspace-file',path:key,name}，下载走既有鉴权。配 scripts/smoke-p47-artifacts.mjs。
+A2 退出登录二次确认：packages/desktop/src/renderer/src/pages/Shell.tsx:100 直连 onLogout，加内联确认或 window.confirm，不加依赖。
+A3 渠道未绑定可见提示：packages/server/src/channels/dispatcher.service.ts:125-132 现在只回「已收到」。改文案为「已收到，但你的微信/企微账号还没绑定员工，请在电脑端打开「渠道网关」完成绑定，绑定后重新发一次需求。」+ 结构化 warn（channel/fromUser/msgId/reason:'unbound'）。不改绑定逻辑、不新增接口。配 smoke-p47-channel-degrade.mjs。
+A4 toolapi 兜底标记：packages/server/src/toolapi/toolapi.service.ts:69,108 生成失败返回固定文案，用户会误以为是个性化建议。加 degraded:true + 文案前缀「（模板兜底，非个性化生成：本次模型调用失败）」，消费端别吞标记。配冒烟。
+A5 音色克隆按安全默认置灰：media.service.ts:316 对 indextts 直接 400（T-33 计费护栏），但桌面入口还能点。改 packages/desktop/src/renderer/src/pages/MediaStudio.tsx：voice 模式提交按钮置灰 + 说明「音色合成暂未开放：上游不返回可核对的音频时长，为避免多扣积分，体验版先关闭提交。需要开通请联系管理员。」服务端 400 保留，不要去改计费口径或打开 indextts。
+A6 UI-01 先核实再动手：steps 已随 outputMeta 上传（cloud-executor.mjs:194），查桌面任务详情/对话是否渲染 outputMeta.steps。有 → 不改代码，note 说明位置和行号；没有 → 任务详情加可折叠「执行过程」（tool/durationMs/success，失败红字）。
+
+硬约束：禁改 .env/secrets 值、禁碰生产机（47.85.46.165 / 8.163.59.118）、禁改 prisma/schema.prisma 或新建迁移、禁 bump 版本（0.1.30 我打包）、禁改 packages/desktop/src/main/platform*.ts（真机校准过）。每 20-30 分钟 coord save T-76 --agent codex --note --next。做完写 docs/handoff/P47-产物登记与体验修复.md（每条：改了什么、验证命令与结果、已知限制），然后 coord done T-76 + coord msg dsh-lead。每条必须有可复跑证据，不接受只改文档。

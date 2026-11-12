@@ -28,7 +28,7 @@ export const ACK_TEXT = "已收到，正在处理，稍后把结果发给你";
 /** 凭证/员工未配置时的统一回复 */
 export const NOT_CONFIGURED_TEXT = "渠道未配置";
 /** 无法绑定平台账号时的降级回复 */
-export const DEGRADED_ACK_TEXT = "已收到";
+export const DEGRADED_ACK_TEXT = "已收到，但你的微信/企微账号还没绑定员工，请在电脑端打开「渠道网关」完成绑定，绑定后重新发一次需求。若没有绑定入口，请联系管理员。";
 
 /** 企微文本消息 content 上限 2048 字节，中文按 3 字节算，保守截到 600 字 */
 const WECOM_PUSH_MAX_CHARS = 600;
@@ -123,12 +123,9 @@ export class ChannelDispatcherService {
 
     const userId = await this.resolveUserId(msg);
     if (!userId) {
-      // 需求 T-11 第 5 条：接口需要 userId 绑定时不硬改员工链路，降级为只回「已收到」+ 留 TODO
-      this.logger.warn(
-        "[TODO] 渠道用户尚未绑定平台账号，已降级为仅回复「已收到」。channel=" + msg.channel +
-        " from=" + msg.fromUser +
-        "；补 CHANNEL_OWNER_USER_ID 或建立渠道用户映射后即可创建云端任务。",
-      );
+      this.logger.warn(JSON.stringify({ reason: 'unbound', channel: msg.channel, fromUser: msg.fromUser, msgId: msg.msgId ?? null }));
+      // 企微/公众号控制器先回 ACK 并丢弃此返回值，需要主动推送；个人微信轮询会转发返回值。
+      if (msg.channel !== 'personal-wechat') await this.push(msg, DEGRADED_ACK_TEXT);
       return DEGRADED_ACK_TEXT;
     }
 
@@ -152,11 +149,18 @@ export class ChannelDispatcherService {
       // 建单失败要放掉幂等占位，否则用户原样重发会被当成重复回调。
       await this.releaseInbound(claim);
       // 员工未安装 / 未购买 / 账号异常等：同样降级，但不能把 500 抛回微信（会被反复重试）
+      const failText = "已收到，但员工任务创建失败（可能是员工未安装或授权已过期），请到电脑端「员工办公区」确认后再发一次，或联系管理员。";
       this.logger.warn(
-        "创建员工任务失败，降级为仅回复「已收到」：channel=" + msg.channel +
+        "创建员工任务失败，降级：channel=" + msg.channel +
         " from=" + msg.fromUser + " reason=" + (error?.message ?? error),
       );
-      return DEGRADED_ACK_TEXT;
+      // 与未绑定分支一致：企微/公众号控制器会丢弃返回值，必须主动推送，否则用户只看到 ACK 后再无下文。
+      if (msg.channel !== 'personal-wechat') {
+        try { await this.push(msg, failText); } catch (pushError: any) {
+          this.logger.warn("任务创建失败提示推送失败 channel=" + msg.channel + " reason=" + (pushError?.message ?? pushError));
+        }
+      }
+      return failText;
     }
   }
 

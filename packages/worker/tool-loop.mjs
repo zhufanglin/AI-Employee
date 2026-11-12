@@ -118,6 +118,16 @@ export function recentContext(messages, maxChars = 1200) {
   return parts.slice(-6).join('\n').slice(-maxChars);
 }
 
+export function collectFiles(result) {
+  const candidates = [result, result?.file];
+  const seen = new Set();
+  return candidates.flatMap((item) => {
+    if (!item || typeof item.key !== 'string' || !item.key.startsWith('workspace/') || typeof item.name !== 'string' || !item.name.trim() || seen.has(item.key)) return [];
+    seen.add(item.key);
+    return [{ key: item.key, name: item.name }];
+  });
+}
+
 export async function runToolLoop({ api, model, messages, skill, strategy, persona, needs, workspaceRules, strategyMeta, maxSteps = 8, timeoutMs = 900000, pollMs = 8000, signal: externalSignal }) {
   if (!Number.isInteger(maxSteps) || maxSteps < 1 || maxSteps > 20 || !Number.isFinite(timeoutMs) || timeoutMs < 1000 || !Number.isFinite(pollMs) || pollMs < 10) throw new Error('执行器配置无效');
   const controller = new AbortController();
@@ -170,7 +180,9 @@ export async function runToolLoop({ api, model, messages, skill, strategy, perso
           }
           result = await request('/capabilities/run', { name: tool, params });
           if (!result?.success) throw new Error(String(result?.error || '能力执行失败'));
-          if (tool === 'file_write' && typeof result.data?.key === 'string' && typeof result.data?.name === 'string') files.push({ key: result.data.key, name: result.data.name });
+          if (['file_write', 'doc_write', 'transcribe', 'media_process'].includes(tool)) {
+            for (const file of collectFiles(result.data)) if (!files.some(existing => existing.key === file.key)) files.push(file);
+          }
         } else if (Object.hasOwn(MEDIA, tool)) {
           const created = await request(MEDIA[tool], parsed.params);
           if (!created?.taskId) throw new Error('媒体服务未返回任务编号，请勿自动重试');

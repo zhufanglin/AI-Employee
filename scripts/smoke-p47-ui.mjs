@@ -1,0 +1,15 @@
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+const read = (path) => readFileSync(new URL('../' + path, import.meta.url), 'utf8');
+const shell = read('packages/desktop/src/renderer/src/pages/Shell.tsx');
+const media = read('packages/desktop/src/renderer/src/pages/MediaStudio.tsx');
+const office = read('packages/desktop/src/renderer/src/pages/EmployeeOffice.tsx');
+const service = read('packages/server/src/media/media.service.ts');
+assert.match(shell, /if \(window\.confirm\('退出后需要重新用手机号登录，确定退出？'\)\) onLogout\(\)/);
+assert.match(media, /<button className="primary" disabled onClick=\{submitClone\}>/);
+assert.match(media, /音色合成暂未开放：上游不返回可核对的音频时长/);
+assert.match(service, /taskType === "indextts"\) throw new BadRequestException/);
+assert.match(office, /Array\.isArray\(task\.outputMeta\?\.steps\)/);
+assert.match(office, /<summary>执行过程<\/summary>/);
+assert.match(office, /step\.success === false/);
+console.log('P47 UI source checks: logout confirmation, disabled voice and step display PASS');

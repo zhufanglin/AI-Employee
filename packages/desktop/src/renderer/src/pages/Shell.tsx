@@ -97,7 +97,7 @@ export default function Shell({ user, config, onLogout }: { user: any; config: a
               <span>积分 {balance}</span>
             </div>
           </div>
-          <button className="ghost wide" onClick={onLogout}>退出登录</button>
+          <button className="ghost wide" onClick={() => { if (window.confirm('退出后需要重新用手机号登录，确定退出？')) onLogout() }}>退出登录</button>
         </div>
       </aside>
 

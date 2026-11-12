@@ -1,6 +1,6 @@
 # 任务看板（自动生成，勿手改）
 
-> 生成时间 2026-11-12T15:08:55.009Z · 单一事实源 `docs/handoff/state.json`
+> 生成时间 2026-11-12T21:05:09.567Z · 单一事实源 `docs/handoff/state.json`
 
 **当前阶段**：P10（先能用三件事）派工完成，看板 29/33 —— 用户要求先能用、定价后置：T-31 桌面端出图出片 / T-32 员工多步干活 / T-33 成本护栏 已派 Codex；dsh-lead 推主线（生产可用性收口 + 复核），T-11 渠道仍 blocked(env)。
 
@@ -79,6 +79,9 @@
 | T-71 |  | done | dsh-lead | - | - |
 | T-72 | P45-2 合规：同意落库/跨境单独同意/登录页协议行/日志留存180天/已登录即时落库 + 0.1.27 发布 | done | dsh-lead | 11-12 10:42 | - |
 | T-73 | P45-1/3/4 媒体水印 + AI 声明 + 举报工单（0.1.28 上线） | done | dsh-lead | 11-12 15:06 | - |
+| T-74 | P46 语音转写(ASR)+并发+team_run编排+企业资料引导（0.1.29 上线） | done | dsh-lead | 11-12 17:20 | - |
+| T-75 | T-75 遗落功能对照：原版0.4.29 vs 复刻0.1.29，功能层遗漏表（codex） | done | codex | 11-12 18:48 | docs/handoff/T-75-遗落功能表.md |
+| T-76 | T-76 T-75复核A组修复：产物登记/退出确认/渠道降级提示/toolapi兜底/音色克隆置灰/过程可见 | done | codex | 11-12 20:24 | packages/worker/tool-loop.mjs,packages/desktop/src/renderer/src/pages/Shell.tsx,packages/server/src/channels/dispatcher.service.ts,packages/server/src/toolapi/toolapi.service.ts,packages/desktop/src/renderer/src/pages/MediaStudio.tsx |
 
 **未完成任务详情**
 

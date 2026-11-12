@@ -36,6 +36,7 @@ function parseStrategies(raw: unknown, expected: number): string[] {
   return out;
 }
 
+const FALLBACK_PREFIX = "（模板兜底，非个性化生成：本次模型调用失败）";
 type PageQuery = { phone: string; company?: string; wechatNickname?: string; industry?: string; lastCommDays?: number; addWechatDays?: number };
 
 @Injectable()
@@ -108,19 +109,21 @@ export class ToolapiService {
       this.logger.warn("今日沟通建议生成失败，回落固定文案：" + (error?.message ?? error));
     }
     return Promise.all(
-      rows.map((row, i) =>
-        this.prisma.todayCommunication.create({
+      rows.map(async (row, i) => {
+        const degraded = !strategies[i];
+        const saved = await this.prisma.todayCommunication.create({
           data: {
             phone: row.phone,
             potentialCustomerId: row.id,
             wechatNickname: row.wechatNickname,
-            communicationStrategy: strategies[i] || "根据客户资料生成首轮跟进建议",
+            communicationStrategy: strategies[i] || FALLBACK_PREFIX + "根据客户资料生成首轮跟进建议",
           },
-        }),
-      ),
+        });
+        return { ...saved, degraded };
+      }),
     );
   }
-  async queryTodayCommunications(dto: any) { const where: any = { phone: this.owner(dto.phone) }; if (dto.wechatNickname) where.wechatNickname = dto.wechatNickname; if (dto.commDate) { const date = new Date(dto.commDate); where.commDate = { gte: date, lt: new Date(date.getTime() + 86400000) }; } return this.prisma.todayCommunication.findMany({ where, orderBy: { commDate: "desc" } }); }
+  async queryTodayCommunications(dto: any) { const where: any = { phone: this.owner(dto.phone) }; if (dto.wechatNickname) where.wechatNickname = dto.wechatNickname; if (dto.commDate) { const date = new Date(dto.commDate); where.commDate = { gte: date, lt: new Date(date.getTime() + 86400000) }; } const rows = await this.prisma.todayCommunication.findMany({ where, orderBy: { commDate: "desc" } }); return rows.map(row => ({ ...row, degraded: String(row.communicationStrategy ?? "").startsWith(FALLBACK_PREFIX) })); }
   async updateTodayCommunication(id: string, phone: string, dto: any) { const row = await this.prisma.todayCommunication.findFirst({ where: { id, phone: this.owner(phone) } }); if (!row) throw new NotFoundException("今日沟通不存在"); return this.prisma.todayCommunication.update({ where: { id }, data: { actualCommContent: dto.actualCommContent, communicationStrategy: dto.communicationStrategy, seedingContent: dto.seedingContent } }); }
 
   async createCustomerProfile(dto: any) { return this.prisma.customerProfile.create({ data: { phone: this.owner(dto.phone), company: dto.company, wechatNickname: dto.wechatNickname, industry: dto.industry, position: dto.position, customerId: dto.customerId, lastCommDate: dto.lastCommDate ? new Date(dto.lastCommDate) : null, dealAmount: dto.dealAmount ?? 0, collectDate: dto.collectDate ? new Date(dto.collectDate) : null, responsiblePerson: dto.responsiblePerson, addWechatDate: dto.addWechatDate ? new Date(dto.addWechatDate) : null, satisfaction: dto.satisfaction, dealDate: dto.dealDate ? new Date(dto.dealDate) : null, remark: dto.remark, potentialCustomerId: dto.potentialCustomerId } }); }
