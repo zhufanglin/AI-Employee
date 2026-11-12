@@ -1,0 +1,14 @@
+[Unit]
+Description=每 5 分钟运行一次 fcmediaagent 监控告警
+
+[Timer]
+# 开机 2 分钟后首次运行，之后每次 service 跑完再等 5 分钟
+OnBootSec=2min
+OnUnitActiveSec=5min
+AccuracySec=30s
+Unit=fcmediaagent-monitor.service
+# 监控是周期性的，错过就错过，不做开机补跑
+Persistent=false
+
+[Install]
+WantedBy=timers.target

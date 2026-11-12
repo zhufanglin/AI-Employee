@@ -1,6 +1,6 @@
 # 任务看板（自动生成，勿手改）
 
-> 生成时间 2026-11-11T06:14:33.821Z · 单一事实源 `docs/handoff/state.json`
+> 生成时间 2026-11-11T14:06:25.589Z · 单一事实源 `docs/handoff/state.json`
 
 **当前阶段**：P10（先能用三件事）派工完成，看板 29/33 —— 用户要求先能用、定价后置：T-31 桌面端出图出片 / T-32 员工多步干活 / T-33 成本护栏 已派 Codex；dsh-lead 推主线（生产可用性收口 + 复核），T-11 渠道仍 blocked(env)。
 
@@ -72,6 +72,8 @@
 | T-64 | P38 视频号评论读通（脏表单拦导航→重建窗口重试）+ 0.1.22 | done | dsh-lead | - | packages/desktop/src/main/platform.ts |
 | T-65 | P42 战略表+人设表忠实复刻（工作区企业战略.md + 3 表 + needs 授权注入 + 桌面页）+ 0.1.23 | done | dsh-lead | - | packages/server/src/strategy/**, packages/server/prisma/schema.prisma, packages/worker/tool-loop.mjs, packages/desktop/src/main/strategy-ops.ts, packages/desktop/src/renderer/src/pages/Strategy.tsx, packages/desktop/resources/skills/**, docs/handoff/P42-战略表与人设表.md |
 | T-66 | P43 全面逆向对照 + P0/P1 修复（兑换码入口 / 对话持久化 / 媒体结算 / 渠道幂等 / cron 启停 / 状态机）+ 0.1.24 | done | dsh-lead | - | packages/server/src/**, packages/server/prisma/schema.prisma, packages/desktop/src/main/**, packages/desktop/src/preload/index.ts, packages/desktop/src/renderer/src/**, docs/handoff/P43-全面逆向对照报告.md, docs/handoff/P43-sections/** |
+| T-67 | P43 P1：员工授权到期自动扫描（对齐原版 employee-expiry.scheduler）+ 生产上线 | done | dsh-lead | - | packages/server/src/employee/employee-expiry.service.ts, packages/server/src/employee/employee.module.ts, packages/server/src/admin/admin-extra.controller.ts, scripts/smoke-p43-expiry.mjs, scripts/verify.ps1, docs/handoff/P43-全面逆向对照报告.md |
+| T-68 | P43 P1 剩余 7 条：后台配置接库 / 员工订单支付 / asar 热更新 / 客户端日志 / 审批重跑 / 工作区规则 / toolapi 真生成 | done | dsh-lead | - | packages/server/src/auth/**, packages/server/src/payments/**, packages/server/src/employee/**, packages/server/src/toolapi/**, packages/server/src/admin/**, packages/worker/tool-loop.mjs, packages/worker/cloud-executor.mjs, packages/desktop/src/main/**, packages/desktop/src/preload/**, packages/desktop/src/renderer/**, scripts/smoke-p43-p1.mjs, scripts/publish-asar.mjs, docs/handoff/P43-P1剩余7条.md |
 
 **未完成任务详情**
 

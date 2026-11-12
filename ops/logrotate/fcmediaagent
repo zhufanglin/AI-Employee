@@ -1,0 +1,44 @@
+# =============================================================================
+# fcmediaagent 生产日志轮转（P44 / WP3）
+# 安装位置：/etc/logrotate.d/fcmediaagent
+# 安装命令：sudo cp ops/logrotate/fcmediaagent /etc/logrotate.d/fcmediaagent
+#           sudo chown root:root /etc/logrotate.d/fcmediaagent
+#           sudo chmod 644 /etc/logrotate.d/fcmediaagent
+#           sudo logrotate -d /etc/logrotate.d/fcmediaagent   # 干跑，只打印计划
+#
+# 为什么必须用 copytruncate：
+#   两个服务由 systemd 启动，unit 里用 StandardOutput=append:/opt/fcmediaagent/logs/api.log
+#   和 append:/opt/fcmediaagent/logs/worker.log 写日志。进程启动后一直持有该文件的 fd，
+#   systemd 不会因为文件被 rename 而重新打开。若用默认的 create/rename 方式轮转：
+#     1) 进程继续往已被改名的旧 inode 写，新文件没人写；
+#     2) 磁盘空间不会释放，日志越积越多；
+#     3) journalctl 里也看不到这些日志（输出被 append 到文件，没有进 journal）。
+#   因此这里用 copytruncate：先复制原文件内容，再原地 truncate，进程 fd 始终有效。
+#   代价是「复制完成到 truncate 之间」极短窗口内可能丢少量日志，运维日志可接受。
+#
+# 轮转规则：
+#   - 目录：/opt/fcmediaagent/logs/*.log（当前为 api.log、worker.log、backup.log、
+#     monitor.log；后续新增 *.log 自动纳入）
+#   - 每天检查一次；单文件超过 100M 时也会提前轮转（maxsize，可能一天转多次）
+#   - 保留 14 份；.1 暂不压缩（delaycompress），从 .2 起 gzip 压缩
+#   - 空文件不轮转（notifempty）；文件不存在不报错（missingok）
+#   - Ubuntu 的 logrotate.timer 每天自动触发，不需要额外加 cron
+#
+# 手动验证 / 强制执行：
+#   sudo logrotate -d /etc/logrotate.d/fcmediaagent    # 只打印，不落盘
+#   sudo logrotate -f /etc/logrotate.d/fcmediaagent    # 立即强制轮转一次
+#   ls -lh /opt/fcmediaagent/logs/                     # 应出现 api.log.1 等
+#   systemctl status logrotate.timer                   # 确认系统定时器在跑
+# =============================================================================
+
+/opt/fcmediaagent/logs/*.log {
+    daily
+    rotate 14
+    maxsize 100M
+    compress
+    delaycompress
+    copytruncate
+    notifempty
+    missingok
+    su root root
+}

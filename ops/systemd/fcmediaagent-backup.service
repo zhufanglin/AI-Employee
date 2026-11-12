@@ -1,0 +1,31 @@
+[Unit]
+Description=fcmediaagent MySQL 每日备份（P44 运维保障 / WP1）
+Documentation=file:///opt/fcmediaagent/ops/README.md
+After=network-online.target docker.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+# 备份需要 root：要 docker exec 进 fcm-mysql，并写 /opt/fcmediaagent/backups、/opt/fcmediaagent/logs
+User=root
+Group=root
+WorkingDirectory=/opt/fcmediaagent
+
+# 保留天数（脚本内默认也是 14，这里显式写一份方便调整）
+Environment=RETENTION_DAYS=14
+# 需要异地备份时取消下面一行注释（要求 app/.env 里有 OSS_* 且 ali-oss 已安装）
+# Environment=OSS_UPLOAD=1
+# 备注：unit 的 SSH 环境没有 PATH，脚本内部已用 /opt/node/bin/node 等绝对路径
+
+ExecStart=/opt/fcmediaagent/ops/backup-prod.sh
+# 大库 dump 可能超过 30 分钟，给足超时
+TimeoutStartSec=3600
+# 备份是 IO 密集的低优先级任务，别抢 api/worker 的磁盘
+Nice=10
+IOSchedulingClass=idle
+
+StandardOutput=journal
+StandardError=journal
+
+# 备份失败时不要自动重试（timer 次日还会再来一次，重复重试只会放大 IO）
+Restart=no

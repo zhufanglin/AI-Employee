@@ -1,0 +1,66 @@
+{
+  "_readme": "P44 WP2 监控告警配置示例。复制为 /opt/fcmediaagent/ops/monitor.config.json（或脚本同目录 monitor.config.json，或 --config 指定）。文件不存在时脚本使用内置默认值；本文件里列出的就是默认值。以下划线开头的键只是说明，脚本会忽略。改完无需重启 timer，下一次运行即生效。",
+  "_check_order": "六项检查固定顺序：api_health, queue_backlog, worker_heartbeat, upstream_overdue, resources, backup_freshness",
+
+  "timeZone": "Asia/Shanghai",
+
+  "apiHealth": {
+    "_doc": "检查①API 健康。enabled=是否启用（默认 true）；url=健康检查地址（默认 http://127.0.0.1:3000/api/health）；timeoutMs=请求超时毫秒（默认 3000）。判定：HTTP 非 200 或响应体 db != up 即告警。",
+    "enabled": true,
+    "url": "http://127.0.0.1:3000/api/health",
+    "timeoutMs": 3000
+  },
+
+  "queueBacklog": {
+    "_doc": "检查②队列积压。staleMinutes=只统计 createdAt 早于多少分钟前的任务（默认 30）；threshold=允许的最大积压条数，超过即告警（默认 20）；mysqlContainer=MySQL 容器名（默认 fcm-mysql）；dockerBin=docker 可执行文件（默认 docker，非交互环境建议写绝对路径如 /usr/bin/docker）；envFile=从中解析 DATABASE_URL 的文件（默认 /opt/fcmediaagent/app/.env，密码只经环境变量 MYSQL_PWD 传入容器，不落 argv、不打日志）；timeoutMs=docker 查询超时（默认 20000）。SQL：select count(*) from EmployeeTask where status='queued' and createdAt < now() - interval <staleMinutes> minute",
+    "enabled": true,
+    "staleMinutes": 30,
+    "threshold": 20,
+    "mysqlContainer": "fcm-mysql",
+    "dockerBin": "docker",
+    "envFile": "/opt/fcmediaagent/app/.env",
+    "timeoutMs": 20000
+  },
+
+  "workerHeartbeat": {
+    "_doc": "检查③worker 心跳。logPath=worker 日志路径（默认 /opt/fcmediaagent/logs/worker.log）；maxIdleMinutes=日志 mtime 超过多少分钟没更新即告警（默认 10，需大于 worker 空转时最长的日志间隔）。",
+    "enabled": true,
+    "logPath": "/opt/fcmediaagent/logs/worker.log",
+    "maxIdleMinutes": 10
+  },
+
+  "upstreamOverdue": {
+    "_doc": "检查④上游欠费。logPaths=要扫描的日志（默认 worker.log 与 api.log）；tailLines=每个文件只看最后多少行（默认 200）；pattern=报错关键字正则，大小写不敏感（默认 AccountOverdueError）。命中即告警，样本行会带进告警详情。",
+    "enabled": true,
+    "logPaths": [
+      "/opt/fcmediaagent/logs/worker.log",
+      "/opt/fcmediaagent/logs/api.log"
+    ],
+    "tailLines": 200,
+    "pattern": "AccountOverdueError"
+  },
+
+  "resources": {
+    "_doc": "检查⑤磁盘与内存。diskPath=要检查的挂载点（默认 /）；diskMaxUsedPercent=使用率上限百分比，超过即告警（默认 85）；memMinAvailableMB=可用内存下限 MB，低于即告警（默认 300）。内存优先读 /proc/meminfo 的 MemAvailable，无 /proc 时退回 os.freemem()。",
+    "enabled": true,
+    "diskPath": "/",
+    "diskMaxUsedPercent": 85,
+    "memMinAvailableMB": 300
+  },
+
+  "backupFreshness": {
+    "_doc": "检查⑥备份新鲜度。backupDir=备份目录（默认 /opt/fcmediaagent/backups/mysql）；maxAgeHours=最新 *.sql.gz 的 mtime 超过多少小时即告警（默认 26，对应每日一次备份 + 2 小时余量）。目录不存在或没有 *.sql.gz 也会告警。",
+    "enabled": true,
+    "backupDir": "/opt/fcmediaagent/backups/mysql",
+    "maxAgeHours": 26
+  },
+
+  "alert": {
+    "_doc": "告警输出。webhookUrl=机器人地址，留空则依次读环境变量 ALERT_WEBHOOK_URL、/opt/fcmediaagent/app/.env 里的 ALERT_WEBHOOK_URL（企业微信或钉钉群机器人；钉钉若用自定义关键词，请把关键词设为「监控」）；cooldownMinutes=同一 check 的冷却分钟数，冷却内只推一次（默认 60）；stateFile=去重状态文件（默认 /opt/fcmediaagent/monitor-state.json，记录 lastAlertAt/alerting）；logFile=监控日志（默认 /opt/fcmediaagent/logs/monitor.log，每行一个 JSON）；webhookTimeoutMs=推送超时毫秒（默认 5000，失败只记日志不影响退出码）。",
+    "webhookUrl": "",
+    "cooldownMinutes": 60,
+    "stateFile": "/opt/fcmediaagent/monitor-state.json",
+    "logFile": "/opt/fcmediaagent/logs/monitor.log",
+    "webhookTimeoutMs": 5000
+  }
+}

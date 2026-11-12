@@ -1,0 +1,22 @@
+[Unit]
+Description=fcmediaagent 生产监控告警（P44 WP2：六项检查 + webhook 推送）
+Documentation=file:/opt/fcmediaagent/ops/README.md
+# 队列积压检查要 docker exec，先等 docker 起来
+Wants=network-online.target
+After=network-online.target docker.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/fcmediaagent
+# 可选环境文件：ALERT_WEBHOOK_URL 建议单独放这里（chmod 600），避免混进 app/.env
+EnvironmentFile=-/etc/default/fcmediaagent-monitor
+Environment=NODE_ENV=production
+Environment=TZ=Asia/Shanghai
+# 生产 Node 绝对路径：非交互环境没有 PATH
+ExecStart=/opt/node/bin/node /opt/fcmediaagent/ops/monitor.mjs --once
+# 退出码语义：0=本轮跑完（业务异常只告警不失败）；1=写监控日志失败或 --strict 下有告警
+TimeoutStartSec=120
+Nice=10
+
+[Install]
+WantedBy=multi-user.target
