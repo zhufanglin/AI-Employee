@@ -1,7 +1,7 @@
 {
   "project": "中科元晟 AI员工 0.4.29 完全复刻",
   "version": 1,
-  "updatedAt": "2026-11-12T21:29:41.762Z",
+  "updatedAt": "2026-11-13T07:16:02.026Z",
   "phase": "P10（先能用三件事）派工完成，看板 29/33",
   "phaseGoal": "用户要求先能用、定价后置：T-31 桌面端出图出片 / T-32 员工多步干活 / T-33 成本护栏 已派 Codex；dsh-lead 推主线（生产可用性收口 + 复核），T-11 渠道仍 blocked(env)。",
   "owners": {
@@ -3929,6 +3929,47 @@
       },
       "finishedAt": "2026-11-12T21:29:41.761Z",
       "result": "codex T-76 交付 6 项全部复核通过（packages/worker/tool-loop.mjs collectFiles 白名单登记 workspace/ key、Shell.tsx 退出确认、MediaStudio.tsx 音色提交置灰、dispatcher 未绑定结构化 warn+主动推送、toolapi.service.ts FALLBACK_PREFIX+degraded、EmployeeOffice.tsx outputMeta.steps 折叠展示）。dsh-lead 补充：dispatcher 建单失败分支也改为非个人微信主动 push(failText)（原来只 return，企微/公众号只收到 ACK）；4 个 P47 冒烟接入 scripts/verify.ps1（BOM=239,187,191 SIZE=12391 PARSE_OK）。验证：server/web tsc=0；smoke-p47-artifacts/channel-degrade/toolapi/ui 全绿；全量 verify.ps1 -Smoke = VERIFY GREEN；生产部署 dist(387)+worker/tool-loop.mjs（备份 dist.bak.20261113-051927、tool-loop.mjs.bak.20261113-051927），API/WORKER active、HEALTH=200、LEGAL=200、worker concurrency 2/2；0.1.30 exe 127,828,214B 已发布（yml=200 exe=206）+ asar 11,629,894B（json=200 bin=206）+ asar 覆盖安装校验 VERSION=0.1.30 + CDP 真机 version=0.1.30；git 8a87139 已推送。遗留：Gateway.tsx 无渠道绑定界面，降级提示「去渠道网关绑定」不可自助完成。"
+    },
+    {
+      "id": "T-78",
+      "title": "P48 来源核对 source_check（可信引用）上线（0.1.31）",
+      "status": "done",
+      "owner": "dsh-lead",
+      "scope": [],
+      "accept": "",
+      "blockedBy": [],
+      "createdAt": "2026-11-13T07:15:44.516Z",
+      "history": [
+        {
+          "at": "2026-11-13T07:16:01.432Z",
+          "by": "dsh-lead",
+          "what": "claim"
+        },
+        {
+          "at": "2026-11-13T07:16:01.619Z",
+          "by": "dsh-lead",
+          "what": "save: source_check 能力上线：本地冒烟29项、生产prod-verify 15/15、真实业务331秒 source_check×5、0.1.31已发布安装、verify GREEN(39步)"
+        },
+        {
+          "at": "2026-11-13T07:16:02.026Z",
+          "by": "dsh-lead",
+          "what": "done: P48_DEPLOY_DONE / PROD 15-15 / VERIFY GREEN / 0.1.31 / git 00102a9"
+        }
+      ],
+      "lease": {
+        "at": "2026-11-13T07:16:01.379Z",
+        "heartbeat": "2026-11-13T07:16:01.619Z",
+        "reason": null
+      },
+      "checkpoint": {
+        "progress": [],
+        "notes": [
+          "07:16 source_check 能力上线：本地冒烟29项、生产prod-verify 15/15、真实业务331秒 source_check×5、0.1.31已发布安装、verify GREEN(39步)"
+        ],
+        "files": []
+      },
+      "finishedAt": "2026-11-13T07:16:02.024Z",
+      "result": "P48_DEPLOY_DONE / PROD 15-15 / VERIFY GREEN / 0.1.31 / git 00102a9"
     }
   ],
   "primary": "dsh-lead",
