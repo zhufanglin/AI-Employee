@@ -38,6 +38,19 @@ const ALIAS_MAP: Record<string, { provider: ResolvedUpstream["provider"]; upstre
 /** 上游网关类 5xx：重试通常能过；4xx 是参数/额度问题，重试没意义。 */
 const GATEWAY_STATUS = new Set([500, 502, 503, 504, 529]);
 
+/**
+ * Node fetch 的 TypeError('fetch failed') 本身没有信息量，真正原因在 e.cause（ECONNRESET / ETIMEDOUT / ENOTFOUND…）。
+ * 日志和用户提示都带上 cause，下次上游抖动才能定位是 DNS、连接被重置还是超时。
+ */
+function describeFetchError(e: any): string {
+  if (!e) return "unknown";
+  const cause = e.cause;
+  const code = cause?.code || cause?.errno || (typeof cause === "string" ? cause : "");
+  const causeMsg = cause?.message && cause.message !== e.message ? ` ${cause.message}` : "";
+  const base = `${e.message ?? String(e)}`;
+  return code ? `${base}（${code}${causeMsg}）` : `${base}${causeMsg}`;
+}
+
 const PROVIDER_DEFAULTS: Record<ResolvedUpstream["provider"], { baseUrlEnv: string; baseUrl: string; keyEnv: string }> = {
   ark: { baseUrlEnv: "ARK_BASE_URL", baseUrl: "https://ark.cn-beijing.volces.com/api/v3", keyEnv: "ARK_API_KEY" },
   deepseek: { baseUrlEnv: "DEEPSEEK_BASE_URL", baseUrl: "https://api.deepseek.com/v1", keyEnv: "DEEPSEEK_API_KEY" },
@@ -117,12 +130,12 @@ export class ProvidersService {
         return res;
       } catch (e: any) {
         lastErr = e;
-        this.logger.warn(`upstream fetch failed (attempt ${i + 1}/${attempts}): ${e?.message ?? e}`);
+        this.logger.warn(`upstream fetch failed (attempt ${i + 1}/${attempts}): ${describeFetchError(e)}`);
         if (i < attempts - 1) await new Promise((r) => setTimeout(r, 400 * 3 ** i));
       }
     }
     throw new BadGatewayException({
-      error: { message: `上游网络不可达，请稍后重试（${lastErr?.message ?? lastErr}）`, code: "UPSTREAM_UNREACHABLE" },
+      error: { message: `上游网络不可达，请稍后重试（${describeFetchError(lastErr)}）`, code: "UPSTREAM_UNREACHABLE" },
     });
   }
 

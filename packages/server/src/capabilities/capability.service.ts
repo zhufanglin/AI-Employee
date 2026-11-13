@@ -9,6 +9,7 @@ import { customerDescriptors, buildCustomerHandlers } from "./capabilities/custo
 import { llmDescriptors, buildLlmHandlers } from "./capabilities/llm";
 import { descriptor as searchDescriptor, handler as searchHandler } from "./capabilities/search";
 import { descriptor as webBatchDescriptor, handler as webBatchHandler } from "./capabilities/web-batch";
+import { descriptor as sourceCheckDescriptor, handler as sourceCheckHandler } from "./capabilities/source-check";
 import { descriptors as fileDescriptors, handlers as fileHandlers } from "./capabilities/files";
 import { descriptors as docDescriptors, handlers as docHandlers } from "./capabilities/docs";
 import { descriptors as docWriteDescriptors, handlers as docWriteHandlers } from "./capabilities/docs-write";
@@ -29,7 +30,7 @@ import { descriptor as platformMetricsDescriptor, handler as platformMetricsHand
 @Injectable()
 export class CapabilityService {
   private readonly logger = new Logger(CapabilityService.name);
-  private readonly descriptors: CapabilityDescriptor[] = [webExtractDescriptor, webBatchDescriptor, ...contentDescriptors, ...customerDescriptors, ...llmDescriptors, searchDescriptor, ...fileDescriptors, ...docDescriptors, ...docWriteDescriptors, ...mediaDescriptors, ...asrDescriptors, ...visionDescriptors, ...employeeDescriptors, ...memoryDescriptors, ...memoryMaintenanceDescriptors, ...platformDescriptors, platformMetricsDescriptor];
+  private readonly descriptors: CapabilityDescriptor[] = [webExtractDescriptor, webBatchDescriptor, sourceCheckDescriptor, ...contentDescriptors, ...customerDescriptors, ...llmDescriptors, searchDescriptor, ...fileDescriptors, ...docDescriptors, ...docWriteDescriptors, ...mediaDescriptors, ...asrDescriptors, ...visionDescriptors, ...employeeDescriptors, ...memoryDescriptors, ...memoryMaintenanceDescriptors, ...platformDescriptors, platformMetricsDescriptor];
   private readonly handlers: Record<string, CapabilityHandler>;
 
   constructor(private readonly prisma: PrismaService, private readonly toolapi: ToolapiService, private readonly providers: ProvidersService) {
@@ -40,6 +41,7 @@ export class CapabilityService {
       ...buildLlmHandlers(toolapi),
       web_search: searchHandler,
       web_batch: webBatchHandler,
+      source_check: sourceCheckHandler,
       ...fileHandlers,
       ...docHandlers,
       ...docWriteHandlers,

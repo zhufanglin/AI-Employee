@@ -144,6 +144,10 @@ if ($Smoke) {
     & $node "scripts\smoke-p47-ui.mjs"
     $script:code = $LASTEXITCODE
   }
+  Step "smoke: P48 来源核对（可信引用）" {
+    & $node "scripts\smoke-p48-source-check.mjs"
+    $script:code = $LASTEXITCODE
+  }
   Step "smoke: W2" {
     & $node "scripts\smoke-w2.mjs"
     $script:code = $LASTEXITCODE
