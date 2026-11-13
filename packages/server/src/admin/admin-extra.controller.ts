@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post, Put, Query } from "@nestjs/common";
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Patch, Post, Put, Query } from "@nestjs/common";
 import { MemoryCleanupService } from "../capabilities/memory-cleanup.service";
 import { EmployeeExpiryService } from "../employee/employee-expiry.service";
 import { Roles } from "../common/decorators";
@@ -159,6 +159,32 @@ export class AdminExtraController {
   @Delete("media-pricing/:id")
   deleteMediaPricing(@Param("id") id: string) {
     return this.extra.deleteMediaPricing(id);
+  }
+
+  // ---------- 定价总览（成本驱动，P49） ----------
+  /** 全局参数 + 每个模型/媒体任务的成本、现价、建议价、近 N 天实测用量 */
+  @Get("pricing/overview")
+  pricingOverview(@Query() query: any) {
+    return this.extra.pricingOverview(query?.days);
+  }
+
+  /** 修改全局定价参数（积分兑元、目标毛利、单次最低积分、试用积分、RunningHub 币价） */
+  @Patch("pricing/config")
+  updatePricingConfig(@Body() body: any) {
+    return this.extra.updatePricingConfig(body, body?.operator ? String(body.operator) : "admin");
+  }
+
+  /** 按成本重算：mode=preview 只看差异，mode=apply 写回并留痕 */
+  @Post("pricing/recalc")
+  @HttpCode(HttpStatus.OK)
+  recalcPricing(@Body() body: any) {
+    return this.extra.recalcPricing(body, body?.operator ? String(body.operator) : "admin");
+  }
+
+  /** 定价变更历史 */
+  @Get("pricing/changelog")
+  pricingChangeLog(@Query() query: any) {
+    return this.extra.pricingChangeLog(query?.limit);
   }
 
   // ---------- 兑换码 ----------

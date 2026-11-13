@@ -507,3 +507,5 @@ A6 UI-01 先核实再动手：steps 已随 outputMeta 上传（cloud-executor.mj
 - 2026-11-13T07:16:01.442Z | dsh-lead | CLAIM | T-78 P48 来源核对 source_check（可信引用）上线（0.1.31）
 - 2026-11-13T07:16:01.857Z | dsh-lead | SAVE | T-78 source_check 能力上线：本地冒烟29项、生产prod-verify 15/15、真实业务331秒 source_check×5、0.1.31已发布安装、verify GREEN(39步)
 - 2026-11-13T07:16:02.286Z | dsh-lead | DONE | T-78 P48 来源核对 source_check（可信引用）上线（0.1.31） —— P48_DEPLOY_DONE / PROD 15-15 / VERIFY GREEN / 0.1.31 / git 00102a9
+- 2026-11-13T07:32:44.194Z | dsh-lead | NOTE | 将要改 prisma/schema.prisma：迁移名 add_timeline_job（新增 model TimelineJob，用于第二步「时间线剪辑」任务：status/progress/spec/resultUrl/error/durationSeconds）。
+- 2026-11-13T07:58:22.160Z | dsh-lead | NOTE | 新增 timeline 时间线剪辑域：POST /api/timeline/sources 上传、POST /api/timeline/jobs 建任务、GET jobs/:id 轮询；edl.ts 负责分段/选片/ASS 字幕/画中画滤镜；迁移 20261113154500_add_timeline_job 已应用；接口文档 docs/时间线剪辑-Timeline接口.md；第二步成片 _work/成片/第二步-克隆人+克隆音色+工厂混剪-27s.mp4

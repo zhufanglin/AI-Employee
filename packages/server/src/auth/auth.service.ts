@@ -9,6 +9,8 @@ import { JwtService } from "@nestjs/jwt";
 import * as bcrypt from "bcryptjs";
 import { randomBytes, randomInt } from "node:crypto";
 import { PrismaService } from "../prisma/prisma.service";
+import { CreditsService } from "../billing/credits.service";
+import { PricingService } from "../billing/pricing.service";
 import { SmsSender } from "./sms.sender";
 import { env, envInt } from "../common/env";
 
@@ -41,6 +43,8 @@ export class AuthService {
     private readonly prisma: PrismaService,
     private readonly jwt: JwtService,
     private readonly sms: SmsSender,
+    private readonly credits: CreditsService,
+    private readonly pricing: PricingService,
   ) {}
 
   // ---------- 短信验证码 ----------
@@ -92,6 +96,7 @@ export class AuthService {
         },
       });
       await this.recordConsent(user.id, consent, "sms-login");
+      await this.grantTrialCredits(user);
     } else {
       // 老账号也补记一次（幂等：同用户同文档同版本只记一条），便于合规审计
       await this.recordConsent(user.id, consent, "sms-login");
@@ -142,6 +147,23 @@ export class AuthService {
     return created;
   }
 
+  /**
+   * 新账号赠送试用积分（金额取 PricingConfig.trialCredits，0 = 关闭）。
+   * 失败不阻断登录 —— 送分是增值行为，不能把用户挡在门外。
+   */
+  private async grantTrialCredits(user: { id: string; phone?: string | null }) {
+    try {
+      const amount = await this.pricing.trialCredits();
+      if (!amount || amount <= 0) return 0;
+      await this.credits.addCredits(user.id, amount, "gift", "新用户试用赠送（" + amount + " 积分）", undefined, "system");
+      this.logger.log("新用户 " + (user.phone ?? user.id) + " 赠送试用积分 " + amount);
+      return amount;
+    } catch (e: any) {
+      this.logger.warn("赠送试用积分失败（不影响登录）：" + (e?.message ?? e));
+      return 0;
+    }
+  }
+
   async register(dto: {
     phone?: string; email?: string; password: string; code?: string; name?: string; consent?: ConsentInput;
   }) {
@@ -164,6 +186,7 @@ export class AuthService {
       },
     });
     await this.recordConsent(user.id, dto.consent, "register");
+    await this.grantTrialCredits(user);
     return this.issueToken(user);
   }
 

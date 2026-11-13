@@ -19,6 +19,7 @@ import { ChannelsModule } from "./channels/channels.module";
 import { ComposeVideosModule } from "./compose-videos/compose-videos.module";
 import { CloneRecordsModule } from "./clone-records/clone-records.module";
 import { AudioMaterialsModule } from "./audio-materials/audio-materials.module";
+import { TimelineModule } from "./timeline/timeline.module";
 import { PaymentsModule } from "./payments/payments.module";
 import { AdminModule } from "./admin/admin.module";
 import { CapabilityModule } from "./capabilities/capability.module";
@@ -42,7 +43,7 @@ import { LegalModule } from "./legal/legal.module";
     ToolapiModule,
     MediaModule,
     ChannelsModule,
-    ComposeVideosModule, CloneRecordsModule, AudioMaterialsModule,
+    ComposeVideosModule, CloneRecordsModule, AudioMaterialsModule, TimelineModule,
     PaymentsModule,
     AdminModule,
     CapabilityModule,

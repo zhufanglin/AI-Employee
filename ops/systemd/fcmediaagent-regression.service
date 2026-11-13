@@ -1,9 +1,9 @@
 [Unit]
 Description=fcmediaagent 生产回归检查（P44 第三波：只读低成本回归）
 Documentation=file:/opt/fcmediaagent/ops/README.md
-# 只依赖本机 api，不碰 docker；等网络与 api 就绪即可
-Wants=network-online.target
-After=network-online.target
+# 需要本机 api + docker（sms_login 会 docker exec 进 fcm-mysql 播种一次性验证码）
+Wants=network-online.target docker.service
+After=network-online.target docker.service
 
 [Service]
 Type=oneshot

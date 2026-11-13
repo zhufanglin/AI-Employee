@@ -3,6 +3,7 @@ import { randomInt } from "node:crypto";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
+import { PricingService } from "../billing/pricing.service";
 import { PackageService } from "../employee/package.service";
 import * as bcrypt from "bcryptjs";
 import { PrismaService } from "../prisma/prisma.service";
@@ -32,6 +33,7 @@ export class AdminExtraService {
     private readonly prisma: PrismaService,
     private readonly packages: PackageService,
     private readonly sms: SmsSender,
+    private readonly pricing: PricingService,
   ) {}
 
   // ================= 站点 / 集成配置 =================
@@ -328,6 +330,7 @@ export class AdminExtraService {
     if (!modelName) throw new BadRequestException("模型名称不能为空");
     const exists = await this.prisma.modelPricing.findUnique({ where: { modelId } });
     if (exists) throw new BadRequestException("该模型已存在定价");
+    this.pricing.clearCache();
     return this.prisma.modelPricing.create({
       data: {
         modelId,
@@ -338,6 +341,9 @@ export class AdminExtraService {
         pricePerOutputToken: Math.max(0, Math.trunc(Number(body?.pricePerOutputToken ?? 0))),
         provider: body?.provider ?? "ark",
         upstreamModelId: body?.upstreamModelId ?? null,
+        upstreamCostInputPerMillionCny: Math.max(0, Number(body?.upstreamCostInputPerMillionCny ?? 1.8)),
+        upstreamCostOutputPerMillionCny: Math.max(0, Number(body?.upstreamCostOutputPerMillionCny ?? 14.4)),
+        costNote: body?.costNote ? String(body.costNote).slice(0, 255) : null,
         isActive: body?.isActive !== false,
       },
     });
@@ -353,7 +359,16 @@ export class AdminExtraService {
     for (const f of ["pricePerRequest", "pricePerInputToken", "pricePerOutputToken"] as const) {
       if (body?.[f] !== undefined) data[f] = Math.trunc(Number(body[f]));
     }
+    for (const f of ["upstreamCostInputPerMillionCny", "upstreamCostOutputPerMillionCny"] as const) {
+      if (body?.[f] !== undefined) {
+        const v = Number(body[f]);
+        if (!Number.isFinite(v) || v < 0) throw new BadRequestException("上游成本必须是大于等于 0 的数字");
+        data[f] = v;
+      }
+    }
+    if (body?.costNote !== undefined) data.costNote = body.costNote ? String(body.costNote).slice(0, 255) : null;
     if (body?.isActive !== undefined) data.isActive = Boolean(body.isActive);
+    this.pricing.clearCache();
     return this.prisma.modelPricing.update({ where: { id }, data });
   }
 
@@ -361,6 +376,7 @@ export class AdminExtraService {
     const row = await this.prisma.modelPricing.findUnique({ where: { id } });
     if (!row) throw new NotFoundException("模型定价不存在");
     await this.prisma.modelPricing.delete({ where: { id } });
+    this.pricing.clearCache();
     return { success: true };
   }
 
@@ -375,6 +391,7 @@ export class AdminExtraService {
     if (!taskName) throw new BadRequestException("任务名称不能为空");
     const exists = await this.prisma.mediaPricing.findUnique({ where: { taskType } });
     if (exists) throw new BadRequestException("该媒体任务已存在定价");
+    this.pricing.clearCache();
     return this.prisma.mediaPricing.create({
       data: {
         taskType,
@@ -383,6 +400,10 @@ export class AdminExtraService {
         pricePerRequest: Math.max(1, Math.trunc(Number(body?.pricePerRequest ?? 1))),
         pricePerInputSecond: Number(body?.pricePerInputSecond ?? 0),
         defaultEstimatedSeconds: Math.max(1, Math.trunc(Number(body?.defaultEstimatedSeconds ?? 60))),
+        upstreamUnit: body?.upstreamUnit === "coins" ? "coins" : "cny",
+        upstreamCoinsPerUnit: Math.max(0, Number(body?.upstreamCoinsPerUnit ?? 0)),
+        upstreamUnitCostCny: Math.max(0, Number(body?.upstreamUnitCostCny ?? 0)),
+        costNote: body?.costNote ? String(body.costNote).slice(0, 255) : null,
         isActive: body?.isActive !== false,
       },
     });
@@ -396,7 +417,17 @@ export class AdminExtraService {
     if (body?.pricePerRequest !== undefined) data.pricePerRequest = Math.trunc(Number(body.pricePerRequest));
     if (body?.pricePerInputSecond !== undefined) data.pricePerInputSecond = Number(body.pricePerInputSecond);
     if (body?.defaultEstimatedSeconds !== undefined) data.defaultEstimatedSeconds = Math.trunc(Number(body.defaultEstimatedSeconds));
+    if (body?.upstreamUnit !== undefined) data.upstreamUnit = body.upstreamUnit === "coins" ? "coins" : "cny";
+    for (const f of ["upstreamCoinsPerUnit", "upstreamUnitCostCny"] as const) {
+      if (body?.[f] !== undefined) {
+        const v = Number(body[f]);
+        if (!Number.isFinite(v) || v < 0) throw new BadRequestException("上游成本必须是大于等于 0 的数字");
+        data[f] = v;
+      }
+    }
+    if (body?.costNote !== undefined) data.costNote = body.costNote ? String(body.costNote).slice(0, 255) : null;
     if (body?.isActive !== undefined) data.isActive = Boolean(body.isActive);
+    this.pricing.clearCache();
     return this.prisma.mediaPricing.update({ where: { id }, data });
   }
 
@@ -405,6 +436,24 @@ export class AdminExtraService {
     if (!row) throw new NotFoundException("媒体定价不存在");
     await this.prisma.mediaPricing.delete({ where: { id } });
     return { success: true };
+  }
+
+  // ================= 定价（成本驱动） =================
+  pricingOverview(days?: number) {
+    const d = Number(days);
+    return this.pricing.overview(Number.isFinite(d) && d > 0 ? Math.min(365, Math.trunc(d)) : 30);
+  }
+
+  updatePricingConfig(body: any, operator?: string) {
+    return this.pricing.updateConfig(body ?? {}, operator);
+  }
+
+  recalcPricing(body: any, operator?: string) {
+    return this.pricing.recalc({ mode: body?.mode === "apply" ? "apply" : "preview", operator, days: Number(body?.days) || 30 });
+  }
+
+  pricingChangeLog(limit?: number) {
+    return this.pricing.listChangeLog(Number(limit) || 50);
   }
 
   // ================= 兑换码（管理端 CRUD） =================

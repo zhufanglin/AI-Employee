@@ -148,6 +148,10 @@ if ($Smoke) {
     & $node "scripts\smoke-p48-source-check.mjs"
     $script:code = $LASTEXITCODE
   }
+  Step "smoke: P49 定价体系（成本驱动）" {
+    & $node "scripts\smoke-p49-pricing.mjs"
+    $script:code = $LASTEXITCODE
+  }
   Step "smoke: W2" {
     & $node "scripts\smoke-w2.mjs"
     $script:code = $LASTEXITCODE

@@ -1,5 +1,5 @@
 [Unit]
-Description=fcmediaagent MySQL 每日备份（P44 运维保障 / WP1）
+Description=fcmediaagent MySQL + uploads 每日备份（P44/P49 运维保障）
 Documentation=file:///opt/fcmediaagent/ops/README.md
 After=network-online.target docker.service
 Wants=network-online.target
@@ -13,8 +13,12 @@ WorkingDirectory=/opt/fcmediaagent
 
 # 保留天数（脚本内默认也是 14，这里显式写一份方便调整）
 Environment=RETENTION_DAYS=14
-# 需要异地备份时取消下面一行注释（要求 app/.env 里有 OSS_* 且 ali-oss 已安装）
-# Environment=OSS_UPLOAD=1
+# 默认启用 OSS 异地备份（MySQL + uploads 两个包都上传；要求 app/.env 里有 OSS_*）
+# 如需临时关闭，不要改本文件，写 /etc/default/fcmediaagent-backup：
+#   OSS_UPLOAD=0
+# EnvironmentFile 在 Environment= 之后生效，因此 /etc/default 可以覆盖下面的值。
+Environment=OSS_UPLOAD=1
+EnvironmentFile=-/etc/default/fcmediaagent-backup
 # 备注：unit 的 SSH 环境没有 PATH，脚本内部已用 /opt/node/bin/node 等绝对路径
 
 ExecStart=/opt/fcmediaagent/ops/backup-prod.sh

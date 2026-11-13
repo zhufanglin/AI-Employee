@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="description" content="中科元晟 AI员工 —— 让 AI 接管重复工作，把时间留给真正重要的事。" />
+<title>中科元晟 AI员工 · Windows 客户端下载</title>
+<style>
+  :root {
+    --bg: #070b18;
+    --panel: rgba(16, 24, 46, .78);
+    --line: rgba(126, 160, 255, .18);
+    --text: #eef3ff;
+    --muted: #9aa9c9;
+    --brand: #5b8cff;
+    --brand-2: #8b5cf6;
+    --ok: #37d39a;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    min-height: 100vh;
+    color: var(--text);
+    background:
+      radial-gradient(900px 520px at 15% -10%, rgba(91, 140, 255, .30), transparent 65%),
+      radial-gradient(760px 460px at 88% 8%, rgba(139, 92, 246, .24), transparent 65%),
+      radial-gradient(700px 500px at 50% 110%, rgba(55, 211, 154, .10), transparent 70%),
+      var(--bg);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+      "Microsoft YaHei", "Hiragino Sans GB", Arial, sans-serif;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { width: min(1080px, calc(100% - 40px)); margin: 0 auto; }
+  header {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 16px; padding: 28px 0 10px;
+  }
+  .logo { display: flex; align-items: center; gap: 10px; font-weight: 700; letter-spacing: .5px; }
+  .logo-mark {
+    width: 34px; height: 34px; border-radius: 10px;
+    background: linear-gradient(135deg, var(--brand), var(--brand-2));
+    display: grid; place-items: center; font-size: 16px; font-weight: 800;
+    box-shadow: 0 8px 24px rgba(91, 140, 255, .35);
+  }
+  header nav { color: var(--muted); font-size: 14px; }
+  header nav a { color: var(--muted); text-decoration: none; margin-left: 18px; }
+  header nav a:hover { color: var(--text); }
+
+  main { padding: 56px 0 40px; }
+  .hero {
+    display: grid; grid-template-columns: 1.15fr .85fr; gap: 44px; align-items: center;
+  }
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 6px 12px; border: 1px solid var(--line); border-radius: 999px;
+    color: #c7d5ff; background: rgba(91, 140, 255, .08); font-size: 13px;
+  }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ok); box-shadow: 0 0 12px var(--ok); }
+  h1 {
+    margin: 20px 0 16px; font-size: clamp(36px, 5.4vw, 62px);
+    line-height: 1.15; letter-spacing: -1px;
+  }
+  h1 .grad {
+    background: linear-gradient(90deg, #8fb2ff, #c3a6ff 55%, #7ef0c4);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .lead { color: var(--muted); font-size: clamp(16px, 2vw, 19px); max-width: 560px; margin: 0 0 30px; }
+  .actions { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; }
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+    min-height: 52px; padding: 0 26px; border-radius: 14px;
+    font-size: 16px; font-weight: 700; text-decoration: none; color: #fff;
+    background: linear-gradient(135deg, var(--brand), var(--brand-2));
+    box-shadow: 0 14px 34px rgba(91, 140, 255, .32);
+    transition: transform .15s ease, box-shadow .15s ease, opacity .15s ease;
+    border: 1px solid rgba(255, 255, 255, .14);
+  }
+  .btn:hover { transform: translateY(-1px); box-shadow: 0 18px 40px rgba(91, 140, 255, .42); }
+  .btn.is-disabled {
+    background: rgba(255, 255, 255, .08); color: var(--muted);
+    box-shadow: none; cursor: not-allowed; border-color: var(--line);
+  }
+  .btn.is-disabled:hover { transform: none; box-shadow: none; }
+  .meta { color: var(--muted); font-size: 13px; }
+  .meta strong { color: #d8e3ff; font-weight: 600; }
+  .release { margin-top: 12px; font-size: 13px; color: var(--muted); min-height: 20px; }
+  .release.error { color: #ffb4a8; }
+
+  .card {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 24px;
+    padding: 28px; backdrop-filter: blur(14px);
+    box-shadow: 0 30px 80px rgba(0, 0, 0, .35);
+  }
+  .card h2 { margin: 0 0 18px; font-size: 16px; color: #cdd9f5; font-weight: 600; }
+  .feature { display: flex; gap: 13px; padding: 12px 0; border-bottom: 1px dashed var(--line); }
+  .feature:last-child { border-bottom: 0; }
+  .feature .ico {
+    flex: 0 0 34px; width: 34px; height: 34px; border-radius: 10px;
+    display: grid; place-items: center; font-size: 17px;
+    background: rgba(91, 140, 255, .13); border: 1px solid var(--line);
+  }
+  .feature b { display: block; font-size: 14px; margin-bottom: 2px; }
+  .feature span { color: var(--muted); font-size: 13px; }
+
+  section.notes { margin-top: 64px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+  .note { border: 1px solid var(--line); border-radius: 18px; padding: 20px; background: rgba(9, 15, 30, .55); }
+  .note b { display: block; margin-bottom: 6px; font-size: 14px; }
+  .note p { margin: 0; color: var(--muted); font-size: 13px; }
+
+  footer {
+    margin-top: 64px; padding: 26px 0 38px; border-top: 1px solid var(--line);
+    color: var(--muted); font-size: 13px;
+  }
+  .foot-row { display: flex; flex-wrap: wrap; gap: 10px 22px; align-items: center; justify-content: space-between; }
+  .foot-links a { color: var(--muted); text-decoration: none; margin-right: 18px; }
+  .foot-links a:hover { color: var(--text); text-decoration: underline; }
+  .operator { margin-top: 10px; color: #7f8dab; }
+
+  @media (max-width: 860px) {
+    .hero { grid-template-columns: 1fr; gap: 30px; }
+    section.notes { grid-template-columns: 1fr; }
+    header nav { display: none; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo"><span class="logo-mark">元</span><span>中科元晟 AI员工</span></div>
+    <nav>
+      <a href="#features">产品能力</a>
+      <a href="#download">下载客户端</a>
+      <a href="https://api.fcmediaagent.com/api/legal/privacy">隐私政策</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div>
+        <span class="eyebrow"><span class="dot"></span> Windows 桌面客户端 · 持续更新</span>
+        <h1>把重复工作交给 <span class="grad">AI员工</span></h1>
+        <p class="lead">一句话交代任务，AI员工自动完成资料整理、内容生成与日常办公流程，让人专注于真正重要的判断与创造。</p>
+        <div class="actions" id="download">
+          <a id="downloadBtn" class="btn is-disabled" href="#" aria-disabled="true" rel="noopener">正在获取最新版本…</a>
+          <span class="meta">适用系统：<strong>Windows 10 / 11（x64）</strong></span>
+        </div>
+        <div id="releaseInfo" class="release" role="status" aria-live="polite"></div>
+      </div>
+
+      <aside class="card" id="features">
+        <h2>它能为你的团队做什么</h2>
+        <div class="feature"><span class="ico">✦</span><div><b>听懂自然语言</b><span>不用记命令，把目标说清楚就能开始执行。</span></div></div>
+        <div class="feature"><span class="ico">▤</span><div><b>整理资料与文件</b><span>读取工作区资料，归类、提炼、生成可交付文档。</span></div></div>
+        <div class="feature"><span class="ico">◎</span><div><b>跟进完整流程</b><span>从理解任务到产出结果，减少来回切换与手工操作。</span></div></div>
+        <div class="feature"><span class="ico">↻</span><div><b>持续更新</b><span>客户端自动检查新版本，能力与修复及时送达。</span></div></div>
+      </aside>
+    </section>
+
+    <section class="notes">
+      <div class="note"><b>安装简单</b><p>下载安装包后按向导完成安装，使用现有账号登录即可。</p></div>
+      <div class="note"><b>数据边界清晰</b><p>工作区文件与账号数据按隐私政策处理，详见下方法律文件。</p></div>
+      <div class="note"><b>遇到问题</b><p>可通过 support@fcmediaagent.com 联系我们，或提交违规举报。</p></div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="foot-row">
+      <div class="foot-links">
+        <a href="https://api.fcmediaagent.com/api/legal/privacy" target="_blank" rel="noopener">隐私政策</a>
+        <a href="https://api.fcmediaagent.com/api/legal/terms" target="_blank" rel="noopener">用户协议</a>
+        <a href="mailto:support@fcmediaagent.com?subject=%E8%BF%9D%E8%A7%84%E4%B8%BE%E6%8A%A5">违规举报</a>
+      </div>
+      <div>© <span id="year">2026</span> 中科元晟</div>
+    </div>
+    <div class="operator">运营主体：中科元晟智科人工智能科技有限公司</div>
+  </footer>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  // 落地页与 latest.yml 同在 updates.fcmediaagent.com，使用同源相对地址，
+  // 避免跨域；完整地址为 https://updates.fcmediaagent.com/desktop/latest/latest.yml
+  var LATEST_YML_URL = "/desktop/latest/latest.yml";
+  var DOWNLOAD_BASE = "https://updates.fcmediaagent.com/desktop/latest/";
+  var btn = document.getElementById("downloadBtn");
+  var releaseInfo = document.getElementById("releaseInfo");
+
+  document.getElementById("year").textContent = String(new Date().getFullYear());
+
+  function setFallback(message) {
+    btn.classList.add("is-disabled");
+    btn.setAttribute("aria-disabled", "true");
+    btn.removeAttribute("download");
+    btn.href = "https://ai.fcmediaagent.com/";
+    btn.textContent = "请到官网获取最新版";
+    if (message) {
+      releaseInfo.textContent = message;
+      releaseInfo.classList.add("error");
+    }
+  }
+
+  // 从 electron-builder 生成的 latest.yml 里解析 version 与 files[0].url。
+  // 不引入第三方 YAML 库，只处理该文件固定的顶层结构。
+  function parseLatestYml(text) {
+    var lines = String(text || "").split(/\r?\n/);
+    var version = "";
+    var file = "";
+    var inFiles = false;
+    for (var i = 0; i < lines.length; i++) {
+      var line = lines[i];
+      if (/^\S/.test(line)) {
+        if (/^version:\s*/.test(line)) {
+          version = line.replace(/^version:\s*/, "").replace(/^['"]|['"]$/g, "").trim();
+        }
+        if (/^files:\s*$/.test(line)) {
+          inFiles = true;
+          continue;
+        }
+        if (inFiles) break;
+      } else if (inFiles) {
+        var m = line.match(/^\s*-?\s*url:\s*['"]?([^'"\s]+)/);
+        if (m) { file = m[1]; break; }
+      }
+    }
+    if (!file) {
+      for (var j = 0; j < lines.length; j++) {
+        var p = lines[j].match(/^path:\s*['"]?([^'"\s]+)/);
+        if (p) { file = p[1]; break; }
+      }
+    }
+    return { version: version, file: file };
+  }
+
+  function isSafeExeName(name) {
+    return /^[A-Za-z0-9._-]+\.exe$/.test(name) &&
+      name.indexOf("fcmediaagent-") === 0 &&
+      name.indexOf("..") === -1;
+  }
+
+  fetch(LATEST_YML_URL, { cache: "no-store", credentials: "omit" })
+    .then(function (res) {
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      return res.text();
+    })
+    .then(function (text) {
+      var parsed = parseLatestYml(text);
+      if (!parsed.file || !isSafeExeName(parsed.file)) {
+        throw new Error("latest.yml 中未找到有效的安装包文件名");
+      }
+      var href = DOWNLOAD_BASE + parsed.file;
+      btn.href = href;
+      btn.classList.remove("is-disabled");
+      btn.removeAttribute("aria-disabled");
+      btn.textContent = parsed.version ? "下载 Windows 客户端 v" + parsed.version : "下载 Windows 客户端";
+      releaseInfo.classList.remove("error");
+      releaseInfo.textContent = "安装包：" + parsed.file + (parsed.version ? " · 版本 " + parsed.version : "");
+    })
+    .catch(function (err) {
+      setFallback("暂时无法获取最新版本信息（" + (err && err.message ? err.message : "网络异常") + "），请稍后刷新页面。");
+    });
+})();
+</script>
+</body>
+</html>

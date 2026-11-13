@@ -286,30 +286,85 @@ async function bindEmployees() {
   });
 }
 
-/* ---------- 定价 ---------- */
+/* ---------- 定价（成本驱动，P49） ---------- */
+const rmbText = (n) => '¥' + (Math.round(Number(n || 0) * 10000) / 10000);
+const timesText = (n) => (n == null ? '-' : (Math.round(Number(n) * 100) / 100) + ' 倍');
+const numInput = (f, v) => '<input type="number" step="0.0001" min="0" data-cost="' + f + '" value="' + (v == null ? 0 : v) + '" style="width:110px" />';
+
+function modelPriceText(m) {
+  if (m.pricingMode === 'per_token_million') return '每百万 token：输入 ' + m.pricePerInputToken + ' / 输出 ' + m.pricePerOutputToken + ' 积分';
+  if (m.pricingMode === 'per_token') return '每千 token：输入 ' + m.pricePerInputToken + ' / 输出 ' + m.pricePerOutputToken + ' 积分';
+  return '每请求 ' + m.pricePerRequest + ' 积分';
+}
+
+function modelSuggestText(s) {
+  return '每百万 token：输入 ' + s.pricePerInputToken + ' / 输出 ' + s.pricePerOutputToken + ' 积分（约 ' + s.pricePerRequest + ' 积分/次，成本 ' + rmbText(s.costPerRequestCny) + ' ⇒ 售价倍率 ' + timesText(s.marginPerRequest) + '）';
+}
+
 async function viewPricing() {
-  const models = await api('/admin/model-pricing');
-  const media = await api('/admin/media-pricing');
+  const ov = await api('/admin/pricing/overview?days=30');
+  const cfg = ov.config || {};
   const usage = await api('/admin/media/usage?days=7');
   const pending = await api('/admin/media/pending-review');
   const usageRows = (usage.items || []).map((x) => '<tr><td>' + esc(x.taskType) + '</td><td class="right">' + esc(x.count) + '</td><td class="right">' + esc(x.upstreamCoins) + '</td><td class="right">' + esc(x.unknownUpstreamCount) + '</td><td class="right">' + esc(x.chargedCredits) + '</td><td>' + esc(x.costStatus) + '</td></tr>').join('');
   const pendingRows = (pending || []).map((x) => '<tr><td>' + esc(x.taskId) + '</td><td>' + esc(x.userId) + '</td><td>' + esc(x.taskType) + '</td><td>' + esc(x.estimatedAmount) + '</td><td>' + esc(x.createdAt) + '</td><td><button class="sm" data-review="' + esc(x.taskId) + '">核对</button></td></tr>').join('');
-  const mrows = (models || []).map((m) => '<tr><td class="mono">' + esc(m.modelId) + '</td><td>' + esc(m.modelName) + '</td><td>' + esc(m.provider || '') + '</td>'
-    + '<td class="mono muted">' + esc(m.upstreamModelId || '') + '</td><td>' + esc(m.pricingMode) + '</td><td class="right">' + m.pricePerRequest + '</td>'
-    + '<td class="right"><button class="sm" data-mp="' + esc(m.id) + '" data-cur="' + m.pricePerRequest + '">改价</button></td></tr>').join('');
-  const trows = (media || []).map((m) => '<tr><td class="mono">' + esc(m.taskType) + '</td><td>' + esc(m.displayName || '') + '</td><td>' + esc(m.pricingMode) + '</td>'
-    + '<td class="right">' + (m.pricePerRequest != null ? m.pricePerRequest : '') + '</td><td class="right">' + (m.pricePerInputSecond != null ? m.pricePerInputSecond : '') + '</td>'
-    + '<td class="right"><button class="sm" data-mdp="' + esc(m.id) + '" data-cur="' + (m.pricePerRequest != null ? m.pricePerRequest : m.pricePerInputSecond) + '">改价</button></td></tr>').join('');
-  return '<h2>模型与媒体定价</h2><p class="sub">原版全部为占位价（1 积分/次、0 token 单价）；改完不要重跑 seed，否则被覆盖</p>'
+  const cfgPanel = '<div class="panel"><h2 style="font-size:15px">全局定价参数</h2><p class="sub">售价 = 上游成本 ×（1 + 目标毛利）× 积分兑元比例，全部在库里改，代码里没有写死金额。</p><div class="toolbar"><label>1 元 = <input id="cfg-cy" type="number" min="1" value="' + (cfg.creditsPerYuan || 100) + '" style="width:90px" /> 积分</label><label>目标毛利 <input id="cfg-margin" type="number" min="0" value="' + (cfg.targetMarginPercent == null ? 100 : cfg.targetMarginPercent) + '" style="width:80px" /> %</label><label>单次最低 <input id="cfg-min" type="number" min="1" value="' + (cfg.minCreditsPerRequest || 1) + '" style="width:70px" /> 积分</label><label>新用户试用 <input id="cfg-trial" type="number" min="0" value="' + (cfg.trialCredits == null ? 0 : cfg.trialCredits) + '" style="width:90px" /> 积分</label><label>RunningHub 1 币 = <input id="cfg-coin" type="number" step="0.001" min="0" value="' + (cfg.mediaCoinCny == null ? 0.01 : cfg.mediaCoinCny) + '" style="width:90px" /> 元</label><button class="primary" id="cfg-save">保存参数</button></div></div>';
+  const notes = (ov.notes || []).map((n) => '<li>' + esc(n) + '</li>').join('');
+  const mrows = (ov.models || []).map((m) => '<tr data-mrow="' + esc(m.id) + '"><td class="mono">' + esc(m.modelId) + '</td><td>' + esc(m.modelName) + '</td><td>' + numInput('upstreamCostInputPerMillionCny', m.upstreamCostInputPerMillionCny) + '</td><td>' + numInput('upstreamCostOutputPerMillionCny', m.upstreamCostOutputPerMillionCny) + '</td><td>' + (m.measured ? (m.measured.count + ' 次 / 均 ' + m.measured.avgInputTokens + ' 入 + ' + m.measured.avgOutputTokens + ' 出') : '<span class="muted">暂无</span>') + '</td><td>' + esc(modelPriceText(m)) + '</td><td>' + esc(modelSuggestText(m.suggestion)) + '</td><td><button class="sm" data-save-model="' + esc(m.id) + '">存成本</button></td></tr>').join('');
+  const trows = (ov.media || []).map((m) => '<tr data-drow="' + esc(m.id) + '"><td class="mono">' + esc(m.taskType) + '</td><td>' + esc(m.taskName || m.displayName || '') + '</td><td>' + esc(m.pricingMode) + '</td><td><select data-cost="upstreamUnit" style="width:100px"><option value="coins"' + (m.upstreamUnit === 'coins' ? ' selected' : '') + '>币</option><option value="cny"' + (m.upstreamUnit !== 'coins' ? ' selected' : '') + '>元</option></select></td><td>' + numInput('upstreamCoinsPerUnit', m.upstreamCoinsPerUnit) + '</td><td>' + numInput('upstreamUnitCostCny', m.upstreamUnitCostCny) + '</td><td>' + esc(m.suggestion.hasCost ? ('成本 ' + rmbText(m.suggestion.unitCostCny) + (m.pricingMode === 'per_input_second' ? ' /秒' : ' /次')) : '未填成本') + '</td><td>' + (m.pricingMode === 'per_input_second' ? (m.pricePerInputSecond + ' 积分/秒') : (m.pricePerRequest + ' 积分/次')) + '</td><td>' + esc(m.pricingMode === 'per_input_second' ? ('建议 ' + m.suggestion.pricePerInputSecond + ' 积分/秒') : ('建议 ' + m.suggestion.pricePerRequest + ' 积分/次')) + '</td><td><button class="sm" data-save-media="' + esc(m.id) + '">存成本</button></td></tr>').join('');
+  return '<h2>模型与媒体定价</h2><p class="sub">先按上游账单填成本，再点「预览重算」看差异，确认后「应用重算」写回售价（每次写回都留痕）。</p>'
+    + cfgPanel
+    + (notes ? '<div class="panel"><h2 style="font-size:15px">待补齐的成本</h2><ul class="sub" style="margin:6px 0 0 18px">' + notes + '</ul></div>' : '')
+    + '<div class="panel"><div class="toolbar"><button id="price-preview">预览重算（只看差异）</button><button class="primary" id="price-apply">应用重算（写回售价）</button></div><div id="recalc-out" class="sub" style="margin-top:10px"></div></div>'
+    + '<div class="panel"><h2 style="font-size:15px">模型（成本 / 现价 / 建议价）</h2><p class="sub">成本单位：元 / 百万 token。实测用量取近 30 天 AiUsageRecord。</p><table><thead><tr><th>modelId</th><th>展示名</th><th>成本·输入</th><th>成本·输出</th><th>近 30 天实测</th><th>现价</th><th>建议价</th><th></th></tr></thead><tbody>' + (mrows || '<tr><td colspan="8" class="empty">暂无</td></tr>') + '</tbody></table></div>'
+    + '<div class="panel"><h2 style="font-size:15px">媒体任务（成本 / 现价 / 建议价）</h2><p class="sub">币成本 = 币数 × RunningHub 币价；按秒计价的任务填「每秒」成本。</p><table><thead><tr><th>taskType</th><th>名称</th><th>模式</th><th>单位</th><th>币数</th><th>元/单位</th><th>上游成本</th><th>现价</th><th>建议价</th><th></th></tr></thead><tbody>' + (trows || '<tr><td colspan="10" class="empty">暂无</td></tr>') + '</tbody></table></div>'
     + '<div class="panel"><h2 style="font-size:15px">待人工核对的提交</h2><p class="sub">先查实上游是否创建任务，再登记核对依据；未确认前请勿退款或重试。</p><table><thead><tr><th>预占编号</th><th>用户</th><th>类型</th><th>预扣积分</th><th>创建时间</th><th></th></tr></thead><tbody>' + (pendingRows || '<tr><td colspan="6" class="empty">暂无</td></tr>') + '</tbody></table></div>'
-    + '<div class="panel"><h2 style="font-size:15px">近 7 天媒体消耗</h2><p class="sub">上游币与积分分别统计，换算关系尚未确定；未返回上游用量的任务单独计数。积分含进行中预扣。</p><table><thead><tr><th>任务类型</th><th class="right">任务数</th><th class="right">已知上游币</th><th class="right">上游用量未知</th><th class="right">已扣积分</th><th>成本</th></tr></thead><tbody>'
-    + (usageRows || '<tr><td colspan="6" class="empty">暂无</td></tr>') + '</tbody></table></div>'
-    + '<div class="panel"><h2 style="font-size:15px">模型（按次）</h2><table><thead><tr><th>modelId</th><th>展示名</th><th>provider</th><th>上游 id</th><th>模式</th><th class="right">积分/次</th><th></th></tr></thead><tbody>'
-    + (mrows || '<tr><td colspan="7" class="empty">暂无</td></tr>') + '</tbody></table></div>'
-    + '<div class="panel"><h2 style="font-size:15px">媒体任务</h2><table><thead><tr><th>taskType</th><th>名称</th><th>模式</th><th class="right">积分/次</th><th class="right">积分/输入秒</th><th></th></tr></thead><tbody>'
-    + (trows || '<tr><td colspan="6" class="empty">暂无</td></tr>') + '</tbody></table></div>';
+    + '<div class="panel"><h2 style="font-size:15px">近 7 天媒体消耗</h2><p class="sub">上游币与积分分别统计；未返回上游用量的任务单独计数。积分含进行中预扣。</p><table><thead><tr><th>任务类型</th><th class="right">任务数</th><th class="right">已知上游币</th><th class="right">上游用量未知</th><th class="right">已扣积分</th><th>成本</th></tr></thead><tbody>' + (usageRows || '<tr><td colspan="6" class="empty">暂无</td></tr>') + '</tbody></table></div>';
 }
+
+function readCosts(root) {
+  const out = {};
+  root.querySelectorAll('[data-cost]').forEach((el) => {
+    const k = el.dataset.cost;
+    out[k] = el.tagName === 'SELECT' ? el.value : Number(el.value);
+  });
+  return out;
+}
+
+function recalcHtml(r) {
+  if (!r || !r.changes || !r.changes.length) return '没有需要调整的价目（当前售价与成本推导结果一致）。';
+  const rows = r.changes.map((c) => '<tr><td>' + esc(c.scope === 'model' ? '模型' : '媒体') + '</td><td class="mono">' + esc(c.target) + '</td><td class="mono">' + esc(JSON.stringify(c.before)) + '</td><td class="mono">' + esc(JSON.stringify(c.after)) + '</td></tr>').join('');
+  return '<p>共 ' + r.changes.length + ' 项差异' + (r.mode === 'apply' ? '，已写回。' : '（预览，未写库）。') + '</p><table><thead><tr><th>范围</th><th>目标</th><th>原价</th><th>新价</th></tr></thead><tbody>' + rows + '</tbody></table>';
+}
+
 async function bindPricing() {
+  const cs = $('#cfg-save');
+  if (cs) cs.onclick = async () => {
+    const body = { creditsPerYuan: Number($('#cfg-cy').value), targetMarginPercent: Number($('#cfg-margin').value), minCreditsPerRequest: Number($('#cfg-min').value), trialCredits: Number($('#cfg-trial').value), mediaCoinCny: Number($('#cfg-coin').value) };
+    try { await api('/admin/pricing/config', { method: 'PATCH', body: JSON.stringify(body) }); toast('参数已保存', 'ok'); render(); }
+    catch (e) { toast(e.message, 'err'); }
+  };
+  document.querySelectorAll('[data-save-model]').forEach((b) => b.onclick = async () => {
+    const row = b.closest('[data-mrow]');
+    try { await api('/admin/model-pricing/' + b.dataset.saveModel, { method: 'PUT', body: JSON.stringify(readCosts(row)) }); toast('成本已保存', 'ok'); render(); }
+    catch (e) { toast(e.message, 'err'); }
+  });
+  document.querySelectorAll('[data-save-media]').forEach((b) => b.onclick = async () => {
+    const row = b.closest('[data-drow]');
+    try { await api('/admin/media-pricing/' + b.dataset.saveMedia, { method: 'PUT', body: JSON.stringify(readCosts(row)) }); toast('成本已保存', 'ok'); render(); }
+    catch (e) { toast(e.message, 'err'); }
+  });
+  const pv = $('#price-preview');
+  if (pv) pv.onclick = async () => {
+    try { const r = await api('/admin/pricing/recalc', { method: 'POST', body: JSON.stringify({ mode: 'preview' }) }); $('#recalc-out').innerHTML = recalcHtml(r); }
+    catch (e) { toast(e.message, 'err'); }
+  };
+  const ap = $('#price-apply');
+  if (ap) ap.onclick = async () => {
+    if (!confirm('确认按当前成本和毛利写回全部售价？会留痕，可追溯。')) return;
+    try { const r = await api('/admin/pricing/recalc', { method: 'POST', body: JSON.stringify({ mode: 'apply' }) }); $('#recalc-out').innerHTML = recalcHtml(r); toast('已写回 ' + (r.applied || 0) + ' 项', 'ok'); }
+    catch (e) { toast(e.message, 'err'); }
+  };
   document.querySelectorAll('[data-review]').forEach((b) => b.onclick = async () => {
     const action = prompt('核实后输入：refund（未创建，退款）或 track（已创建，继续跟踪）');
     if (action == null) return;
@@ -319,16 +374,6 @@ async function bindPricing() {
     const reason = prompt('填写核对依据（4 至 500 字）'); if (!reason) return;
     if (!confirm(action === 'refund' ? '确认上游未创建任务并退款？' : '确认关联该上游任务？')) return;
     try { await api('/admin/media/pending-review/' + encodeURIComponent(b.dataset.review) + '/resolve', { method: 'POST', body: JSON.stringify({ action, upstreamTaskId, reason }) }); toast('已登记核对结果', 'ok'); render(); }
-    catch (e) { toast(e.message, 'err'); }
-  });
-  document.querySelectorAll('[data-mp]').forEach((b) => b.onclick = async () => {
-    const v = prompt('每请求积分：', b.dataset.cur); if (v == null) return;
-    try { await api('/admin/model-pricing/' + b.dataset.mp, { method: 'PUT', body: JSON.stringify({ pricePerRequest: Number(v) }) }); toast('已更新', 'ok'); render(); }
-    catch (e) { toast(e.message, 'err'); }
-  });
-  document.querySelectorAll('[data-mdp]').forEach((b) => b.onclick = async () => {
-    const v = prompt('积分值：', b.dataset.cur); if (v == null) return;
-    try { await api('/admin/media-pricing/' + b.dataset.mdp, { method: 'PUT', body: JSON.stringify({ pricePerRequest: Number(v) }) }); toast('已更新', 'ok'); render(); }
     catch (e) { toast(e.message, 'err'); }
   });
 }

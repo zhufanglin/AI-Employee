@@ -18,7 +18,10 @@
  *   node monitor.mjs --strict               有告警时退出码 1（默认 0）
  *
  * 输出：/opt/fcmediaagent/logs/monitor.log（每行一个 JSON：ts/check/level/message/detail）
- * 推送：环境变量 ALERT_WEBHOOK_URL（优先）或配置 alert.webhookUrl；
+ * 推送：ALERT_WEBHOOK_URL 取值优先级：
+ *       1) 进程环境变量；2) /etc/default/fcmediaagent-monitor 里的同名项；
+ *       3) 配置 alert.webhookUrl；4) /opt/fcmediaagent/app/.env 里的同名项。
+ *       未配置时只写本地日志，并明确打印「未配置 ALERT_WEBHOOK_URL，告警仅写本地日志」。
  *       同一 check 冷却期内只推一次，恢复时推一次「已恢复」。
  */
 
@@ -32,6 +35,9 @@ import { fileURLToPath } from 'node:url';
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
 const IS_LINUX = process.platform === 'linux';
 const PROD_ENV_FILE = '/opt/fcmediaagent/app/.env';
+// systemd unit 已通过 EnvironmentFile=-/etc/default/fcmediaagent-monitor 注入；
+// 这里再读一次，兼容不经过 systemd、手动执行 monitor.mjs 的场景。
+const MONITOR_DEFAULTS_FILE = '/etc/default/fcmediaagent-monitor';
 
 const CHECK_ORDER = ['api_health', 'queue_backlog', 'worker_heartbeat', 'upstream_overdue', 'resources', 'backup_freshness', 'prod_regression'];
 
@@ -1099,9 +1105,13 @@ async function main() {
     }
   }
 
+  // 优先级：进程环境变量 > /etc/default/fcmediaagent-monitor > 配置文件 > app/.env
+  // 只用内置 fs 读取，不引入任何外部依赖。
   const envMap = readEnvFile(PROD_ENV_FILE);
+  const defaultsMap = readEnvFile(MONITOR_DEFAULTS_FILE);
   const webhookUrl = String(
     (process.env.ALERT_WEBHOOK_URL || '').trim() ||
+    (defaultsMap.ALERT_WEBHOOK_URL || '').trim() ||
     (config.alert.webhookUrl || '').trim() ||
     (envMap.ALERT_WEBHOOK_URL || '').trim() ||
     ''
@@ -1110,7 +1120,7 @@ async function main() {
   if (pendingPushes === 0) {
     console.log('[monitor] 无需推送' + (counts.alert ? '（告警仍在冷却期内）' : '（全部正常）'));
   } else if (!webhookUrl) {
-    console.log('[monitor] 有 ' + pendingPushes + ' 项待推送，但未配置 ALERT_WEBHOOK_URL（仅落日志）');
+    console.log('[monitor] 有 ' + pendingPushes + ' 项待推送，未配置 ALERT_WEBHOOK_URL，告警仅写本地日志（可写入 /etc/default/fcmediaagent-monitor，参考 ops/README.md）');
   } else {
     const markdown = buildMarkdown(hostname, nowText, alertItems, recoveryItems);
     const title = alertItems.length ? 'fcmediaagent 监控告警' : 'fcmediaagent 监控恢复';

@@ -113,6 +113,12 @@ model ModelPricing {
   /** 真正发给上游的模型 id（如 doubao-seed-2-1-pro-260628，W2 新增） */
   upstreamModelId     String?
   isActive            Boolean  @default(true)
+  /// 上游成本：输入 元 / 百万 tokens（按上游账单校准，运营可改）
+  upstreamCostInputPerMillionCny  Float @default(1.8)
+  /// 上游成本：输出 元 / 百万 tokens
+  upstreamCostOutputPerMillionCny Float @default(14.4)
+  /// 成本口径说明（账单来源 / 日期）
+  costNote            String?  @db.VarChar(255)
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
 }
@@ -126,6 +132,14 @@ model MediaPricing {
   pricePerInputSecond     Float    @default(0)
   defaultEstimatedSeconds Int      @default(60)
   isActive                Boolean  @default(true)
+  /// 上游计量单位：coins（按 RunningHub 币计价）| cny（直接填人民币成本）
+  upstreamUnit            String   @default("cny")
+  /// 每个计价单位消耗的上游币数（如一次文生图约 157 币）
+  upstreamCoinsPerUnit    Float    @default(0)
+  /// 每个计价单位的上游成本（元），upstreamUnit=cny 时直接使用
+  upstreamUnitCostCny     Float    @default(0)
+  /// 成本口径说明
+  costNote                String?  @db.VarChar(255)
   createdAt               DateTime @default(now())
   updatedAt               DateTime @updatedAt
 }
@@ -970,4 +984,52 @@ model ReportTicket {
   @@index([status, createdAt])
   @@index([userId, createdAt])
   @@map("ReportTicket")
+}
+
+/// 时间线剪辑（第二步）：按 EDL 从多段实拍 + 配音 + 克隆人正片合成竖屏成片
+model TimelineJob {
+  id              String   @id @default(cuid())
+  phone           String
+  /// queued | running | completed | failed
+  status          String   @default("queued") @db.VarChar(16)
+  progress        Int      @default(0)
+  spec            Json?
+  resultUrl       String?  @db.MediumText
+  error           String?  @db.MediumText
+  durationSeconds Float?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([phone])
+  @@index([status])
+  @@index([createdAt])
+}
+
+/// 定价全局参数（单例；价格全部由成本推导，代码不写死）
+model PricingConfig {
+  id                   String   @id @default("global")
+  /// 1 元人民币 = 多少积分（展示与结算基准）
+  creditsPerYuan       Int      @default(100)
+  /// 目标毛利率（百分比），售价 = 上游成本 × (1 + margin/100)
+  targetMarginPercent  Int      @default(100)
+  /// 单次模型请求最低扣多少积分
+  minCreditsPerRequest Int      @default(1)
+  /// 新用户注册赠送积分（0 = 关闭）
+  trialCredits         Int      @default(200)
+  /// RunningHub 1 币 = 多少人民币（按充值账单校准）
+  mediaCoinCny         Float    @default(0.01)
+  updatedBy            String?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+}
+
+/// 定价变更留痕（每次 apply 记一条，便于回溯）
+model PricingChangeLog {
+  id        String   @id @default(cuid())
+  scope     String   // config | model | media
+  target    String   // global | <modelId> | <taskType>
+  before    String   @db.Text
+  after     String   @db.Text
+  operator  String?
+  createdAt DateTime @default(now())
 }
